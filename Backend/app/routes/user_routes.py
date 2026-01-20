@@ -5,7 +5,6 @@ from typing import Optional
 from ..schemas.user_schema import UserSignup, UserLogin, UserResponse, ForgotPassword, ResetPassword
 from ..services.auth_service import AuthService
 from ..config import settings
-
 router = APIRouter()
 
 
@@ -238,3 +237,4 @@ async def logout_all_sessions(
         "success": True,
         "message": "Logged out from all devices successfully"
     }
+>>>>>>> b19cb69c67feedfc7bad165ace16ed9979471854
