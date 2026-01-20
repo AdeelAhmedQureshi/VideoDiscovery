@@ -5,7 +5,7 @@ export function Footer() {
     <footer className="border-t border-gray-200 bg-gray-50">
       <div className="container mx-auto px-6 py-12">
         <div className="grid md:grid-cols-4 gap-8">
-          {/* Brand - UPDATED SPACING */}
+          {/* Brand  */}
           <div className="space-y-6 ml-18"> 
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-linear-to-br from-cyan-400 to-cyan-500 flex items-center justify-center">
@@ -18,7 +18,7 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Product - UPDATED SPACING */}
+          {/* Product  */}
           <div className="space-y-6 ml-28">
             <h3 className="font-semibold text-gray-900">Product</h3>
             <ul className="space-y-2 text-sm text-gray-600">
@@ -45,7 +45,7 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Resources - UPDATED SPACING */}
+          {/* Resources */}
           <div className="space-y-8 ml-28">
             <h3 className="font-semibold text-gray-900">Resources</h3>
             <ul className="space-y-2 text-sm text-gray-600">
@@ -73,7 +73,7 @@ export function Footer() {
           </div>
 
           {/* Team - Intentionally commented out */}
-          <div className="space-y-6 ml-28git">
+          {/* <div className="space-y-6 ml-28git">
             <h3 className="font-semibold text-gray-900">Team</h3>
             <ul className="space-y-2 text-sm text-gray-600">
               <li>Muhammad Kaleem</li>
@@ -83,13 +83,13 @@ export function Footer() {
                 Sukkur IBA University
               </li>
             </ul>
-          </div>
+          </div> */}
         </div>
 
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-gray-600">
-            © 2025 VideoDiscovery Multimodal Video Understanding for Web-based Video Discovery and Recommendation 
+            © 2026 VideoDiscovery Multimodal Video Understanding for Web-based Video Discovery and Recommendation 
           </p>
           
           <div className="flex items-center gap-4">
