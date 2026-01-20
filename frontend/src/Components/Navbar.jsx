@@ -20,19 +20,14 @@ export const Header = () => {
           </div>
 
           {/* Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-8 ml-170">
             <a
               href="#features-section"
               className="text-base font-medium text-gray-600 hover:text-gray-900 transition-colors"
             >
               Features
             </a>
-            <a
-              href="#upload-section"
-              className="text-base font-medium text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              Upload
-            </a>
+    
             <a
               href="/documentation"
               className="text-base font-medium text-gray-600 hover:text-gray-900 transition-colors"

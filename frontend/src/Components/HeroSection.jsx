@@ -53,22 +53,11 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.5, delay: 1 }}
           >
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-2 px-8 py-4 bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-base"
-              onClick={() => document.getElementById('upload-section')?.scrollIntoView({ behavior: 'smooth' })}
-            >
-              <Upload className="w-5 h-5" />
-              Upload Video
-            </motion.button>
-
-            {/* UPDATED BUTTON: Changed to motion.a and added href */}
             <motion.a 
               href="/documentation" 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-2 px-8 py-4 bg-white hover:bg-gray-50 text-gray-700 font-medium rounded-xl border-2 border-gray-200 transition-all duration-200 text-base"
+             className="flex items-center gap-2 px-8 py-4 bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-base"
             >
               <Video className="w-5 h-5" />
               Learn More
