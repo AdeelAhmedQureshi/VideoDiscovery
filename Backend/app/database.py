@@ -25,3 +25,11 @@ def feedback_collection():
 
 def users_collection():
     return db.get_collection("users")
+
+
+def refresh_tokens_collection():
+    return db.get_collection("refresh_tokens")
+
+
+def password_reset_tokens_collection():
+    return db.get_collection("password_reset_tokens")
