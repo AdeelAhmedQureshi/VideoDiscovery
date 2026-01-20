@@ -91,6 +91,18 @@ export default function Auth() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
+              {!isSignUp && (
+                <div className="text-right mt-2">
+                  <button
+                    type="button"
+                    className="text-sm text-cyan-600 hover:text-cyan-700 hover:underline transition-colors"
+                    onClick={() => alert('Forgot Password flow here')}
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
+
 
               <button
                 onClick={handleSubmit}
