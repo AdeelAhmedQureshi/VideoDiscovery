@@ -1,177 +1,102 @@
-// import React, { createContext, useContext, useEffect, useState } from 'react';
-
-// // import { supabase } from '@/integrations/supabase/client';
-// import { useNavigate } from 'react-router-dom';
-// import { toast } from 'sonner';
-
-// const AuthContext = createContext(undefined);
-
-// export const AuthProvider = ({ children }) => {
-//   const [user, setUser] = useState(null);
-//   const [session, setSession] = useState(null);
-//   const [loading, setLoading] = useState(true);
-//   const navigate = useNavigate();
-
-//   useEffect(() => {
-//     // Set up auth state listener
-//     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-//       (event, session) => {
-//         setSession(session);
-//         setUser(session?.user ?? null);
-//         setLoading(false);
-//       }
-//     );
-
-//     // Check for existing session
-//     supabase.auth.getSession().then(({ data: { session } }) => {
-//       setSession(session);
-//       setUser(session?.user ?? null);
-//       setLoading(false);
-//     });
-
-//     return () => subscription.unsubscribe();
-//   }, []);
-
-//   const signUp = async (email, password, fullName) => {
-//     const redirectUrl = `${window.location.origin}/`;
-    
-//     const { error } = await supabase.auth.signUp({
-//       email,
-//       password,
-//       options: {
-//         emailRedirectTo: redirectUrl,
-//         data: {
-//           full_name: fullName,
-//         },
-//       },
-//     });
-
-//     if (error) {
-//       toast.error(error.message);
-//     } else {
-//       toast.success('Account created successfully!');
-//       navigate('/');
-//     }
-
-//     return { error };
-//   };
-
-//   const signIn = async (email, password) => {
-//     const { error } = await supabase.auth.signInWithPassword({
-//       email,
-//       password,
-//     });
-
-//     if (error) {
-//       toast.error(error.message);
-//     } else {
-//       toast.success('Welcome back!');
-//       navigate('/');
-//     }
-
-//     return { error };
-//   };
-
-//   const signOut = async () => {
-//     const { error } = await supabase.auth.signOut();
-//     if (error) {
-//       toast.error(error.message);
-//     } else {
-//       toast.success('Signed out successfully');
-//       navigate('/auth');
-//     }
-//   };
-
-//   return (
-//     <AuthContext.Provider value={{ user, session, signUp, signIn, signOut, loading }}>
-//       {children}
-//     </AuthContext.Provider>
-//   );
-// };
-
-// export const useAuth = () => {
-//   const context = useContext(AuthContext);
-//   if (context === undefined) {
-//     throw new Error('useAuth must be used within an AuthProvider');
-//   }
-//   return context;
-// };
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { loginUser, signupUser } from "../Services/AuthApi";
 
 const AuthContext = createContext(undefined);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Simulate loading user from localStorage
+  // Load user on refresh (SAFE)
   useEffect(() => {
-    const savedUser = JSON.parse(localStorage.getItem("authUser"));
-    setUser(savedUser);
-    setSession(savedUser ? { user: savedUser } : null);
-    setLoading(false);
+    try {
+      const storedUser = localStorage.getItem("user");
+
+      if (storedUser && storedUser !== "undefined") {
+        setUser(JSON.parse(storedUser));
+      } else {
+        setUser(null);
+      }
+    } catch (err) {
+      console.error("Invalid user in localStorage", err);
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Sign Up (local)
-  const signUp = async (email, password, fullName) => {
-    const newUser = { email, fullName };
+  // SIGN UP
+  const signUp = async (name, email, password) => {
+    try {
+      const res = await signupUser({ name, email, password });
 
-    localStorage.setItem("authUser", JSON.stringify(newUser));
+      console.log("SIGNUP RESPONSE 👉", res.data);
 
-    setUser(newUser);
-    setSession({ user: newUser });
+      const userData = {
+      name,
+      email,
+    };
 
-    toast.success("Account created!");
-    navigate("/");
+      // if (!userData) {
+      //   throw new Error("User not found in signup response");
+      // }
 
-    return { error: null };
-  };
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(userData));
 
-  // Sign In (local)
-  const signIn = async (email, password) => {
-    const savedUser = JSON.parse(localStorage.getItem("authUser"));
-
-    if (!savedUser || savedUser.email !== email) {
-      toast.error("User not found!");
-      return { error: true };
+      setUser(userData);
+      //alert("Account created successfully!");
+      toast.success("Account created!");
+      navigate("/dashboard");
+    } catch (err) {
+      toast.error(err.message || "Signup failed");
     }
-
-    setUser(savedUser);
-    setSession({ user: savedUser });
-
-    toast.success("Welcome back!");
-    navigate("/");
-
-    return { error: null };
   };
 
-  //Sign Out (local)
-  const signOut = async () => {
-    localStorage.removeItem("authUser");
-    setUser(null);
-    setSession(null);
+  // SIGN IN
+  const signIn = async (email, password) => {
+    try {
+      const res = await loginUser({ email, password });
 
-    toast.success("Signed out");
+      console.log("LOGIN RESPONSE 👉", res.data);
+
+      const userData = {
+      name: res.data.name || res.data.data?.name,
+      email: res.data.email || res.data.data?.email,
+    };
+
+      if (!userData) {
+        throw new Error("User not found in login response");
+      }
+
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      setUser(userData);
+      toast.success("Welcome back!");
+      navigate("/dashboard");
+    } catch (err) {
+      console.error(err);
+      toast.error("Invalid credentials");
+    }
+  };
+
+  // SIGN OUT
+  const signOut = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
     navigate("/auth");
   };
 
   return (
-    <AuthContext.Provider
-      value={{ user, session, signUp, signIn, signOut, loading }}
-    >
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-};
+export const useAuth = () => useContext(AuthContext);

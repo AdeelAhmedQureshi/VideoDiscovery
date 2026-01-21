@@ -1,7 +1,15 @@
 import { Button } from "@/Components/ui/button";
-import { Github, Video } from "lucide-react";
+import { Github, Video ,User ,LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom"; 
 import { useAuth } from "./../../contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/Components/ui/dropdown-menu";
 
 export const Header = () => {
   const { user, signOut } = useAuth();
@@ -34,34 +42,13 @@ export const Header = () => {
             >
               Documentation
             </a>
-          </nav>
 
-          {/* CTA */}
-          <div className="flex items-center gap-3">
-            
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <User className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => signOut()}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign Out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button variant="default" size="sm" className="bg-cyan-500 hover:bg-cyan-600 text-white font-medium px-6 rounded-lg shadow-sm"
-              onClick={() => navigate('/auth')}>
-                Sign In
-              </Button>
-            )}
-          </div>
+          </nav>
+           <button
+           onClick={()=>{navigate('/auth')}}
+           className="bg-cyan-500 h-8 cursor-pointer hover:bg-cyan-600 text-white font-medium px-6 rounded-lg shadow-sm">
+            SignIn
+           </button>
         </div>
       </div>
     </header>

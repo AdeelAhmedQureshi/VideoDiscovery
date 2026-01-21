@@ -1,5 +1,5 @@
 import { Button } from "@/Components/ui/button";
-import { Video, User, LogOut } from "lucide-react";
+import { Video, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { UploadSection } from "@/Components/UploadSection";
@@ -18,9 +18,14 @@ export const Dashboard = () => {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
 
+    // Get first letter of user's name for avatar
+    const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
+
+    console.log("Dashboard user:", user);
+
     return (
         <>   
-        <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm">
+        <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm h-20 justify-center flex items-center">
             <div className="container mx-auto px-6">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
@@ -31,29 +36,26 @@ export const Dashboard = () => {
                         <span className="font-bold text-xl text-gray-900">VideoDiscovery</span>
                     </div>
 
-                    {/* Navigation */}
-
                     {/* User Avatar */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 cursor-pointer">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="w-11 h-11 rounded-full bg-linear-to-br from-cyan-400 to-cyan-500 flex items-center justify-center shadow-md"
+                                    className="w-11 h-11 rounded-full bg-linear-to-br from-cyan-400 to-cyan-500 flex items-center justify-center shadow-md text-white font-bold text-lg cursor-pointer"
                                 >
-                                    <User className="h-5 w-5 text-white" />
+                                    {userInitial}
                                 </Button>
                             </DropdownMenuTrigger>
 
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                            <DropdownMenuContent align="end"
+                                className="mt-4">
+                                <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => navigate('/profile')}>
-                                    Profile
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => signOut()}>
-                                    <LogOut className="mr-2 h-4 w-4" />
+                                <DropdownMenuItem onClick={() => signOut()}
+                                    className="text-red-600 hover:bg-red-100">
+                                    <LogOut className="mr-2 h-4 w-4 cursor-pointer" />
                                     Sign Out
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -61,14 +63,13 @@ export const Dashboard = () => {
                     </div>
                 </div>
             </div>
-            
         </header>
+
         <main className="mt-20">
             <AnalyticsPanel />
             <UploadSection />
             <RecommendationsSection />
         </main>
         </>
-        
     );
 };

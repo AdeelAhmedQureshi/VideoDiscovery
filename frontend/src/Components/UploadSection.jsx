@@ -1,10 +1,17 @@
 import { useState, useCallback } from "react";
 import { Upload, FileVideo, X, Loader2 } from "lucide-react";
 
-export  function UploadSection() {
+export function UploadSection() {
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+ const allowedFormats = [
+  "video/mp4",
+  "video/avi",
+  "video/quicktime", // MOV
+  "video/webm",
+  "video/x-matroska" // MKV
+];
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
@@ -16,22 +23,6 @@ export  function UploadSection() {
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e) => {
-    e.preventDefault();
-    setIsDragging(false);
-
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile && droppedFile.type.startsWith("video/")) {
-      setFile(droppedFile);
-    }
-  }, []);
-
-  const handleFileInput = (e) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-    }
-  };
 
   const handleRemoveFile = () => {
     setFile(null);
@@ -41,11 +32,70 @@ export  function UploadSection() {
     if (!file) return;
     setIsAnalyzing(true);
 
-    // Simulate analysis
     setTimeout(() => {
       setIsAnalyzing(false);
     }, 3000);
   };
+
+  // Validate file format and duration
+  const validateVideoFile = (file) => {
+    return new Promise((resolve, reject) => {
+      if (!allowedFormats.includes(file.type)) {
+        reject("Invalid format! Only MP4, AVI, or MOV allowed.");
+        return;
+      }
+
+      const url = URL.createObjectURL(file);
+      const video = document.createElement("video");
+      video.preload = "metadata";
+
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(url);
+        if (video.duration > 180) {
+          reject("Video is too long! Maximum allowed duration is 3 minutes.");
+        } else {
+          resolve(file);
+        }
+      };
+
+      video.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject("Cannot read video file.");
+      };
+
+      video.src = url;
+    });
+  };
+
+  // Updated handleFileInput
+  const handleFileInput = async (e) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    try {
+      const validFile = await validateVideoFile(selectedFile);
+      setFile(validFile);
+    } catch (error) {
+      alert(error); // you can replace this with a toast for better UX
+    }
+  };
+
+  // Updated handleDrop
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const droppedFile = e.dataTransfer.files[0];
+    if (!droppedFile) return;
+
+    try {
+      const validFile = await validateVideoFile(droppedFile);
+      setFile(validFile);
+    } catch (error) {
+      alert(error);
+    }
+  };
+
 
   return (
     <section id="upload-section" className="py-24 px-6 bg-gray-50 mt-10">
@@ -67,11 +117,10 @@ export  function UploadSection() {
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`relative border-2 border-dashed rounded-xl p-16 text-center transition-all ${
-                isDragging
-                  ? "border-cyan-500 bg-cyan-50/50"
-                  : "border-gray-300 hover:border-cyan-400 hover:bg-gray-50"
-              }`}
+              className={`relative border-2 border-dashed rounded-xl p-16 text-center transition-all ${isDragging
+                ? "border-cyan-500 bg-cyan-50/50"
+                : "border-gray-300 hover:border-cyan-400 hover:bg-gray-50"
+                }`}
             >
               <input
                 type="file"
@@ -89,9 +138,6 @@ export  function UploadSection() {
                   <p className="text-base font-medium text-gray-900 mb-1">
                     Drop your video here or click to browse
                   </p>
-                  {/* <p className="text-sm text-gray-500">
-                    Supports MP4, AVI, MOV, WebM up to 500MB
-                  </p> */}
                 </div>
 
                 <button className="inline-flex items-center gap-2 px-6 py-2.5 bg-white border-2 border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors pointer-events-none">
