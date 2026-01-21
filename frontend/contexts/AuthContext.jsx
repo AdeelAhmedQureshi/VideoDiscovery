@@ -39,16 +39,10 @@ export const AuthProvider = ({ children }) => {
       name,
       email,
     };
-
-      // if (!userData) {
-      //   throw new Error("User not found in signup response");
-      // }
-
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(userData));
 
       setUser(userData);
-      //alert("Account created successfully!");
       toast.success("Account created!");
       navigate("/dashboard");
     } catch (err) {

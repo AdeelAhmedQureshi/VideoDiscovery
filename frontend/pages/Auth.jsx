@@ -33,7 +33,7 @@ export default function Auth() {
 
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-blue-50 via-cyan-50 to-white p-4 mt-18">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-blue-50 via-cyan-50 to-white p-4 mt-6">
 
       {/* Back Button */}
       <button
