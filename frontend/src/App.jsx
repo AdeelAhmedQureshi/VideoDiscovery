@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "../contexts/AuthContext";
-
+import { Toaster } from "sonner";
 import { Header } from "./Components/Navbar";
 import { Documentation } from "../pages/Documentation";
 import { Hero } from "./Components/HeroSection";
@@ -13,6 +13,7 @@ import Auth from "../pages/Auth";
 export default function App() {
   return (
     <Router>
+      <Toaster richColors position="top-right" />
       <AuthProvider>
         <div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 flex flex-col">
 
