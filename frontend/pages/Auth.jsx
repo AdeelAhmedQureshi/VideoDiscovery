@@ -140,7 +140,7 @@ export default function Auth() {
                   <button
                     type="button"
                     className="text-sm text-cyan-600 hover:text-cyan-700 hover:underline transition-colors"
-                    onClick={() => alert('Forgot Password flow here')}
+                    onClick={() => nav('/forgot-password')}
                   >
                     Forgot Password?
                   </button>
