@@ -237,4 +237,3 @@ async def logout_all_sessions(
         "success": True,
         "message": "Logged out from all devices successfully"
     }
->>>>>>> b19cb69c67feedfc7bad165ace16ed9979471854

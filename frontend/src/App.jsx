@@ -10,7 +10,8 @@ import { Footer } from "./Components/Footer";
 import { Dashboard } from "../pages/Dashboard";
 import { ProtectedRoute } from "./Components/ProtectedRoutes";
 import Auth from "../pages/Auth";
-
+import ForgotPassword from "../pages/ForgotPassword";
+import ResetPassword from "../pages/ResetPassword";
 export default function App() {
   return (
     <Router>
@@ -35,6 +36,8 @@ export default function App() {
               {/* Auth page */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/documentation" element={<Documentation />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route
                 path="/dashboard"
                 element={
