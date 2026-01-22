@@ -1,25 +1,59 @@
 # main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from .config import settings
 from .routes.health import router as health_router
 from .routes.video_routes import router as video_router
 from .routes.feedback_routes import router as feedback_router
 from .routes.user_routes import router as user_router
+from .utils.db_indexes import create_database_indexes
 
-app = FastAPI(title=settings.PROJECT_NAME, debug=settings.DEBUG)
 
-# CORS (adjust origins for production)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application startup and shutdown events"""
+    # Startup
+    print(f"🚀 Starting {settings.PROJECT_NAME}...")
+    await create_database_indexes()
+    print(f"✅ {settings.PROJECT_NAME} is ready!")
+    yield
+    # Shutdown
+    print(f"👋 Shutting down {settings.PROJECT_NAME}...")
+
+
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    debug=settings.DEBUG,
+    lifespan=lifespan
+)
+
+# CORS configuration for session management with cookies
+# Important: allow_credentials=True requires specific origins (not "*")
+allowed_origins = [
+    "http://localhost:5173",  # Vite default
+    "http://localhost:3000",  # React default
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+    settings.FRONTEND_URL,
+]
+
+# In production, use only your production domain
+if not settings.DEBUG:
+    allowed_origins = [settings.FRONTEND_URL]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # replace with your frontend URL in prod
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=allowed_origins,
+    allow_credentials=True,  # Required for cookies
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "Accept"],
+    expose_headers=["Set-Cookie"],  # Allow frontend to see Set-Cookie header
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
 
 # include routers
 app.include_router(health_router, prefix="/api")
-app.include_router(user_router, prefix="/api/auth")
+app.include_router(user_router, prefix="/api/users")
 app.include_router(video_router, prefix="/api/videos")
 app.include_router(feedback_router, prefix="/api/feedback")

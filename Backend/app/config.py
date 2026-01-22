@@ -10,10 +10,25 @@ class Settings(BaseSettings):
     MONGO_URL: str
     DATABASE_NAME: str
     JWT_SECRET: str
+    JWT_REFRESH_SECRET: str = "change-this-refresh-secret-in-production"
 
-    CLOUDINARY_CLOUD_NAME: str | None = None
-    CLOUDINARY_API_KEY: str | None = None
-    CLOUDINARY_API_SECRET: str | None = None
+    # Token expiration settings (in minutes)
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  # Short-lived access token
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7  # Long-lived refresh token
+
+    # Cloudinary configuration
+    CLOUDINARY_CLOUD_NAME: str = "dgztjaiuy"
+    CLOUDINARY_API_KEY: str = "192341468861746"
+    CLOUDINARY_API_SECRET: str = "ptsMoam6oKFaHvlpmVAACh5aO6o"
+    CLOUDINARY_URL: str = "cloudinary://192341468861746:ptsMoam6oKFaHvlpmVAACh5aO6o@dgztjaiuy"
+
+    # Email configuration for password reset
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: str | None = None
+    EMAIL_FROM: str | None = None
+    FRONTEND_URL: str = "http://localhost:5173"
 
     COLAB_URL: str | None = None
     YOUTUBE_API_KEY: str | None = None
