@@ -13,63 +13,54 @@ import {
     DropdownMenuSeparator,
     DropdownMenuItem,
 } from "@/Components/ui/dropdown-menu";
-
+import { UserAvatar } from "./../src/Components/UserAvatar";
 export const Dashboard = () => {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
-
-    // Get first letter of user's name for avatar
-    const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : '?';
-
-    console.log("Dashboard user:", user);
-
     return (
-        <>   
-        <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm h-20 justify-center flex items-center">
-            <div className="container mx-auto px-6">
-                <div className="flex items-center justify-between h-16">
-                    {/* Logo */}
-                    <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 rounded-xl bg-linear-to-br from-cyan-400 to-cyan-500 flex items-center justify-center shadow-md">
-                            <Video className="w-5 h-5 text-white" />
+        <>
+            <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm h-22 justify-center flex items-center cursor-pointer">
+                <div className="container mx-auto px-6">
+                    <div className="flex items-center justify-between h-16"
+                        onClick={() => { navigate('/') }}>
+                        {/* Logo */}
+                        <div className="flex items-center gap-2">
+                            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-cyan-400 to-cyan-500 flex items-center justify-center shadow-md">
+                                <Video className="w-5 h-5 text-white" />
+                            </div>
+                            <span className="font-bold text-2xl text-gray-900">VideoDiscovery</span>
                         </div>
-                        <span className="font-bold text-xl text-gray-900">VideoDiscovery</span>
-                    </div>
+                        {/* Navigation */}
+                        <nav className="hidden md:flex items-center gap-10">
+                            <a
+                                href="#features-section"
+                                className="text-lg font-semibold text-gray-600 hover:text-gray-900 transition-colors"
+                            >
+                                Features
+                            </a>
 
-                    {/* User Avatar */}
-                    <div className="flex items-center gap-3 cursor-pointer">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="w-11 h-11 rounded-full bg-linear-to-br from-cyan-400 to-cyan-500 flex items-center justify-center shadow-md text-white font-bold text-lg cursor-pointer"
-                                >
-                                    {userInitial}
-                                </Button>
-                            </DropdownMenuTrigger>
+                            <a
+                                href="/documentation"
+                                className="text-lg font-semibold text-gray-600 hover:text-gray-900 transition-colors"
+                            >
+                                Documentation
+                            </a>
+                            
+                        </nav>
 
-                            <DropdownMenuContent align="end"
-                                className="mt-4">
-                                <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => signOut()}
-                                    className="text-red-600 hover:bg-red-100">
-                                    <LogOut className="mr-2 h-4 w-4 cursor-pointer" />
-                                    Sign Out
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        {/* User Avatar */}
+                        <div className="flex items-center gap-3 cursor-pointer">
+                            <UserAvatar />
+                        </div>
                     </div>
                 </div>
-            </div>
-        </header>
+            </header>
 
-        <main className="mt-20">
-            <AnalyticsPanel />
-            <UploadSection />
-            <RecommendationsSection />
-        </main>
+            <main className="mt-20">
+                <AnalyticsPanel />
+                <UploadSection />
+                <RecommendationsSection />
+            </main>
         </>
     );
 };
