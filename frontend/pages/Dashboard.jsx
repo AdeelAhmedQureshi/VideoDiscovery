@@ -32,6 +32,12 @@ export const Dashboard = () => {
                         </div>
                         {/* Navigation */}
                         <nav className="hidden md:flex items-center gap-10">
+                             <a
+                                href="/"
+                                className="text-lg font-semibold text-gray-600 hover:text-gray-900 transition-colors"
+                            >
+                                Home
+                            </a>
                             <a
                                 href="#features-section"
                                 className="text-lg font-semibold text-gray-600 hover:text-gray-900 transition-colors"
@@ -45,6 +51,7 @@ export const Dashboard = () => {
                             >
                                 Documentation
                             </a>
+                           
                             
                         </nav>
 
