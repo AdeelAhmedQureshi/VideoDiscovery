@@ -6,13 +6,18 @@ export function Footer() {
       <div className="container mx-auto px-6 py-12">
         <div className="grid md:grid-cols-4 gap-8">
           {/* Brand  */}
-          <div className="space-y-6 ml-18"> 
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-linear-to-br from-cyan-400 to-cyan-500 flex items-center justify-center">
-                <Video className="w-5 h-5 text-white" />
+          <div className="space-y-6 ml-15">
+            <div className="space-y-6 ml-0 sm:ml-2 md:ml-1">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-linear-to-br from-cyan-400 to-cyan-500 flex items-center justify-center shrink-0">
+                  <Video className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                </div>
+                <span className="font-bold text-base sm:text-lg text-gray-900 whitespace-nowrap">
+                  VideoDiscovery
+                </span>
               </div>
-              <span className="font-bold text-lg text-gray-900">VideoDiscovery</span>
             </div>
+
             <p className="text-sm text-gray-600 leading-relaxed">
               Multimodal video understanding for intelligent video discovery and recommendation.
             </p>
@@ -37,11 +42,7 @@ export function Footer() {
                   Documentation
                 </a>
               </li>
-              {/* <li>
-                <a href="#" className="hover:text-cyan-600 transition-colors">
-                  Pricing
-                </a>
-              </li> */}
+
             </ul>
           </div>
 
@@ -71,27 +72,14 @@ export function Footer() {
               </li>
             </ul>
           </div>
-
-          {/* Team - Intentionally commented out */}
-          {/* <div className="space-y-6 ml-28git">
-            <h3 className="font-semibold text-gray-900">Team</h3>
-            <ul className="space-y-2 text-sm text-gray-600">
-              <li>Muhammad Kaleem</li>
-              <li>Adeel Ahmed Qureshi</li>
-              <li>Mahnoor Rajput</li>
-              <li className="pt-2 text-xs text-gray-500">
-                Sukkur IBA University
-              </li>
-            </ul>
-          </div> */}
         </div>
 
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-gray-600">
-            © 2026 VideoDiscovery Multimodal Video Understanding for Web-based Video Discovery and Recommendation 
+            © 2026 VideoDiscovery Multimodal Video Understanding for Web-based Video Discovery and Recommendation
           </p>
-          
+
           <div className="flex items-center gap-4">
             <a
               href="https://github.com"

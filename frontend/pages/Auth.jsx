@@ -57,13 +57,13 @@ export default function Auth() {
         </div>
 
         {/* Auth Card */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
           <div className="p-8">
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
                 {isSignUp ? 'Create Account' : 'Welcome Back'}
               </h2>
-              <p className="text-gray-600 mt-1 text-sm">
+              <p className="text-gray-600 mt-1 text-medium">
                 {isSignUp ? 'Sign up to start analyzing your videos' : 'Sign in to continue to your account'}
               </p>
             </div>
@@ -72,7 +72,7 @@ export default function Auth() {
 
               {isSignUp && (
                 <div className="relative">
-                  <label htmlFor="fullName" className="block text-sm font-medium text-gray-900 mb-2">
+                  <label htmlFor="fullName" className="block text-medium font-medium text-gray-900 mb-2">
                     Full Name
                   </label>
                   <input
@@ -84,12 +84,12 @@ export default function Auth() {
                     placeholder="John Doe"
                     className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   />
-                  <User className="absolute left-3 top-[38px] w-5 h-5 text-gray-400" />
+                  <User className="absolute left-3 top-[44px] w-5 h-5 text-gray-400" />
                 </div>
               )}
 
               <div className="relative">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-2">
+                <label htmlFor="email" className="block text-medium font-medium text-gray-900 mb-2">
                   Email
                 </label>
                 <input
@@ -101,11 +101,11 @@ export default function Auth() {
                   placeholder="you@example.com"
                   className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 />
-                <User className="absolute left-3 top-[38px] w-5 h-5 text-gray-400" />
+                <User className="absolute left-3 top-[44px] w-5 h-5 text-gray-400 justify-center flex items-center" />
               </div>
 
               <div className="relative">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-900 mb-2">
+                <label htmlFor="password" className="block text-medium font-medium text-gray-900 mb-2">
                   Password
                 </label>
                 <input
@@ -120,13 +120,12 @@ export default function Auth() {
                     : "border-gray-300"
                     }`}
                 />
-                <Lock className="absolute left-3 top-[38px] w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-3 top-[44px] w-5 h-5 text-gray-400 justify-center flex items-center" />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-[38px] w-5 h-5 text-gray-400"
                 >
-                  {showPassword ? <EyeOff /> : <Eye />}
                 </button>
                 {isSignUp && password && !/(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=]).{8,}/.test(password) && (
                   <p className="mt-1 text-xs text-red-500">
@@ -139,7 +138,7 @@ export default function Auth() {
                 <div className="text-right mt-2">
                   <button
                     type="button"
-                    className="text-sm text-cyan-600 hover:text-cyan-700 hover:underline transition-colors"
+                    className="text-medium text-cyan-600 hover:text-cyan-700 hover:underline transition-colors"
                     onClick={() => nav('/forgot-password')}
                   >
                     Forgot Password?
@@ -150,7 +149,7 @@ export default function Auth() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded-lg cursor-pointer"
+                className="w-full py-3 bg-cyan-500 hover:bg-cyan-600 text-lg font-xl text-white rounded-lg cursor-pointer"
               >
                 {isLoading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
               </button>
@@ -161,7 +160,7 @@ export default function Auth() {
                 type="button"
                 onClick={() => setIsSignUp(!isSignUp)}
                 disabled={isLoading}
-                className="text-sm text-cyan-600 hover:text-cyan-700 hover:underline transition-colors disabled:opacity-50"
+                className="text-medium text-cyan-600 hover:text-cyan-700 hover:underline transition-colors disabled:opacity-50"
               >
                 {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
               </button>
@@ -170,7 +169,7 @@ export default function Auth() {
         </div>
 
         {/* Additional Info */}
-        <p className="text-center text-xs text-gray-500">
+        <p className="text-center text-s text-gray-500">
           By continuing, you agree to our Terms of Service and Privacy Policy
         </p>
       </div>
