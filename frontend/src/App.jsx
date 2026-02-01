@@ -1,34 +1,31 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "../contexts/AuthContext";
-
+import { Toaster } from "sonner";
 import { Header } from "./Components/Navbar";
 import { Documentation } from "../pages/Documentation";
 import { Hero } from "./Components/HeroSection";
 import { Features } from "./Components/Features";
 import { HowItWorks } from "./Components/HowitWorks";
 import { Footer } from "./Components/Footer";
-import {Dashboard} from "../pages/Dashboard";
+import { Dashboard } from "../pages/Dashboard";
+import { ProtectedRoute } from "./Components/ProtectedRoutes";
 import Auth from "../pages/Auth";
-
+import ForgotPassword from "../pages/ForgotPassword";
+import ResetPassword from "../pages/ResetPassword";
 export default function App() {
   return (
     <Router>
+      <Toaster richColors position="top-right" />
       <AuthProvider>
         <div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 flex flex-col">
-
-          {/* Navbar */}
-          <Header>
-
-          </Header>
-
-          {/* Routes */}
+          {/* Public routes */}
           <main className="flex-1">
             <Routes>
-              {/* Home page */}
               <Route
                 path="/"
                 element={
                   <>
+                    <Header />
                     <Hero />
                     <Features />
                     <HowItWorks />
@@ -36,10 +33,19 @@ export default function App() {
                 }
               />
 
-              {/* Auth page (optional) */}
+              {/* Auth page */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/documentation" element={<Documentation />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
           </main>
 

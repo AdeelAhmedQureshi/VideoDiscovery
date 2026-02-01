@@ -12,7 +12,7 @@ export function HowItWorks(){
             <div className="text-center space-y-3">
               <div className="text-5xl font-bold text-cyan-500">02</div>
               <h4 className="text-lg font-semibold text-gray-900">Semantic Matching</h4>
-              <p className="text-gray-600 text-sm">Using CLIP, YOLO, and Whisper, we create multimodal embeddings for deep content understanding.</p>
+              <p className="text-gray-600 text-sm">Using CLIP, YOLO, and Whisper and other models, we create multimodal embeddings for deep content understanding.</p>
             </div>
             <div className="text-center space-y-3">
               <div className="text-5xl font-bold text-cyan-500">03</div>
