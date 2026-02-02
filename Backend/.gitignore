@@ -1,21 +1,29 @@
-.env
-.env.example
-.env.local
-.env.*.local
+# Backend-specific ignores
+# (Common patterns are in root .gitignore)
 
 # Virtual Environment
 venv/
+venv_old/
+venv_new/
+.env
+.venv
 env/
 ENV/
-__pycache__/
+
+# Python bytecode
 *.pyc
 *.pyo
 *.pyd
 
-# Python cache
-.Python
-*.so
-*.egg
-*.egg-info/
-dist/
-build/    
+# pytest cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Logs
+*.log    
