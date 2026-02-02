@@ -31,7 +31,7 @@ class VideoResponse(BaseModel):
     file_url: str
     file_name: str
     intelligent_query: str  # Required field
-    video_hash: Optional[str] = None
+    video_hash: str  # Required - used for duplicate detection
     uploaded_at: datetime
 
 
@@ -50,5 +50,5 @@ class VideoInDB(BaseModel):
     file_url: str
     file_name: str
     intelligent_query: Optional[str] = None
-    video_hash: Optional[str] = None
+    video_hash: str  # Required - used for duplicate detection
     uploaded_at: datetime
