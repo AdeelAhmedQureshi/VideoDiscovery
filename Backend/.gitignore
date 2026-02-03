@@ -1,4 +1,29 @@
+# Backend-specific ignores
+# (Common patterns are in root .gitignore)
+
+# Virtual Environment
+venv/
+venv_old/
+venv_new/
 .env
-.env.example
-.env.local
-.env.*.local    
+.venv
+env/
+ENV/
+
+# Python bytecode
+*.pyc
+*.pyo
+*.pyd
+
+# pytest cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Logs
+*.log    
