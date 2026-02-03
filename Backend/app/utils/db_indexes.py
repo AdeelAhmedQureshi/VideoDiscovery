@@ -40,6 +40,11 @@ async def create_database_indexes():
         videos_col = db.get_collection("videos")
         await videos_col.create_index("user_id")
         await videos_col.create_index("video_hash")
+        # Compound unique index to prevent duplicate videos per user
+        await videos_col.create_index(
+            [("user_id", 1), ("video_hash", 1)],
+            unique=True
+        )
         await videos_col.create_index("uploaded_at")
         print("✓ Created indexes on videos")
 
