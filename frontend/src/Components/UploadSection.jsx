@@ -80,6 +80,7 @@ export function UploadSection() {
 
     const droppedFile = e.dataTransfer.files[0];
     if (!droppedFile) return;
+    
 
     try {
       const validFile = await validateVideoFile(droppedFile);
@@ -90,33 +91,55 @@ export function UploadSection() {
   };
 
   const handleAnalyze = async () => {
-    if (!file) return;
-    setIsAnalyzing(true);
+  if (!file) return;
+  setIsAnalyzing(true);
 
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
+  try {
+    const token = localStorage.getItem("token");
 
-      const response = await fetch("http://localhost:8000/api/videos/upload", {
-        method: "POST",
-        body: formData
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Upload failed");
-      }
-
-      const data = await response.json();
-      showPopup("Video uploaded successfully!", "success");
-      console.log("Upload success:", data);
-    } catch (err) {
-      console.error(err);
-      showPopup(err.message, "error");
-    } finally {
-      setIsAnalyzing(false);
+    if (!token) {
+      showPopup("Please login again", "error");
+      return;
     }
-  };
+
+    console.log(file); 
+// Should show: File { name: "video.mp4", size: ..., type: "video/mp4" }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("title", "My Video");
+    formData.append("intelligent_query", "dummy query");
+    // formData.append("intelligent_query", query);
+    console.log("Token being sent:", token);
+
+
+    const response = await fetch(
+      "http://localhost:8000/api/videos/upload",
+      {
+        method: "POST",
+        headers: {
+           "Authorization": `Bearer ${token}`, // THIS IS IMPORTANT 🔥 THIS WAS MISSING
+        },
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || "Upload failed");
+    }
+
+    const data = await response.json();
+    showPopup("Video uploaded successfully!", "success");
+    console.log("Upload success:", data);
+  } catch (err) {
+    console.error(err);
+    showPopup(err.message, "error");
+  } finally {
+    setIsAnalyzing(false);
+  }
+};
+
 
   return (
     <section id="upload-section" className="py-24 px-6 bg-gray-50 mt-10 relative">
@@ -198,12 +221,12 @@ export function UploadSection() {
                 {isAnalyzing ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Analyzing Video...
+                    Upload Video...
                   </>
                 ) : (
                   <>
                     <Upload className="w-5 h-5" />
-                    Analyze Video
+                     Upload  Video
                   </>
                 )}
               </button>

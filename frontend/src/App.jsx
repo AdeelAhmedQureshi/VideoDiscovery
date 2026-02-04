@@ -12,6 +12,7 @@ import { ProtectedRoute } from "./Components/ProtectedRoutes";
 import Auth from "../pages/Auth";
 import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
+import Account from "../pages/Account";
 export default function App() {
   return (
     <Router>
@@ -46,7 +47,16 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/account"
+                element={
+                  <ProtectedRoute>
+                    <Account />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
+
           </main>
 
           {/* Footer */}

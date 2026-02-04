@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
       name,
       email,
     };
-      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("token", res.data.access_token);
       localStorage.setItem("user", JSON.stringify(userData));
 
       setUser(userData);
@@ -66,11 +66,12 @@ export const AuthProvider = ({ children }) => {
         throw new Error("User not found in login response");
       }
 
-      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("token", res.data.access_token);
       localStorage.setItem("user", JSON.stringify(userData));
 
       setUser(userData);
       toast.success("Welcome back!");
+      console.log(userData)
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
