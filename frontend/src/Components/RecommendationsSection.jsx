@@ -54,7 +54,7 @@ const mockRecommendations = [
 
 export  function RecommendationsSection() {
   return (
-    <section className="py-24 px-6 bg-white">
+    <section className="py-24 px-6 bg-white" id="recommendation-section">
       <div className="container mx-auto max-w-7xl">
         {/* Section Header */}
         <div className="text-center space-y-3 mb-16">
