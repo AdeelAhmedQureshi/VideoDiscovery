@@ -1,11 +1,11 @@
 import { useState, useCallback } from "react";
-import { Upload, FileVideo, X, Loader2 } from "lucide-react";
+import { Upload, FileVideo, X, Loader2, CheckCircle, AlertCircle, Info } from "lucide-react";
 
 export function UploadSection() {
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [popup, setPopup] = useState({ message: "", type: "" }); // type: success | error
+  const [popup, setPopup] = useState({ message: "", type: "" }); // type: success | error | info
 
   const allowedFormats = [
     "video/mp4",
@@ -27,10 +27,10 @@ export function UploadSection() {
 
   const handleRemoveFile = () => setFile(null);
 
-  // Custom popup
+  // Custom popup - now supports 'info' type
   const showPopup = (message, type = "success") => {
     setPopup({ message, type });
-    setTimeout(() => setPopup({ message: "", type: "" }), 4000); // auto-hide after 4s
+    setTimeout(() => setPopup({ message: "", type: "" }), 5000); // auto-hide after 5s
   };
 
   const validateVideoFile = (file) => {
@@ -103,14 +103,12 @@ export function UploadSection() {
     }
 
     console.log(file); 
-// Should show: File { name: "video.mp4", size: ..., type: "video/mp4" }
 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("title", "My Video");
     formData.append("intelligent_query", "dummy query");
-    // formData.append("intelligent_query", query);
-    console.log("Token being sent:", token);
+    //console.log("Token being sent:", token);
 
 
     const response = await fetch(
@@ -126,7 +124,22 @@ export function UploadSection() {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.detail || "Upload failed");
+      
+      // Check if it's a duplicate video message (not an error)
+      const errorMessage = errorData.detail || errorData.message || "Upload failed";
+      
+      if (
+        errorMessage.toLowerCase().includes("already uploaded") ||
+        errorMessage.toLowerCase().includes("duplicate") ||
+        errorMessage.toLowerCase().includes("exists") ||
+        errorMessage.includes("id")
+      ) {
+        showPopup(errorMessage, "info");
+        setIsAnalyzing(false);
+        return;
+      } else {
+        throw new Error(errorMessage);
+      }
     }
 
     const data = await response.json();
@@ -145,13 +158,14 @@ export function UploadSection() {
     <section id="upload-section" className="py-24 px-6 bg-gray-50 mt-10 relative">
       <div className="container mx-auto max-w-2xl">
         {/* Section Header */}
-        <div className="text-center space-y-3 mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-            Upload Your Video
-          </h2>
-          <p className="text-base text-gray-600">
-            Drag and drop your video file or click to browse. We support MP4, AVI, MOV, WebM, MKV and more.
-          </p>
+        <div className="text-center mb-16">
+          <div className="inline-block relative mb-4">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
+             Upload Section
+            </h1>
+            <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm"></div>
+          </div>
+          <p className="text-lg text-gray-500 mt-6">Upload your video to get started with intelligent recommendations</p>
         </div>
 
         {/* Upload Card */}
@@ -243,18 +257,99 @@ export function UploadSection() {
         </div>
       </div>
 
-      {/* Popup */}
+      {/* Modern Professional Popup with Icons and Animation */}
       {popup.message && (
-        <div
-          className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-lg text-white font-medium transition-all ${
-            popup.type === "success"
-              ? "bg-cyan-500"
-              : "bg-red-500"
-          }`}
-        >
-          {popup.message}
+        <div className="fixed inset-0 flex items-end justify-center px-4 py-6 pointer-events-none sm:items-start sm:justify-end sm:p-6 z-50">
+          <div
+            className={`max-w-md w-full shadow-2xl rounded-2xl pointer-events-auto overflow-hidden transform transition-all duration-300 ease-out animate-slide-up ${
+              popup.type === "success"
+                ? "bg-gradient-to-r from-blue-500 to-indigo-500"
+                : popup.type === "error"
+                ? "bg-gradient-to-r from-rose-500 to-red-500"
+                : "bg-gradient-to-r from-emerald-500 to-green-500"
+            }`}
+          >
+            <div className="p-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  {popup.type === "success" && (
+                    <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                      <CheckCircle className="h-6 w-6 text-white" />
+                    </div>
+                  )}
+                  {popup.type === "error" && (
+                    <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                      <AlertCircle className="h-6 w-6 text-white" />
+                    </div>
+                  )}
+                  {popup.type === "info" && (
+                    <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                      <Info className="h-6 w-6 text-white" />
+                    </div>
+                  )}
+                </div>
+                <div className="ml-3 flex-1 pt-0.5">
+                  <p className="text-sm font-semibold text-white">
+                    {popup.type === "success" && "Success"}
+                    {popup.type === "error" && "Error"}
+                    {popup.type === "info" && "Information"}
+                  </p>
+                  <p className="mt-1 text-sm text-white/90 leading-relaxed">
+                    {popup.message}
+                  </p>
+                </div>
+                <div className="ml-4 flex-shrink-0 flex">
+                  <button
+                    onClick={() => setPopup({ message: "", type: "" })}
+                    className="inline-flex rounded-lg text-white/80 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-colors"
+                  >
+                    <span className="sr-only">Close</span>
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Progress bar for auto-dismiss */}
+            <div className="h-1 bg-white/20">
+              <div 
+                className="h-full bg-white/60 animate-progress"
+                style={{ animation: "progress 5s linear" }}
+              />
+            </div>
+          </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes slide-up {
+          from {
+            transform: translateY(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+
+        @keyframes progress {
+          from {
+            width: 100%;
+          }
+          to {
+            width: 0%;
+          }
+        }
+
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
+        }
+
+        .animate-progress {
+          animation: progress 5s linear;
+        }
+      `}</style>
     </section>
   );
 }

@@ -91,7 +91,7 @@ export const Dashboard = () => {
 
                             {/* History Icon */}
                             <button
-                                onClick={() => navigate("/dashboard#historysection")}
+                                onClick={() => navigate("/history")}
                                 className="p-2 rounded-xl hover:bg-gray-100 transition group"
                                 title="View History"
                             >

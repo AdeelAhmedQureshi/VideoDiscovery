@@ -13,6 +13,7 @@ import Auth from "../pages/Auth";
 import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
 import Account from "../pages/Account";
+import History from "../pages/History";
 export default function App() {
   return (
     <Router>
@@ -55,7 +56,16 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/history"
+                element={
+                  <ProtectedRoute>
+                    <History />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
+            
 
           </main>
 

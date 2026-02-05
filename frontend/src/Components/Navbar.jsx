@@ -46,8 +46,6 @@ export const Header = () => {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-10">
-            <a href="#features-section" className="nav-link text-lg font-semibold text-gray-600">Features</a>
-            <a href="/documentation" className="nav-link text-lg font-semibold text-gray-600">Documentation</a>
             {user && (
               <a
                 href="/dashboard"
@@ -56,6 +54,9 @@ export const Header = () => {
                 Dashboard
               </a>
             )}
+            <a href="#features-section" className="nav-link text-lg font-semibold text-gray-600">Features</a>
+            <a href="/documentation" className="nav-link text-lg font-semibold text-gray-600">Documentation</a>
+            
           </nav>
 
           {/* Auth */}
