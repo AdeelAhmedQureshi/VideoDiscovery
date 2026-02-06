@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     JWT_SECRET: str
     JWT_REFRESH_SECRET: str = "change-this-refresh-secret-in-production"
 
-    # Token expiration settings (in minutes)
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  # Short-lived access token
+    # Token expiration settings
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours (1440 minutes)
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7  # Long-lived refresh token
 
     # Cloudinary configuration
