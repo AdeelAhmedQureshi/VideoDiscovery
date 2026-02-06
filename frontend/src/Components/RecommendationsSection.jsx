@@ -54,16 +54,17 @@ const mockRecommendations = [
 
 export  function RecommendationsSection() {
   return (
-    <section className="py-24 px-6 bg-white">
+    <section className="py-24 px-6 bg-white" id="recommendation-section">
       <div className="container mx-auto max-w-7xl">
         {/* Section Header */}
-        <div className="text-center space-y-3 mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-            Recommended Videos
-          </h2>
-          <p className="text-base text-gray-600 max-w-2xl mx-auto">
-            Based on multimodal analysis of your video content, here are the most semantically similar videos we found.
-          </p>
+        <div className="text-center mb-16">
+          <div className="inline-block relative mb-4">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
+              Recommended Videos
+            </h1>
+            <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm"></div>
+          </div>
+          <p className="text-lg text-gray-500 mt-6">Based on multimodal analysis of your video content, here are the most semantically similar videos we found.</p>
         </div>
 
         {/* Recommendations Grid */}

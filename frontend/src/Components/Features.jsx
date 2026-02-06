@@ -61,8 +61,17 @@ export function Features() {
   return (
     <section
       id="features-section"
-      className="py-24 px-6 bg-linear-to-b from-white to-gray-50"
+      className="py-24 px-6 bg-gradient-to-b from-white to-gray-50"
     >
+      <div className="text-center mb-16">
+        <div className="inline-block relative mb-4">
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
+            Features
+          </h1>
+          <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm"></div>
+        </div>
+        <p className="text-lg text-gray-500 mt-6">Powerful tools for advanced video discovery and analysis</p>
+      </div>
       <div className="container mx-auto max-w-7xl cursor-pointer">
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, index) => (

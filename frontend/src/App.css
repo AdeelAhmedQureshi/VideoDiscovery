@@ -2,3 +2,125 @@
     @import "tailwindcss/utilities";
     */
     @import "tailwindcss";
+
+    /* Page entrance */
+.animate-page {
+  animation: fadeIn 0.6s ease-out;
+}
+
+/* Fade up */
+.animate-fade-up {
+  animation: fadeUp 0.5s ease-out both;
+}
+
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+
+/* Cards */
+.card {
+  background: white;
+  padding: 2rem;
+  border-radius: 1.5rem;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  margin-bottom: 2.5rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+}
+
+/* Inputs */
+.input {
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid #d1d5db;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.input:focus {
+  border-color: #22d3ee;
+  box-shadow: 0 0 0 3px rgba(34,211,238,0.3);
+}
+
+/* Titles */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  color: #22d3ee;
+}
+
+/* Buttons */
+.primary-btn {
+  background: #06b6d4;
+  color: white;
+  padding: 0.6rem 1.5rem;
+  border-radius: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.primary-btn:hover {
+  background: #0891b2;
+  transform: translateY(-2px);
+}
+
+.danger-btn {
+  background: #ef4444;
+  color: white;
+  border-radius: 1rem;
+}
+
+.modal {
+  background: white;
+  padding: 2rem;
+  border-radius: 1.5rem;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+
+/* Modal animation */
+.animate-modal {
+  animation: modal 0.3s ease-out;
+}
+
+/* Keyframes */
+@keyframes fadeIn {
+  from { opacity: 0 }
+  to { opacity: 1 }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modal {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
