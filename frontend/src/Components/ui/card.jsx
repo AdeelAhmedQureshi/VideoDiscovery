@@ -1,6 +1,7 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
+import { motion } from "framer-motion"
 
 function Card({
   className,
@@ -37,9 +38,12 @@ function CardTitle({
   ...props
 }) {
   return (
-    <div
+    <motion.div
       data-slot="card-title"
       className={cn("leading-none font-semibold", className)}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8 }}
       {...props} />
   );
 }
@@ -49,9 +53,12 @@ function CardDescription({
   ...props
 }) {
   return (
-    <div
+    <motion.div
       data-slot="card-description"
       className={cn("text-muted-foreground text-sm", className)}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.9, delay: 0.1 }}
       {...props} />
   );
 }

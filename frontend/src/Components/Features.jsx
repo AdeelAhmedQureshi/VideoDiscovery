@@ -61,7 +61,7 @@ export function Features() {
   return (
     <section
       id="features-section"
-      className="py-24 px-6 bg-gradient-to-b from-white to-gray-50"
+      className="py-5 px-6 bg-gradient-to-b from-white to-gray-50 "
     >
       <div className="text-center mb-16">
         <div className="inline-block relative mb-4">

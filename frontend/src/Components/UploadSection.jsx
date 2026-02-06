@@ -155,7 +155,7 @@ export function UploadSection() {
 
 
   return (
-    <section id="upload-section" className="py-24 px-6 bg-gray-50 mt-10 relative">
+    <section id="upload-section" className="py-24 px-6 bg-gray-50 relative">
       <div className="container mx-auto max-w-2xl">
         {/* Section Header */}
         <div className="text-center mb-16">
