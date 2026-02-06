@@ -30,7 +30,7 @@ export function Documentation() {
 
   const handleInsights = () => {
     if (!user) navigate("/auth");
-    else navigate("/dashboard#historysection");
+    else navigate("/history");
   };
 
   const cardBase =

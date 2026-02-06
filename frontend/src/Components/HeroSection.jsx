@@ -64,41 +64,8 @@ export function Hero() {
             </motion.a>
           </motion.div>
 
-          {/* Animated Stats */}
-          <motion.div
-            className="grid grid-cols-3 gap-8 pt-16 max-w-3xl mx-auto"
-            initial="hidden"
-            animate="visible"
-            variants={{
-              hidden: {},
-              visible: {
-                transition: { staggerChildren: 0.3 }
-              }
-            }}
-          >
-            {[
-              { title: "YOLO", desc: "Object Detection" },
-              { title: "Whisper", desc: "Speech-to-Text" },
-              { title: "CLIP", desc: "Visual Embedding" }
-            ].map((stat, i) => (
-              <motion.div 
-                key={i}
-                className="space-y-2"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: i * 0.3 }}
-              >
-                <div className="text-4xl font-bold text-cyan-500">{stat.title}</div>
-                <div className="text-sm text-gray-600">{stat.desc}</div>
-              </motion.div>
-            ))}
-          </motion.div>
-
         </div>
-      </div>
-
-      {/* Bottom gradient fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-linear-to-t from-white to-transparent pointer-events-none" />
+      </div>      
     </section>
   );
 }
