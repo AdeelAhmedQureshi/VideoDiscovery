@@ -12,21 +12,21 @@ export function Footer() {
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-linear-to-br from-cyan-400 to-cyan-500 flex items-center justify-center shrink-0">
                   <Video className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
-                <span className="font-bold text-base sm:text-lg text-gray-900 whitespace-nowrap">
+                <span className="font-bold text-xl sm:text-lg text-gray-900 whitespace-nowrap">
                   VideoDiscovery
                 </span>
               </div>
             </div>
 
-            <p className="text-sm text-gray-600 leading-relaxed">
+            <p className="text-medium text-gray-600 leading-relaxed">
               Multimodal video understanding for intelligent video discovery and recommendation.
             </p>
           </div>
 
           {/* Product  */}
           <div className="space-y-6 ml-28">
-            <h3 className="font-semibold text-gray-900">Product</h3>
-            <ul className="space-y-2 text-sm text-gray-600">
+            <h3 className="font-bold text-gray-900 text-xl ">Product</h3>
+            <ul className="space-y-2 text-medium text-gray-600">
               <li>
                 <a href="#features-section" className="hover:text-cyan-600 transition-colors">
                   Features
@@ -48,8 +48,8 @@ export function Footer() {
 
           {/* Resources */}
           <div className="space-y-8 ml-28">
-            <h3 className="font-semibold text-gray-900">Resources</h3>
-            <ul className="space-y-2 text-sm text-gray-600">
+            <h3 className="font-bold text-gray-900 text-xl">Resources</h3>
+            <ul className="space-y-2 text-medium text-gray-600">
               <li>
                 <a href="#" className="hover:text-cyan-600 transition-colors">
                   Documentation
