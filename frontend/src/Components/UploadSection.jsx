@@ -5,7 +5,12 @@ export function UploadSection() {
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [popup, setPopup] = useState({ message: "", type: "" }); // type: success | error | info
+  const [popup, setPopup] = useState({
+    open: false,
+    type: "info",
+    title: "",
+    message: ""
+  });
 
   const allowedFormats = [
     "video/mp4",
@@ -27,10 +32,13 @@ export function UploadSection() {
 
   const handleRemoveFile = () => setFile(null);
 
-  // Custom popup - now supports 'info' type
-  const showPopup = (message, type = "success") => {
-    setPopup({ message, type });
-    setTimeout(() => setPopup({ message: "", type: "" }), 5000); // auto-hide after 5s
+  const showPopup = ({ type = "success", title, message }) => {
+    setPopup({
+      open: true,
+      type,
+      title,
+      message
+    });
   };
 
   const validateVideoFile = (file) => {
@@ -70,7 +78,11 @@ export function UploadSection() {
       const validFile = await validateVideoFile(selectedFile);
       setFile(validFile);
     } catch (error) {
-      showPopup(error, "error");
+      showPopup({
+        type: "error",
+        title: "Invalid file",
+        message: error
+      });
     }
   };
 
@@ -86,7 +98,11 @@ export function UploadSection() {
       const validFile = await validateVideoFile(droppedFile);
       setFile(validFile);
     } catch (error) {
-      showPopup(error, "error");
+      showPopup({
+        type: "error",
+        title: "Invalid file",
+        message: error
+      });
     }
   };
 
@@ -98,7 +114,11 @@ export function UploadSection() {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      showPopup("Please login again", "error");
+      showPopup({
+        type: "error",
+        title: "Session expired",
+        message: "Please log in again to continue."
+      });
       return;
     }
 
@@ -134,7 +154,11 @@ export function UploadSection() {
         errorMessage.toLowerCase().includes("exists") ||
         errorMessage.includes("id")
       ) {
-        showPopup(errorMessage, "info");
+        showPopup({
+          type: "info",
+          title: "Already uploaded",
+          message: errorMessage
+        });
         setIsAnalyzing(false);
         return;
       } else {
@@ -143,11 +167,19 @@ export function UploadSection() {
     }
 
     const data = await response.json();
-    showPopup("Video uploaded successfully!", "success");
+    showPopup({
+      type: "success",
+      title: "Upload complete",
+      message: "Video uploaded successfully."
+    });
     console.log("Upload success:", data);
   } catch (err) {
     console.error(err);
-    showPopup(err.message, "error");
+    showPopup({
+      type: "error",
+      title: "Upload failed",
+      message: err.message
+    });
   } finally {
     setIsAnalyzing(false);
   }
@@ -257,99 +289,41 @@ export function UploadSection() {
         </div>
       </div>
 
-      {/* Modern Professional Popup with Icons and Animation */}
-      {popup.message && (
-        <div className="fixed inset-0 flex items-end justify-center px-4 py-6 pointer-events-none sm:items-start sm:justify-end sm:p-6 z-50">
-          <div
-            className={`max-w-md w-full shadow-2xl rounded-2xl pointer-events-auto overflow-hidden transform transition-all duration-300 ease-out animate-slide-up ${
-              popup.type === "success"
-                ? "bg-gradient-to-r from-blue-500 to-indigo-500"
-                : popup.type === "error"
-                ? "bg-gradient-to-r from-rose-500 to-red-500"
-                : "bg-gradient-to-r from-emerald-500 to-green-500"
-            }`}
-          >
-            <div className="p-4">
-              <div className="flex items-start">
-                <div className="flex-shrink-0">
-                  {popup.type === "success" && (
-                    <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                      <CheckCircle className="h-6 w-6 text-white" />
-                    </div>
-                  )}
-                  {popup.type === "error" && (
-                    <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                      <AlertCircle className="h-6 w-6 text-white" />
-                    </div>
-                  )}
-                  {popup.type === "info" && (
-                    <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                      <Info className="h-6 w-6 text-white" />
-                    </div>
+      {popup.open && (
+        <div className="fixed top-6 left-1/2 z-50 w-[min(92vw,540px)] -translate-x-1/2">
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white/95 shadow-2xl">
+            <div className="px-6 py-4 bg-gradient-to-r from-cyan-500 to-blue-500">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  {popup.type === "success" ? (
+                    <CheckCircle className="h-5 w-5 text-white" />
+                  ) : popup.type === "info" ? (
+                    <Info className="h-5 w-5 text-white" />
+                  ) : (
+                    <AlertCircle className="h-5 w-5 text-white" />
                   )}
                 </div>
-                <div className="ml-3 flex-1 pt-0.5">
-                  <p className="text-sm font-semibold text-white">
-                    {popup.type === "success" && "Success"}
-                    {popup.type === "error" && "Error"}
-                    {popup.type === "info" && "Information"}
-                  </p>
-                  <p className="mt-1 text-sm text-white/90 leading-relaxed">
-                    {popup.message}
-                  </p>
-                </div>
-                <div className="ml-4 flex-shrink-0 flex">
-                  <button
-                    onClick={() => setPopup({ message: "", type: "" })}
-                    className="inline-flex rounded-lg text-white/80 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-colors"
-                  >
-                    <span className="sr-only">Close</span>
-                    <X className="h-5 w-5" />
-                  </button>
+                <div className="flex-1">
+                  <p className="text-sm uppercase tracking-widest text-white/80">Notification</p>
+                  <h3 className="text-lg font-bold text-white">{popup.title}</h3>
                 </div>
               </div>
             </div>
-            
-            {/* Progress bar for auto-dismiss */}
-            <div className="h-1 bg-white/20">
-              <div 
-                className="h-full bg-white/60 animate-progress"
-                style={{ animation: "progress 5s linear" }}
-              />
+
+            <div className="px-6 py-5 bg-white/90">
+              <p className="text-slate-700 font-medium mb-4">{popup.message}</p>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setPopup({ open: false, type: "info", title: "", message: "" })}
+                  className="px-5 py-2.5 bg-gradient-to-r from-slate-900 to-slate-700 text-white font-bold rounded-2xl hover:from-slate-800 hover:to-slate-600 transition-all shadow-lg"
+                >
+                  OK
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
-
-      <style>{`
-        @keyframes slide-up {
-          from {
-            transform: translateY(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-
-        @keyframes progress {
-          from {
-            width: 100%;
-          }
-          to {
-            width: 0%;
-          }
-        }
-
-        .animate-slide-up {
-          animation: slide-up 0.3s ease-out;
-        }
-
-        .animate-progress {
-          animation: progress 5s linear;
-        }
-      `}</style>
     </section>
   );
 }

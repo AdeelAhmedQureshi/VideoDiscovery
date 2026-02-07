@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, Response, Cookie, Depends
 from typing import Optional
+from bson import ObjectId
 from ..schemas.user_schema import (
     UserSignup, UserLogin, UserResponse, ForgotPassword, ResetPassword,
     UpdateName, UpdateEmail, UpdatePassword, DeleteAccount
@@ -12,6 +13,34 @@ from ..utils.password_hasher import verify_password, hash_password
 from ..database import users_collection, videos_collection, feedback_collection, recommendations_collection, refresh_tokens_collection
 from ..config import settings
 router = APIRouter()
+
+
+def build_user_id_filter(user_id: str) -> dict:
+    """Build a filter that matches either user_id or _id."""
+    filters = [{"user_id": user_id}]
+    try:
+        filters.append({"_id": ObjectId(user_id)})
+    except Exception:
+        pass
+
+    if len(filters) == 1:
+        return filters[0]
+
+    return {"$or": filters}
+
+
+async def get_user_by_id(user_id: str, projection: Optional[dict] = None) -> Optional[dict]:
+    """Fetch a user by user_id or _id and backfill user_id if missing."""
+    user = await users_collection().find_one(build_user_id_filter(user_id), projection)
+
+    if user and not user.get("user_id"):
+        await users_collection().update_one(
+            {"_id": user["_id"]},
+            {"$set": {"user_id": str(user["_id"])}}
+        )
+        user["user_id"] = str(user["_id"])
+
+    return user
 
 
 def set_auth_cookies(response: Response, access_token: str, refresh_token: str):
@@ -259,8 +288,8 @@ async def get_user_profile(current_user: dict = Depends(get_current_user)):
     Returns user profile data
     """
     try:
-        user = await users_collection().find_one(
-            {"user_id": current_user["user_id"]},
+        user = await get_user_by_id(
+            current_user["user_id"],
             {"password": 0}  # Exclude password from response
         )
 
@@ -305,7 +334,7 @@ async def update_user_name(
     try:
         # Update user name in database
         result = await users_collection().update_one(
-            {"user_id": current_user["user_id"]},
+            build_user_id_filter(current_user["user_id"]),
             {"$set": {"name": update_data.name}}
         )
 
@@ -345,7 +374,7 @@ async def update_user_email(
     """
     try:
         # Get current user from database
-        user = await users_collection().find_one({"user_id": current_user["user_id"]})
+        user = await get_user_by_id(current_user["user_id"])
 
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
@@ -357,7 +386,7 @@ async def update_user_email(
         # Check if email is already in use by another user
         existing_user = await users_collection().find_one({
             "email": update_data.email,
-            "user_id": {"$ne": current_user["user_id"]}
+            "_id": {"$ne": user["_id"]}
         })
 
         if existing_user:
@@ -365,7 +394,7 @@ async def update_user_email(
 
         # Update email in database
         result = await users_collection().update_one(
-            {"user_id": current_user["user_id"]},
+            build_user_id_filter(current_user["user_id"]),
             {"$set": {"email": update_data.email}}
         )
 
@@ -408,7 +437,7 @@ async def update_user_password(
     """
     try:
         # Get current user from database
-        user = await users_collection().find_one({"user_id": current_user["user_id"]})
+        user = await get_user_by_id(current_user["user_id"])
 
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
@@ -428,7 +457,7 @@ async def update_user_password(
 
         # Update password in database
         result = await users_collection().update_one(
-            {"user_id": current_user["user_id"]},
+            build_user_id_filter(current_user["user_id"]),
             {"$set": {"password": new_hashed_password}}
         )
 
@@ -436,7 +465,8 @@ async def update_user_password(
             raise HTTPException(status_code=404, detail="User not found")
 
         # Logout from all devices for security (invalidate all refresh tokens)
-        await refresh_tokens_collection().delete_many({"user_id": current_user["user_id"]})
+        user_id = user.get("user_id") or str(user["_id"])
+        await refresh_tokens_collection().delete_many({"user_id": user_id})
 
         # Clear cookies for current session
         clear_auth_cookies(response)
@@ -480,7 +510,7 @@ async def delete_user_account(
     """
     try:
         # Get current user from database
-        user = await users_collection().find_one({"user_id": current_user["user_id"]})
+        user = await get_user_by_id(current_user["user_id"])
 
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
@@ -489,7 +519,7 @@ async def delete_user_account(
         if not verify_password(delete_data.password, user["password"]):
             raise HTTPException(status_code=401, detail="Incorrect password")
 
-        user_id = current_user["user_id"]
+        user_id = user.get("user_id") or str(user["_id"])
 
         # Delete all user data in a safe manner
         # 1. Delete all videos uploaded by user
@@ -505,7 +535,7 @@ async def delete_user_account(
         await refresh_tokens_collection().delete_many({"user_id": user_id})
 
         # 5. Finally, delete the user account
-        result = await users_collection().delete_one({"user_id": user_id})
+        result = await users_collection().delete_one(build_user_id_filter(user_id))
 
         if result.deleted_count == 0:
             raise HTTPException(status_code=404, detail="User not found")
@@ -543,8 +573,8 @@ async def get_account_statistics(current_user: dict = Depends(get_current_user))
         recommendation_count = await recommendations_collection().count_documents({"user_id": user_id})
 
         # Get user info
-        user = await users_collection().find_one(
-            {"user_id": user_id},
+        user = await get_user_by_id(
+            user_id,
             {"password": 0}
         )
 
@@ -554,7 +584,7 @@ async def get_account_statistics(current_user: dict = Depends(get_current_user))
         return {
             "success": True,
             "data": {
-                "user_id": user_id,
+                "user_id": user.get("user_id") or str(user["_id"]),
                 "name": user["name"],
                 "email": user["email"],
                 "created_at": user.get("created_at"),

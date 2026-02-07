@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { AuthProvider } from "../contexts/AuthContext";
 import { Toaster } from "sonner";
 import { Header } from "./Components/Navbar";
@@ -14,10 +15,41 @@ import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
 import Account from "../pages/Account";
 import History from "../pages/History";
+
+const ScrollToHash = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    const targetId =
+      location.state?.scrollTo ??
+      (location.hash ? location.hash.replace("#", "") : null);
+
+    if (!targetId) {
+      return;
+    }
+
+    const element = document.getElementById(targetId);
+
+    if (!element) {
+      return;
+    }
+
+    setTimeout(() => {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
+  }, [location]);
+
+  return null;
+};
+
 export default function App() {
   return (
     <Router>
       <Toaster richColors position="top-right" />
+      <ScrollToHash />
       <AuthProvider>
         <div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 flex flex-col">
           {/* Public routes */}
