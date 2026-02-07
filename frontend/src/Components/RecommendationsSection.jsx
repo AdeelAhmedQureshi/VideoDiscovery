@@ -1,6 +1,5 @@
 import { Play, ExternalLink } from "lucide-react";
 
-// Mock data for demonstration
 const mockRecommendations = [
   {
     id: 1,
