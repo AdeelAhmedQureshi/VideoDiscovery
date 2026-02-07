@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 export function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-linear-to-br from-blue-50 via-cyan-50 to-white mt-16">
+    <section className="relative min-h-[90vh] sm:min-h-screen flex items-center justify-center overflow-hidden bg-linear-to-br from-blue-50 via-cyan-50 to-white mt-16">
       
       {/* Animated background blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -20,12 +20,12 @@ export function Hero() {
         />
       </div>
 
-      <div className="container mx-auto px-6 relative z-10 pt-20">
-        <div className="max-w-5xl mx-auto text-center space-y-8">
+      <div className="container mx-auto px-5 sm:px-6 relative z-10 pt-16 sm:pt-20">
+        <div className="max-w-5xl mx-auto text-center space-y-6 sm:space-y-8">
           
           {/* Animated Heading */}
           <motion.h1
-            className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1 }}
@@ -38,7 +38,7 @@ export function Hero() {
 
           {/* Animated Description */}
           <motion.p
-            className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed"
+            className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1.5, delay: 0.5 }}
@@ -48,7 +48,7 @@ export function Hero() {
 
           {/* CTA Buttons */}
           <motion.div
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6"
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4 sm:pt-6"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.5, delay: 1 }}
@@ -57,7 +57,7 @@ export function Hero() {
               href="/documentation" 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-             className="flex items-center gap-2 px-8 py-4 bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-base"
+             className="flex items-center gap-2 px-7 sm:px-8 py-3.5 sm:py-4 bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-base"
             >
               <Video className="w-5 h-5" />
               Learn More

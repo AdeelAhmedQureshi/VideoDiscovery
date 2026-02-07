@@ -51,7 +51,7 @@ export default function DashboardStats() {
   };
 
   return (
-    <section className="h-60 bg-gradient-to-br from-cyan-50 to-slate-100 py-24">
+    <section className="bg-gradient-to-br from-cyan-50 to-slate-100 py-16 sm:py-24">
       <div className="max-w-6xl mx-auto px-6">
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
@@ -71,7 +71,7 @@ export default function DashboardStats() {
               className={`
                 relative overflow-hidden rounded-2xl
                 bg-white/70 backdrop-blur-lg
-                shadow-md p-6
+                shadow-md p-5 sm:p-6
                 border border-transparent ${item.hoverBorder}
               `}
             >
@@ -84,14 +84,14 @@ export default function DashboardStats() {
               />
 
               {/* Content */}
-              <div className="relative z-10 flex flex-col gap-5">
+              <div className="relative z-10 flex flex-col gap-5 items-center text-center sm:items-start sm:text-left">
                 <div
-                  className={`w-fit p-3 rounded-xl text-white bg-gradient-to-br ${item.color} shadow-md`}
+                  className={`w-fit p-3 rounded-xl text-white bg-gradient-to-br ${item.color} shadow-md mx-auto sm:mx-0`}
                 >
                   {item.icon}
                 </div>
 
-                <h2 className="text-3xl font-bold text-gray-800">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
                   {item.value}
                 </h2>
 

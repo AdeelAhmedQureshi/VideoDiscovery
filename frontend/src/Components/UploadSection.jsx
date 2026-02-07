@@ -187,27 +187,27 @@ export function UploadSection() {
 
 
   return (
-    <section id="upload-section" className="py-24 px-6 bg-gray-50 relative">
+    <section id="upload-section" className="py-16 sm:py-24 px-5 sm:px-6 bg-gray-50 relative">
       <div className="container mx-auto max-w-2xl">
         {/* Section Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-12 sm:mb-16">
           <div className="inline-block relative mb-4">
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
+            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
              Upload Section
             </h1>
             <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm"></div>
           </div>
-          <p className="text-lg text-gray-500 mt-6">Upload your video to get started with intelligent recommendations</p>
+          <p className="text-base sm:text-lg text-gray-500 mt-4 sm:mt-6">Upload your video to get started with intelligent recommendations</p>
         </div>
 
         {/* Upload Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
           {!file ? (
             <div
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`relative border-2 border-dashed rounded-xl p-16 text-center transition-all ${isDragging
+              className={`relative border-2 border-dashed rounded-xl p-8 sm:p-16 text-center transition-all ${isDragging
                 ? "border-cyan-500 bg-cyan-50/50"
                 : "border-gray-300 hover:border-cyan-400 hover:bg-gray-50"
                 }`}
@@ -220,15 +220,15 @@ export function UploadSection() {
               />
 
               <div className="space-y-4">
-                <div className="w-16 h-16 mx-auto rounded-full bg-linear-to-br from-cyan-100 to-cyan-50 flex items-center justify-center">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto rounded-full bg-linear-to-br from-cyan-100 to-cyan-50 flex items-center justify-center">
                   <Upload className="w-8 h-8 text-cyan-500" />
                 </div>
 
-                <p className="text-base font-medium text-gray-900 mb-1">
+                <p className="text-sm sm:text-base font-medium text-gray-900 mb-1">
                   Drop your video here or click to browse
                 </p>
 
-                <button className="inline-flex items-center gap-2 px-6 py-2.5 bg-white border-2 border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors pointer-events-none">
+                <button className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 bg-white border-2 border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors pointer-events-none">
                   <FileVideo className="w-4 h-4" />
                   Select Video File
                 </button>
@@ -237,7 +237,7 @@ export function UploadSection() {
           ) : (
             <div className="space-y-6">
               {/* File Info */}
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200">
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200 flex-wrap sm:flex-nowrap">
                 <div className="w-12 h-12 rounded-lg bg-linear-to-br from-cyan-100 to-cyan-50 flex items-center justify-center shrink-0">
                   <FileVideo className="w-6 h-6 text-cyan-500" />
                 </div>
@@ -262,7 +262,7 @@ export function UploadSection() {
               <button
                 onClick={handleAnalyze}
                 disabled={isAnalyzing}
-                className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded-xl shadow-sm transition-colors disabled:opacity-70"
+                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 sm:py-4 bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded-xl shadow-sm transition-colors disabled:opacity-70"
               >
                 {isAnalyzing ? (
                   <>
