@@ -70,7 +70,11 @@ export const Dashboard = () => {
                                 Home
                             </a>
                             <a
-                                href="#features-section"
+                                href="/"
+                                onClick={(event) => {
+                                    event.preventDefault();
+                                    navigate("/", { state: { scrollTo: "features-section" } });
+                                }}
                                 className="text-lg font-semibold text-gray-600 nav-link"
                             >
                                 Features

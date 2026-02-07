@@ -7,6 +7,7 @@ from .email_service import EmailService
 from typing import Tuple, Dict, Optional
 from datetime import datetime, timedelta, timezone
 import secrets
+from bson import ObjectId
 
 
 async def get_users_collection():
@@ -63,6 +64,12 @@ class AuthService:
             user_id = str(result.inserted_id)
             print(f"[auth] inserted user_id={user_id}")
 
+            # Backfill user_id field for consistency with other collections
+            await users_col.update_one(
+                {"_id": result.inserted_id},
+                {"$set": {"user_id": user_id}}
+            )
+
             # Generate access and refresh tokens
             access_token = create_access_token(user_id, email)
             refresh_token = create_refresh_token(user_id, email)
@@ -106,7 +113,14 @@ class AuthService:
         if not verify_password(password, user["password"]):
             return None, "Invalid password"
 
-        user_id = str(user["_id"])
+        user_id = user.get("user_id") or str(user["_id"])
+
+        # Backfill user_id for older records
+        if not user.get("user_id"):
+            await users_col.update_one(
+                {"_id": user["_id"]},
+                {"$set": {"user_id": user_id}}
+            )
 
         # Generate access and refresh tokens
         access_token = create_access_token(user_id, email)
@@ -245,9 +259,20 @@ class AuthService:
 
             # Verify user still exists
             users_col = await get_users_collection()
-            user = await users_col.find_one({"_id": user_id})
+            user = await users_col.find_one({"user_id": user_id})
+            if not user:
+                try:
+                    user = await users_col.find_one({"_id": ObjectId(user_id)})
+                except Exception:
+                    user = None
             if not user:
                 return None, "User not found"
+
+            if not user.get("user_id"):
+                await users_col.update_one(
+                    {"_id": user["_id"]},
+                    {"$set": {"user_id": str(user["_id"])}}
+                )
 
             # Generate new access token
             new_access_token = create_access_token(user_id, email)
