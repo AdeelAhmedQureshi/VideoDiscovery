@@ -62,7 +62,7 @@ export default function History() {
         }
       `}</style>
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 relative z-10">
                 <div className="mb-6">
                     <button
                         onClick={() => navigate(-1)}
@@ -77,19 +77,19 @@ export default function History() {
                 {/* Header */}
                 <div className="text-center mb-16">
                     <div className="inline-block relative mb-4">
-                        <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
+                        <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
                             History & Activity
                         </h1>
                         <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm"></div>
                     </div>
-                    <p className="text-lg text-gray-500 mt-6">
+                    <p className="text-base sm:text-lg text-gray-500 mt-4 sm:mt-6">
                         Review your recent video interactions and Recommendations
                     </p>
                 </div>
 
                 {/* Section Header (Light only) */}
-                <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
-                    <h2 className="text-2xl font-bold text-gray-900">Recent Activity</h2>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 pb-4 border-b border-gray-200 gap-4">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Recent Activity</h2>
                     <button className="text-sm text-cyan-600 font-semibold hover:text-cyan-700 flex items-center gap-2 transition-all duration-300 hover:gap-3 bg-white hover:bg-cyan-50 px-4 py-2 rounded-lg border border-cyan-300 shadow">
                         View all <ArrowUpRight className="w-4 h-4 text-cyan-600" />
                     </button>
