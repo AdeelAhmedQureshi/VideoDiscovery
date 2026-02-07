@@ -15,7 +15,7 @@ import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
 import Account from "../pages/Account";
 import History from "../pages/History";
-
+import NotFound from "../pages/NotFound";
 const ScrollToHash = () => {
   const location = useLocation();
 
@@ -96,7 +96,9 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="*" element={<NotFound />} />
             </Routes>
+
             
 
           </main>
