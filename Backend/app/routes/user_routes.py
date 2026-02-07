@@ -1,9 +1,15 @@
 # app/routes/user_routes.py
 
-from fastapi import APIRouter, HTTPException, Response, Cookie
+from fastapi import APIRouter, HTTPException, Response, Cookie, Depends
 from typing import Optional
-from ..schemas.user_schema import UserSignup, UserLogin, UserResponse, ForgotPassword, ResetPassword
+from ..schemas.user_schema import (
+    UserSignup, UserLogin, UserResponse, ForgotPassword, ResetPassword,
+    UpdateName, UpdateEmail, UpdatePassword, DeleteAccount
+)
 from ..services.auth_service import AuthService
+from ..utils.jwt_handler import get_current_user
+from ..utils.password_hasher import verify_password, hash_password
+from ..database import users_collection, videos_collection, feedback_collection, recommendations_collection, refresh_tokens_collection
 from ..config import settings
 router = APIRouter()
 
@@ -237,3 +243,330 @@ async def logout_all_sessions(
         "success": True,
         "message": "Logged out from all devices successfully"
     }
+
+
+# ============================================
+# USER ACCOUNT MANAGEMENT ENDPOINTS
+# ============================================
+
+@router.get("/me", response_model=dict)
+async def get_user_profile(current_user: dict = Depends(get_current_user)):
+    """
+    Get current user profile information
+
+    Requires: Authentication (Bearer token or HttpOnly cookie)
+
+    Returns user profile data
+    """
+    try:
+        user = await users_collection().find_one(
+            {"user_id": current_user["user_id"]},
+            {"password": 0}  # Exclude password from response
+        )
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Convert ObjectId to string if present
+        if "_id" in user:
+            user["_id"] = str(user["_id"])
+
+        return {
+            "success": True,
+            "data": {
+                "user_id": user["user_id"],
+                "name": user["name"],
+                "email": user["email"],
+                "created_at": user.get("created_at")
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error fetching user profile: {str(e)}")
+
+
+@router.put("/update-name", response_model=dict)
+async def update_user_name(
+    update_data: UpdateName,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Update user's name
+
+    Requires: Authentication (Bearer token or HttpOnly cookie)
+
+    Request body:
+    {
+        "name": "New Name"
+    }
+    """
+    try:
+        # Update user name in database
+        result = await users_collection().update_one(
+            {"user_id": current_user["user_id"]},
+            {"$set": {"name": update_data.name}}
+        )
+
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        return {
+            "success": True,
+            "message": "Name updated successfully",
+            "data": {
+                "name": update_data.name
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error updating name: {str(e)}")
+
+
+@router.put("/update-email", response_model=dict)
+async def update_user_email(
+    update_data: UpdateEmail,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Update user's email address
+
+    Requires: Authentication (Bearer token or HttpOnly cookie)
+    Requires: Password confirmation for security
+
+    Request body:
+    {
+        "email": "newemail@example.com",
+        "password": "current_password"
+    }
+    """
+    try:
+        # Get current user from database
+        user = await users_collection().find_one({"user_id": current_user["user_id"]})
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Verify password
+        if not verify_password(update_data.password, user["password"]):
+            raise HTTPException(status_code=401, detail="Incorrect password")
+
+        # Check if email is already in use by another user
+        existing_user = await users_collection().find_one({
+            "email": update_data.email,
+            "user_id": {"$ne": current_user["user_id"]}
+        })
+
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already in use")
+
+        # Update email in database
+        result = await users_collection().update_one(
+            {"user_id": current_user["user_id"]},
+            {"$set": {"email": update_data.email}}
+        )
+
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        return {
+            "success": True,
+            "message": "Email updated successfully. Please login again with your new email.",
+            "data": {
+                "email": update_data.email
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error updating email: {str(e)}")
+
+
+@router.put("/update-password", response_model=dict)
+async def update_user_password(
+    update_data: UpdatePassword,
+    response: Response,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Update user's password
+
+    Requires: Authentication (Bearer token or HttpOnly cookie)
+    Requires: Current password verification
+
+    Request body:
+    {
+        "current_password": "current_password",
+        "new_password": "new_password"
+    }
+
+    Note: This will logout the user from all devices for security
+    """
+    try:
+        # Get current user from database
+        user = await users_collection().find_one({"user_id": current_user["user_id"]})
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Verify current password
+        if not verify_password(update_data.current_password, user["password"]):
+            raise HTTPException(
+                status_code=401, detail="Current password is incorrect")
+
+        # Check if new password is same as current
+        if verify_password(update_data.new_password, user["password"]):
+            raise HTTPException(
+                status_code=400, detail="New password must be different from current password")
+
+        # Hash new password
+        new_hashed_password = hash_password(update_data.new_password)
+
+        # Update password in database
+        result = await users_collection().update_one(
+            {"user_id": current_user["user_id"]},
+            {"$set": {"password": new_hashed_password}}
+        )
+
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Logout from all devices for security (invalidate all refresh tokens)
+        await refresh_tokens_collection().delete_many({"user_id": current_user["user_id"]})
+
+        # Clear cookies for current session
+        clear_auth_cookies(response)
+
+        return {
+            "success": True,
+            "message": "Password updated successfully. Please login again with your new password."
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error updating password: {str(e)}")
+
+
+@router.delete("/delete-account", response_model=dict)
+async def delete_user_account(
+    delete_data: DeleteAccount,
+    response: Response,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Permanently delete user account and all associated data
+
+    Requires: Authentication (Bearer token or HttpOnly cookie)
+    Requires: Password confirmation
+    Requires: Typing "DELETE" to confirm
+
+    Request body:
+    {
+        "password": "your_password",
+        "confirmation": "DELETE"
+    }
+
+    WARNING: This action is irreversible and will delete:
+    - User account
+    - All uploaded videos
+    - All feedback
+    - All recommendations
+    - All refresh tokens
+    """
+    try:
+        # Get current user from database
+        user = await users_collection().find_one({"user_id": current_user["user_id"]})
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Verify password
+        if not verify_password(delete_data.password, user["password"]):
+            raise HTTPException(status_code=401, detail="Incorrect password")
+
+        user_id = current_user["user_id"]
+
+        # Delete all user data in a safe manner
+        # 1. Delete all videos uploaded by user
+        await videos_collection().delete_many({"user_id": user_id})
+
+        # 2. Delete all feedback by user
+        await feedback_collection().delete_many({"user_id": user_id})
+
+        # 3. Delete all recommendations for user
+        await recommendations_collection().delete_many({"user_id": user_id})
+
+        # 4. Delete all refresh tokens
+        await refresh_tokens_collection().delete_many({"user_id": user_id})
+
+        # 5. Finally, delete the user account
+        result = await users_collection().delete_one({"user_id": user_id})
+
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Clear authentication cookies
+        clear_auth_cookies(response)
+
+        return {
+            "success": True,
+            "message": "Account deleted successfully. All your data has been permanently removed."
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        # If something goes wrong, at least try to preserve data integrity
+        raise HTTPException(
+            status_code=500, detail=f"Error deleting account: {str(e)}")
+
+
+@router.get("/account-stats", response_model=dict)
+async def get_account_statistics(current_user: dict = Depends(get_current_user)):
+    """
+    Get statistics about user's account and data
+
+    Requires: Authentication (Bearer token or HttpOnly cookie)
+
+    Returns counts of videos, feedback, and recommendations
+    """
+    try:
+        user_id = current_user["user_id"]
+
+        # Count user's data
+        video_count = await videos_collection().count_documents({"user_id": user_id})
+        feedback_count = await feedback_collection().count_documents({"user_id": user_id})
+        recommendation_count = await recommendations_collection().count_documents({"user_id": user_id})
+
+        # Get user info
+        user = await users_collection().find_one(
+            {"user_id": user_id},
+            {"password": 0}
+        )
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        return {
+            "success": True,
+            "data": {
+                "user_id": user_id,
+                "name": user["name"],
+                "email": user["email"],
+                "created_at": user.get("created_at"),
+                "statistics": {
+                    "total_videos": video_count,
+                    "total_feedback": feedback_count,
+                    "total_recommendations": recommendation_count
+                }
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error fetching account statistics: {str(e)}")
