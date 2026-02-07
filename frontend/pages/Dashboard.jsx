@@ -1,24 +1,16 @@
-import { Button } from "@/Components/ui/button";
 import { Video, History } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { UploadSection } from "@/Components/UploadSection";
 import AnalyticsPanel from "@/Components/Analysis";
 import { RecommendationsSection } from "@/Components/RecommendationsSection";
-import {
-    DropdownMenu,
-    DropdownMenuTrigger,
-    DropdownMenuContent,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuItem,
-} from "@/Components/ui/dropdown-menu";
 import { UserAvatar } from "./../src/Components/UserAvatar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 export const Dashboard = () => {
-    const { user, signOut } = useAuth();
+    const { signOut } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const [menuOpen, setMenuOpen] = useState(false);
 
     useEffect(() => {
         if (location.hash) {
@@ -91,7 +83,7 @@ export const Dashboard = () => {
                         </nav>
 
                         {/* User Avatar */}
-                        <div className="flex items-center gap-4">
+                        <div className="hidden md:flex items-center gap-4">
 
                             {/* History Icon */}
                             <button
@@ -106,11 +98,94 @@ export const Dashboard = () => {
                             <UserAvatar />
                         </div>
 
+                        <button
+                            type="button"
+                            onClick={() => setMenuOpen((prev) => !prev)}
+                            className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 text-gray-600 hover:text-cyan-600 hover:border-cyan-200 transition"
+                            aria-label="Toggle navigation"
+                        >
+                            {menuOpen ? (
+                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M18 6L6 18" />
+                                    <path d="M6 6l12 12" />
+                                </svg>
+                            ) : (
+                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M4 6h16" />
+                                    <path d="M4 12h16" />
+                                    <path d="M4 18h16" />
+                                </svg>
+                            )}
+                        </button>
+
                     </div>
                 </div>
+                {menuOpen && (
+                    <div className="md:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-lg">
+                        <div className="container mx-auto px-4 sm:px-6 py-4 space-y-3">
+                            <button
+                                onClick={() => {
+                                    navigate("/");
+                                    setMenuOpen(false);
+                                }}
+                                className="w-full text-left text-base font-semibold text-gray-700 hover:text-cyan-600"
+                            >
+                                Home
+                            </button>
+                            <button
+                                onClick={() => {
+                                    navigate("/", { state: { scrollTo: "features-section" } });
+                                    setMenuOpen(false);
+                                }}
+                                className="w-full text-left text-base font-semibold text-gray-700 hover:text-cyan-600"
+                            >
+                                Features
+                            </button>
+                            <button
+                                onClick={() => {
+                                    navigate("/documentation");
+                                    setMenuOpen(false);
+                                }}
+                                className="w-full text-left text-base font-semibold text-gray-700 hover:text-cyan-600"
+                            >
+                                Documentation
+                            </button>
+                            <button
+                                onClick={() => {
+                                    navigate("/history");
+                                    setMenuOpen(false);
+                                }}
+                                className="w-full text-left text-base font-semibold text-gray-700 hover:text-cyan-600"
+                            >
+                                History
+                            </button>
+
+                            <div className="pt-2 border-t border-gray-200 flex items-center justify-between">
+                                <button
+                                    onClick={() => {
+                                        navigate("/account");
+                                        setMenuOpen(false);
+                                    }}
+                                    className="text-base font-semibold text-gray-700 hover:text-cyan-600"
+                                >
+                                    Account
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        signOut();
+                                        setMenuOpen(false);
+                                    }}
+                                    className="text-base font-semibold text-red-600 hover:text-red-700"
+                                >
+                                    Sign Out
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </header>
 
-            <main className="mt-20 space-y-24">
+            <main className="mt-20 space-y-16 sm:space-y-24">
                 <section id="analytics">
                     <AnalyticsPanel />
                 </section>

@@ -37,7 +37,7 @@ export function Documentation() {
     "p-8 bg-white rounded-2xl border border-gray-100 shadow-lg cursor-pointer group transition-all duration-300 hover:-translate-y-4 hover:shadow-xl";
 
   return (
-    <section className="min-h-screen bg-linear-to-b from-white to-gray-50 py-24 px-6 mt-14">
+    <section className="min-h-screen bg-linear-to-b from-white to-gray-50 py-16 sm:py-24 px-5 sm:px-6 mt-14">
       <div className="max-w-6xl mx-auto">
 
         {/* Back Button */}
@@ -52,18 +52,18 @@ export function Documentation() {
         {/* Header */}
         <div className="text-center mb-16">
           <div className="inline-block relative mb-4">
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
+            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
               Documentation
             </h1>
             <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm"></div>
           </div>
-          <p className="text-lg text-gray-500 mt-6">
+          <p className="text-base sm:text-lg text-gray-500 mt-4 sm:mt-6">
             Get started with VideoDiscovery in just a few easy steps
           </p>
         </div>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
 
           {/* Card 1 */}
           <div
