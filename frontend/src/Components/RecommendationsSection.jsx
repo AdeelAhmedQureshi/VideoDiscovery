@@ -54,21 +54,21 @@ const mockRecommendations = [
 
 export  function RecommendationsSection() {
   return (
-    <section className="py-24 px-6 bg-white" id="recommendation-section">
+    <section className="py-16 sm:py-24 px-5 sm:px-6 bg-white" id="recommendation-section">
       <div className="container mx-auto max-w-7xl">
         {/* Section Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-12 sm:mb-16">
           <div className="inline-block relative mb-4">
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
+            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
               Recommended Videos
             </h1>
             <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm"></div>
           </div>
-          <p className="text-lg text-gray-500 mt-6">Based on multimodal analysis of your video content, here are the most semantically similar videos we found.</p>
+          <p className="text-base sm:text-lg text-gray-500 mt-4 sm:mt-6">Based on multimodal analysis of your video content, here are the most semantically similar videos we found.</p>
         </div>
 
         {/* Recommendations Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {mockRecommendations.map((video) => (
             <div
               key={video.id}
@@ -101,22 +101,22 @@ export  function RecommendationsSection() {
               </div>
 
               {/* Content */}
-              <div className="p-5 space-y-3">
-                <h3 className="font-semibold text-base leading-tight text-gray-900 group-hover:text-cyan-600 transition-colors line-clamp-2">
+              <div className="p-4 space-y-2.5">
+                <h3 className="font-semibold text-sm sm:text-base leading-tight text-gray-900 group-hover:text-cyan-600 transition-colors line-clamp-2">
                   {video.title}
                 </h3>
 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-2">
                   {video.tags.map((tag) => (
-                    <span key={tag} className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
+                    <span key={tag} className="px-2.5 py-0.5 bg-gray-100 text-gray-700 text-[11px] sm:text-xs font-medium rounded-full">
                       {tag}
                     </span>
                   ))}
                 </div>
 
                 {/* Action */}
-                <div className="flex items-center text-sm text-cyan-600 font-medium pt-1">
+                <div className="flex items-center text-xs sm:text-sm text-cyan-600 font-medium pt-1">
                   <span>Watch Video</span>
                   <ExternalLink className="w-4 h-4 ml-1" />
                 </div>

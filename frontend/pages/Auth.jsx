@@ -33,12 +33,12 @@ export default function Auth() {
 
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-blue-50 via-cyan-50 to-white p-4 mt-6">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-blue-50 via-cyan-50 to-white p-4 sm:p-6 mt-6">
 
       {/* Back Button */}
       <button
         onClick={() => nav('/')}
-        className="self-start ml-10 mb-4 text-gray-600 hover:text-cyan-700 font-medium flex items-center gap-1"
+        className="self-start ml-2 sm:ml-10 mb-4 text-gray-600 hover:text-cyan-700 font-medium flex items-center gap-1"
       >
         <ArrowLeft className="w-5 h-5" />
         Back
@@ -47,12 +47,12 @@ export default function Auth() {
       <div className="w-full max-w-md space-y-8">
         {/* Logo and Title */}
         <div className="flex flex-col items-center gap-4">
-          <div className="w-17 h-17 rounded-3xl bg-linear-to-br from-cyan-400 to-cyan-500 flex items-center justify-center shadow-lg">
-            <Video className="w-10 h-10 text-white" />
+          <div className="w-16 h-16 sm:w-17 sm:h-17 rounded-3xl bg-linear-to-br from-cyan-400 to-cyan-500 flex items-center justify-center shadow-lg">
+            <Video className="w-9 h-9 sm:w-10 sm:h-10 text-white" />
           </div>
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900">VideoDiscovery</h1>
-            <p className="text-gray-600 mt-1">AI-powered video understanding platform</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">VideoDiscovery</h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">AI-powered video understanding platform</p>
           </div>
         </div>
 
@@ -60,10 +60,10 @@ export default function Auth() {
         <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
           <div className="p-8">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
                 {isSignUp ? 'Create Account' : 'Welcome Back'}
               </h2>
-              <p className="text-gray-600 mt-1 text-medium">
+              <p className="text-sm sm:text-base text-gray-600 mt-1">
                 {isSignUp ? 'Sign up to start analyzing your videos' : 'Sign in to continue to your account'}
               </p>
             </div>
@@ -72,7 +72,7 @@ export default function Auth() {
 
               {isSignUp && (
                 <div className="relative">
-                  <label htmlFor="fullName" className="block text-medium font-medium text-gray-900 mb-2">
+                  <label htmlFor="fullName" className="block text-sm font-medium text-gray-900 mb-2">
                     Full Name
                   </label>
                   <input
@@ -89,7 +89,7 @@ export default function Auth() {
               )}
 
               <div className="relative">
-                <label htmlFor="email" className="block text-medium font-medium text-gray-900 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-900 mb-2">
                   Email
                 </label>
                 <input
@@ -105,7 +105,7 @@ export default function Auth() {
               </div>
 
               <div className="relative">
-                <label htmlFor="password" className="block text-medium font-medium text-gray-900 mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-900 mb-2">
                   Password
                 </label>
                 <input
@@ -149,7 +149,7 @@ export default function Auth() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 bg-cyan-500 hover:bg-cyan-600 text-lg font-xl text-white rounded-lg cursor-pointer"
+                className="w-full py-3 bg-cyan-500 hover:bg-cyan-600 text-base sm:text-lg font-semibold text-white rounded-lg cursor-pointer"
               >
                 {isLoading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
               </button>
@@ -160,7 +160,7 @@ export default function Auth() {
                 type="button"
                 onClick={() => setIsSignUp(!isSignUp)}
                 disabled={isLoading}
-                className="text-medium text-cyan-600 hover:text-cyan-700 hover:underline transition-colors disabled:opacity-50"
+                className="text-sm sm:text-base text-cyan-600 hover:text-cyan-700 hover:underline transition-colors disabled:opacity-50"
               >
                 {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
               </button>
@@ -169,7 +169,7 @@ export default function Auth() {
         </div>
 
         {/* Additional Info */}
-        <p className="text-center text-s text-gray-500">
+        <p className="text-center text-xs sm:text-sm text-gray-500">
           By continuing, you agree to our Terms of Service and Privacy Policy
         </p>
       </div>

@@ -1,20 +1,13 @@
-import { Button } from "@/Components/ui/button";
-import { Video, User, LogOut } from "lucide-react";
+import { useState } from "react";
+import { Video, Menu, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./../../contexts/AuthContext";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "@/Components/ui/dropdown-menu";
 import { UserAvatar } from "./../Components/UserAvatar";
 
 export const Header = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-gray-200 h-22 flex items-center">
@@ -60,17 +53,99 @@ export const Header = () => {
           </nav>
 
           {/* Auth */}
-          {user ? <UserAvatar /> : (
-            <button
-              onClick={() => navigate('/auth')}
-              className="bg-cyan-500 h-10 sm:h-12 cursor-pointer hover:bg-cyan-600 text-white text-base sm:text-lg font-semibold px-6 sm:px-8 rounded-xl shadow-md transition-all"
-            >
-              Sign In
-            </button>
-          )}
+          <div className="hidden md:flex items-center">
+            {user ? <UserAvatar /> : (
+              <button
+                onClick={() => navigate('/auth')}
+                className="bg-cyan-500 h-10 sm:h-12 cursor-pointer hover:bg-cyan-600 text-white text-base sm:text-lg font-semibold px-6 sm:px-8 rounded-xl shadow-md transition-all"
+              >
+                Sign In
+              </button>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 text-gray-600 hover:text-cyan-600 hover:border-cyan-200 transition"
+            aria-label="Toggle navigation"
+          >
+            {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
 
         </div>
       </div>
+
+      {menuOpen && (
+        <div className="md:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-lg">
+          <div className="container mx-auto px-4 sm:px-6 py-4 space-y-3">
+            {user && (
+              <button
+                onClick={() => {
+                  navigate("/dashboard");
+                  setMenuOpen(false);
+                }}
+                className="w-full text-left text-base font-semibold text-gray-700 hover:text-cyan-600"
+              >
+                Dashboard
+              </button>
+            )}
+            <button
+              onClick={() => {
+                navigate("/", { state: { scrollTo: "features-section" } });
+                setMenuOpen(false);
+              }}
+              className="w-full text-left text-base font-semibold text-gray-700 hover:text-cyan-600"
+            >
+              Features
+            </button>
+            <button
+              onClick={() => {
+                navigate("/documentation");
+                setMenuOpen(false);
+              }}
+              className="w-full text-left text-base font-semibold text-gray-700 hover:text-cyan-600"
+            >
+              Documentation
+            </button>
+
+            <div className="pt-2 border-t border-gray-200">
+              {user ? (
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => {
+                      navigate("/account");
+                      setMenuOpen(false);
+                    }}
+                    className="text-base font-semibold text-gray-700 hover:text-cyan-600"
+                  >
+                    Account
+                  </button>
+                  <button
+                    onClick={() => {
+                      signOut();
+                      setMenuOpen(false);
+                    }}
+                    className="text-base font-semibold text-red-600 hover:text-red-700"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    navigate("/auth");
+                    setMenuOpen(false);
+                  }}
+                  className="w-full py-2.5 bg-cyan-500 text-white font-semibold rounded-xl hover:bg-cyan-600 transition"
+                >
+                  Sign In
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
