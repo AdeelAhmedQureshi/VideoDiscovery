@@ -2,6 +2,7 @@ import { Upload, Video, BookOpen, Info, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 export function Documentation() {
   const navigate = useNavigate();
@@ -36,6 +37,41 @@ export function Documentation() {
   const cardBase =
     "p-8 bg-white rounded-2xl border border-gray-100 shadow-lg cursor-pointer group transition-all duration-300 hover:-translate-y-4 hover:shadow-xl";
 
+  const containerVariants = {
+    hidden: { opacity: 0, y: 14 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.65,
+        ease: "easeOut",
+        delayChildren: 0.05,
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const headingVariants = {
+    hidden: { opacity: 0, y: 12, filter: "blur(4px)" },
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+      transition: { duration: 0.6, ease: "easeOut" },
+    },
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 22, scale: 0.96, filter: "blur(6px)" },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      filter: "blur(0px)",
+      transition: { duration: 0.8, ease: "easeOut" },
+    },
+  };
+
   return (
     <section className="min-h-screen bg-linear-to-b from-white to-gray-50 py-16 sm:py-24 px-5 sm:px-6 mt-14">
       <div className="max-w-6xl mx-auto">
@@ -50,25 +86,49 @@ export function Documentation() {
         </button>
 
         {/* Header */}
-        <div className="text-center mb-16">
+        <motion.div
+          className="text-center mb-16"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.7 }}
+          variants={containerVariants}
+        >
           <div className="inline-block relative mb-4">
-            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
+            <motion.h1
+              className="inline-block text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
+              variants={headingVariants}
+            >
               Documentation
-            </h1>
-            <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm"></div>
+            </motion.h1>
+            <motion.div
+              className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
+              variants={headingVariants}
+            ></motion.div>
           </div>
-          <p className="text-base sm:text-lg text-gray-500 mt-4 sm:mt-6">
+          <motion.p
+            className="text-base sm:text-lg text-gray-500 mt-4 sm:mt-6"
+            variants={headingVariants}
+          >
             Get started with VideoDiscovery in just a few easy steps
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          variants={containerVariants}
+        >
 
           {/* Card 1 */}
-          <div
+          <motion.div
             onClick={handleCreateAccount}
             className={`${cardBase} hover:border-blue-400 hover:shadow-blue-200/60`}
+            variants={cardVariants}
+            whileHover={{ y: -8, scale: 1.02, boxShadow: "0 20px 40px -20px rgba(59, 130, 246, 0.4)" }}
+            whileTap={{ scale: 0.98 }}
           >
             <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-blue-100 to-blue-50 mb-5 mx-auto group-hover:scale-110 transition-transform">
               <BookOpen className="w-8 h-8 text-blue-500" />
@@ -79,12 +139,15 @@ export function Documentation() {
             <p className="text-gray-600 text-sm text-center">
               Sign up quickly using your email or username.
             </p>
-          </div>
+          </motion.div>
 
           {/* Card 2 */}
-          <div
+          <motion.div
             onClick={handleUpload}
             className={`${cardBase} hover:border-cyan-400 hover:shadow-cyan-200/60`}
+            variants={cardVariants}
+            whileHover={{ y: -8, scale: 1.02, boxShadow: "0 20px 40px -20px rgba(34, 211, 238, 0.4)" }}
+            whileTap={{ scale: 0.98 }}
           >
             <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-cyan-100 to-cyan-50 mb-5 mx-auto group-hover:scale-110 transition-transform">
               <Upload className="w-8 h-8 text-cyan-500" />
@@ -95,12 +158,15 @@ export function Documentation() {
             <p className="text-gray-600 text-sm text-center">
               Upload videos and let AI analyze them.
             </p>
-          </div>
+          </motion.div>
 
           {/* Card 3 */}
-          <div
+          <motion.div
             onClick={handleRecommendation}
             className={`${cardBase} hover:border-purple-400 hover:shadow-purple-200/60`}
+            variants={cardVariants}
+            whileHover={{ y: -8, scale: 1.02, boxShadow: "0 20px 40px -20px rgba(168, 85, 247, 0.4)" }}
+            whileTap={{ scale: 0.98 }}
           >
             <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-purple-100 to-purple-50 mb-5 mx-auto group-hover:scale-110 transition-transform">
               <Video className="w-8 h-8 text-purple-500" />
@@ -111,12 +177,15 @@ export function Documentation() {
             <p className="text-gray-600 text-sm text-center">
               Explore AI-generated video suggestions.
             </p>
-          </div>
+          </motion.div>
 
           {/* Card 4 */}
-          <div
+          <motion.div
             onClick={handleInsights}
             className={`${cardBase} hover:border-pink-400 hover:shadow-pink-200/60`}
+            variants={cardVariants}
+            whileHover={{ y: -8, scale: 1.02, boxShadow: "0 20px 40px -20px rgba(236, 72, 153, 0.4)" }}
+            whileTap={{ scale: 0.98 }}
           >
             <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-pink-100 to-pink-50 mb-5 mx-auto group-hover:scale-110 transition-transform">
               <Info className="w-8 h-8 text-pink-500" />
@@ -127,9 +196,9 @@ export function Documentation() {
             <p className="text-gray-600 text-sm text-center">
               View history and improve recommendations.
             </p>
-          </div>
+          </motion.div>
 
-        </div>
+        </motion.div>
       </div>
 
       {/* Modal */}

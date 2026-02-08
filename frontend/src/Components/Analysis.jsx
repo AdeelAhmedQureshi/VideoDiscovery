@@ -51,7 +51,7 @@ export default function DashboardStats() {
   };
 
   return (
-    <section className="bg-gradient-to-br from-cyan-50 to-slate-100 py-16 sm:py-24">
+    <section className="max-h-10 bg-gradient-to-br from-cyan-50 to-slate-100 py-16 sm:py-24">
       <div className="max-w-6xl mx-auto px-6">
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"

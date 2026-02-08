@@ -1,4 +1,5 @@
 import { Play, ExternalLink } from "lucide-react";
+import { motion } from "framer-motion";
 
 const mockRecommendations = [
   {
@@ -51,20 +52,61 @@ const mockRecommendations = [
   },
 ];
 
-export  function RecommendationsSection() {
+export function RecommendationsSection() {
+  const containerVariants = {
+    hidden: { opacity: 0, y: 14 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.65,
+        ease: "easeOut",
+        delayChildren: 0.05,
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const headingVariants = {
+    hidden: { opacity: 0, y: 12, filter: "blur(4px)" },
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+      transition: { duration: 0.6, ease: "easeOut" },
+    },
+  };
+
   return (
     <section className="py-16 sm:py-24 px-5 sm:px-6 bg-white" id="recommendation-section">
       <div className="container mx-auto max-w-7xl">
         {/* Section Header */}
-        <div className="text-center mb-12 sm:mb-16">
+        <motion.div
+          className="text-center mb-12 sm:mb-16"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.7 }}
+          variants={containerVariants}
+        >
           <div className="inline-block relative mb-4">
-            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
+            <motion.h1
+              className="inline-block text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
+              variants={headingVariants}
+            >
               Recommended Videos
-            </h1>
-            <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm"></div>
+            </motion.h1>
+            <motion.div
+              className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
+              variants={headingVariants}
+            ></motion.div>
           </div>
-          <p className="text-base sm:text-lg text-gray-500 mt-4 sm:mt-6">Based on multimodal analysis of your video content, here are the most semantically similar videos we found.</p>
-        </div>
+          <motion.p
+            className="text-base sm:text-lg text-gray-500 mt-4 sm:mt-6"
+            variants={headingVariants}
+          >
+            Based on multimodal analysis of your video content, here are the most semantically similar videos we found.
+          </motion.p>
+        </motion.div>
 
         {/* Recommendations Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">

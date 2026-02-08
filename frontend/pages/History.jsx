@@ -9,6 +9,7 @@ import {
     ArrowLeft
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 export default function History() {
     const historyData = [
@@ -41,6 +42,30 @@ export default function History() {
         },
     ];
     const navigate = useNavigate();
+
+    const containerVariants = {
+        hidden: { opacity: 0, y: 14 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: {
+                duration: 0.65,
+                ease: "easeOut",
+                delayChildren: 0.05,
+                staggerChildren: 0.1,
+            },
+        },
+    };
+
+    const headingVariants = {
+        hidden: { opacity: 0, y: 12, filter: "blur(4px)" },
+        visible: {
+            opacity: 1,
+            y: 0,
+            filter: "blur(0px)",
+            transition: { duration: 0.6, ease: "easeOut" },
+        },
+    };
 
     return (
         <div className="min-h-screen font-sans text-gray-800 bg-white">
@@ -75,17 +100,32 @@ export default function History() {
 
 
                 {/* Header */}
-                <div className="text-center mb-16">
+                <motion.div
+                    className="text-center mb-16"
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, amount: 0.7 }}
+                    variants={containerVariants}
+                >
                     <div className="inline-block relative mb-4">
-                        <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
+                        <motion.h1
+                            className="inline-block text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
+                            variants={headingVariants}
+                        >
                             History & Activity
-                        </h1>
-                        <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm"></div>
+                        </motion.h1>
+                        <motion.div
+                            className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
+                            variants={headingVariants}
+                        ></motion.div>
                     </div>
-                    <p className="text-base sm:text-lg text-gray-500 mt-4 sm:mt-6">
+                    <motion.p
+                        className="text-base sm:text-lg text-gray-500 mt-4 sm:mt-6"
+                        variants={headingVariants}
+                    >
                         Review your recent video interactions and Recommendations
-                    </p>
-                </div>
+                    </motion.p>
+                </motion.div>
 
                 {/* Section Header (Light only) */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 pb-4 border-b border-gray-200 gap-4">
