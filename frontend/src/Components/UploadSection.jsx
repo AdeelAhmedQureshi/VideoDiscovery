@@ -174,6 +174,8 @@ export function UploadSection() {
       message: "Video uploaded successfully."
     });
     console.log("Upload success:", data);
+    // Notify dashboard to refresh stats without manual reload
+    window.dispatchEvent(new Event("videoUploaded"));
   } catch (err) {
     console.error(err);
     showPopup({

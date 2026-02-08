@@ -1,35 +1,97 @@
-import { Video, Brain, MessageSquare, Star } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Video, Brain, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function DashboardStats() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [data, setData] = useState({
+    total_videos: 0,
+    total_feedback: 0,
+    total_recommendations: 0,
+  });
+
+  const fetchStats = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("Not signed in. Please log in to view stats.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:8000/api/users/account-stats", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          setError("Session expired. Please sign in again.");
+        } else {
+          setError("Failed to load stats. Try again later.");
+        }
+        setLoading(false);
+        return;
+      }
+
+      const json = await res.json();
+      console.log("[Dashboard] Stats response:", json);
+      const statsObj = json?.data?.statistics ?? json?.statistics ?? json;
+      const mapped = {
+        total_videos:
+          statsObj?.total_videos ?? statsObj?.video_count ?? statsObj?.videos ?? 0,
+        total_feedback:
+          statsObj?.total_feedback ?? statsObj?.feedback_count ?? statsObj?.feedback ?? 0,
+        total_recommendations:
+          statsObj?.total_recommendations ?? statsObj?.recommendation_count ?? statsObj?.recommendations ?? 0,
+      };
+      setData(mapped);
+      setLoading(false);
+    } catch (e) {
+      setError("Network error while loading stats.");
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Initial load
+    fetchStats();
+
+    // Listen for upload events to refresh stats
+    const handler = () => {
+      setLoading(true);
+      fetchStats();
+    };
+    window.addEventListener("videoUploaded", handler);
+    return () => window.removeEventListener("videoUploaded", handler);
+  }, [fetchStats]);
+
   const stats = [
     {
       title: "Total Videos",
-      value: "24",
+      value: loading ? "—" : String(data.total_videos),
       icon: <Video size={28} />,
       color: "from-cyan-500 to-teal-400",
       hoverBorder: "hover:border-cyan-200",
     },
     {
       title: "AI Recommendations",
-      value: "156",
+      value: loading ? "—" : String(data.total_recommendations),
       icon: <Brain size={28} />,
       color: "from-indigo-500 to-purple-400",
       hoverBorder: "hover:border-indigo-400",
     },
     {
       title: "Feedback Submitted",
-      value: "89",
+      value: loading ? "—" : String(data.total_feedback),
       icon: <MessageSquare size={28} />,
       color: "from-pink-500 to-rose-400",
       hoverBorder: "hover:border-pink-400",
-    },
-    {
-      title: "Avg Rating",
-      value: "4.8",
-      icon: <Star size={28} />,
-      color: "from-yellow-500 to-orange-400",
-      hoverBorder: "hover:border-yellow-400",
     },
   ];
 
@@ -54,7 +116,7 @@ export default function DashboardStats() {
     <section className="max-h-10 bg-gradient-to-br from-cyan-50 to-slate-100 py-16 sm:py-24">
       <div className="max-w-6xl mx-auto px-6">
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
           initial="hidden"
           animate="visible"
         >
