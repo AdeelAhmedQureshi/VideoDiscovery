@@ -567,10 +567,25 @@ async def get_account_statistics(current_user: dict = Depends(get_current_user))
     try:
         user_id = current_user["user_id"]
 
-        # Count user's data
+        # Count user's videos
         video_count = await videos_collection().count_documents({"user_id": user_id})
+
+        # Count user's feedback
         feedback_count = await feedback_collection().count_documents({"user_id": user_id})
-        recommendation_count = await recommendations_collection().count_documents({"user_id": user_id})
+
+        # Count recommendations for all user's videos
+        # First get all video_ids for this user
+        user_videos = await videos_collection().find(
+            {"user_id": user_id},
+            {"video_id": 1}
+        ).to_list(length=None)
+
+        video_ids = [video["video_id"] for video in user_videos]
+
+        # Count recommendations that belong to these videos
+        recommendation_count = await recommendations_collection().count_documents(
+            {"uploaded_video_id": {"$in": video_ids}}
+        ) if video_ids else 0
 
         # Get user info
         user = await get_user_by_id(
