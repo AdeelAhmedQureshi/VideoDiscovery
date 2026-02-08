@@ -2,6 +2,7 @@ import { useState } from "react";
 import { User, Mail, Lock, Trash2, ArrowLeft, Shield, CheckCircle2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 export default function Account() {
   const { user, refreshUser, signOut } = useAuth();
@@ -252,6 +253,30 @@ export default function Account() {
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0, y: 14 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.65,
+        ease: "easeOut",
+        delayChildren: 0.05,
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const headingVariants = {
+    hidden: { opacity: 0, y: 12, filter: "blur(4px)" },
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+      transition: { duration: 0.6, ease: "easeOut" },
+    },
+  };
+
   return (
     <section className="min-h-screen bg-linear-to-br from-slate-50 via-white to-cyan-50 py-16 px-4 sm:px-6 lg:px-10">
       <style>{`
@@ -288,18 +313,29 @@ export default function Account() {
             Back
           </button>
 
-          <div className="text-center mb-8">
-            <div className="account-pill inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-cyan-700 shadow-sm">
-              <Shield className="w-4 h-4" />
-              Account Control Center
+          <motion.div
+            className="text-center mb-8"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.7 }}
+            variants={containerVariants}
+          >
+            <div className="inline-block relative mb-5">
+              <motion.h1
+                className="inline-block text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
+                variants={headingVariants}
+              >
+                Account Settings
+              </motion.h1>
+              <motion.div
+                className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
+                variants={headingVariants}
+              ></motion.div>
             </div>
-            <h1 className="account-title mt-5 text-4xl sm:text-5xl font-bold text-slate-900 mb-3">
-              Account Settings
-            </h1>
-            <p className="text-slate-600 max-w-xl mx-auto">
+            <motion.p className="text-slate-600 max-w-xl mx-auto" variants={headingVariants}>
               Manage your profile, refresh credentials, and keep everything secure in one place.
-            </p>
-          </div>
+            </motion.p>
+          </motion.div>
         </div>
 
         {/* Success Alert */}
