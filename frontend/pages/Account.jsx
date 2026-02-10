@@ -17,6 +17,9 @@ export default function Account() {
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [deactivatePassword, setDeactivatePassword] = useState("");
+  const [deactivateConfirmation, setDeactivateConfirmation] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -37,6 +40,60 @@ export default function Account() {
       message,
       onClose: onClose || null
     });
+  };
+  const handleDeactivateAccount = async () => {
+    try {
+      if (!deactivatePassword) {
+        showPopup({
+          type: "warning",
+          title: "Password required",
+          message: "Please enter your current password to deactivate your account."
+        });
+        return;
+      }
+
+      if (deactivateConfirmation.trim().toUpperCase() !== "DEACTIVATE") {
+        showPopup({
+          type: "warning",
+          title: "Confirmation required",
+          message: "Please type DEACTIVATE to confirm account deactivation."
+        });
+        return;
+      }
+
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:8000/api/users/deactivate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        credentials: "include",
+        body: JSON.stringify({
+          password: deactivatePassword,
+          confirmation: deactivateConfirmation.trim().toUpperCase()
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || data.message || "Error deactivating account");
+
+      showPopup({
+        type: "success",
+        title: "Account deactivated",
+        message:
+          data.message ||
+          "Your account is deactivated. You can reactivate within 30 days; after that it will be permanently deleted.",
+        onClose: () => navigate("/auth")
+      });
+      setDeactivatePassword("");
+      setDeactivateConfirmation("");
+      setShowDeactivateModal(false);
+      signOut();
+    } catch (err) {
+      showPopup({
+        type: "error",
+        title: "Deactivation failed",
+        message: err.message || "Failed to deactivate account."
+      });
+    }
   };
 
   const validatePassword = (value) => {
@@ -555,6 +612,28 @@ export default function Account() {
             </div>
 
             <div className="p-8">
+              {/* Deactivate Account (30-day recovery) */}
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6">
+                <div className="flex gap-3">
+                  <Shield className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-bold text-amber-900 mb-1">Deactivate Account (30 days)</h3>
+                    <p className="text-sm text-amber-800">
+                      Temporarily disable your account. You can recover it within 30 days. After 30 days,
+                      your account and data will be permanently deleted.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowDeactivateModal(true)}
+                className="mb-6 px-6 py-3.5 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold rounded-2xl hover:from-amber-700 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl inline-flex items-center cursor-pointer"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Deactivate for 30 days
+              </button>
+
               <div className="bg-red-50 border border-red-200 rounded-2xl p-5 mb-6">
                 <div className="flex gap-3">
                   <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -578,6 +657,76 @@ export default function Account() {
           </div>
         </div>
       </div>
+
+      {/* Deactivate Modal */}
+      {showDeactivateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div className="bg-gradient-to-r from-amber-600 to-orange-600 px-8 py-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-white">
+                  Confirm Account Deactivation
+                </h3>
+              </div>
+            </div>
+
+            <div className="p-8 bg-white/90">
+              <p className="text-gray-900 font-medium mb-4">
+                Deactivating will immediately disable your account. You can reactivate anytime within 30 days.
+                After 30 days, your account will be permanently deleted.
+              </p>
+
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Current Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="password"
+                      value={deactivatePassword}
+                      onChange={(e) => setDeactivatePassword(e.target.value)}
+                      placeholder="Enter your current password"
+                      className="w-full pl-12 pr-4 py-3 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all text-slate-900 shadow-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Type DEACTIVATE to confirm
+                  </label>
+                  <input
+                    value={deactivateConfirmation}
+                    onChange={(e) => setDeactivateConfirmation(e.target.value)}
+                    placeholder="DEACTIVATE"
+                    className="w-full px-4 py-3 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all text-slate-900 shadow-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeactivateModal(false)}
+                  className="flex-1 px-4 py-3.5 bg-gray-100 text-gray-900 font-bold rounded-2xl hover:bg-gray-200 transition-all border border-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  className="flex-1 px-4 py-3.5 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold rounded-2xl hover:from-amber-700 hover:to-orange-700 transition-all shadow-lg"
+                  onClick={handleDeactivateAccount}
+                >
+                  Deactivate
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Enhanced Delete Modal */}
       {showDeleteModal && (

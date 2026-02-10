@@ -5,13 +5,14 @@ from typing import Optional
 from bson import ObjectId
 from ..schemas.user_schema import (
     UserSignup, UserLogin, UserResponse, ForgotPassword, ResetPassword,
-    UpdateName, UpdateEmail, UpdatePassword, DeleteAccount
+    UpdateName, UpdateEmail, UpdatePassword, DeleteAccount, DeactivateAccount, ReactivateAccount
 )
 from ..services.auth_service import AuthService
 from ..utils.jwt_handler import get_current_user
 from ..utils.password_hasher import verify_password, hash_password
 from ..database import users_collection, videos_collection, feedback_collection, recommendations_collection, refresh_tokens_collection
 from ..config import settings
+from datetime import datetime, timedelta, timezone
 router = APIRouter()
 
 
@@ -553,6 +554,115 @@ async def delete_user_account(
         # If something goes wrong, at least try to preserve data integrity
         raise HTTPException(
             status_code=500, detail=f"Error deleting account: {str(e)}")
+
+
+@router.post("/deactivate", response_model=dict)
+async def deactivate_account(
+    payload: DeactivateAccount,
+    response: Response,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Deactivate account for 30 days. Blocks login and refresh, and schedules deletion.
+
+    Requires: Authentication, password, and confirmation "DEACTIVATE".
+    """
+    try:
+        user = await get_user_by_id(current_user["user_id"])
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if not verify_password(payload.password, user["password"]):
+            raise HTTPException(status_code=401, detail="Incorrect password")
+
+        # Store UTC-naive datetimes to align with MongoDB default
+        now = datetime.utcnow()
+        delete_after = now + timedelta(days=30)
+
+        result = await users_collection().update_one(
+            build_user_id_filter(current_user["user_id"]),
+            {"$set": {
+                "deactivated_at": now,
+                "delete_after": delete_after,
+                "status": "deactivated"
+            }}
+        )
+
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        user_id = user.get("user_id") or str(user["_id"]) 
+        await refresh_tokens_collection().delete_many({"user_id": user_id})
+
+        clear_auth_cookies(response)
+
+        return {
+            "success": True,
+            "message": "Account deactivated. You can reactivate within 30 days; after that, it will be permanently deleted."
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deactivating account: {str(e)}")
+
+
+@router.post("/reactivate", response_model=dict)
+async def reactivate_account(payload: ReactivateAccount, response: Response):
+    """
+    Reactivate a deactivated account within 30 days.
+
+    Does not require existing session; accepts email + password.
+    """
+    try:
+        user = await users_collection().find_one({"email": payload.email})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if not verify_password(payload.password, user["password"]):
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        if not user.get("deactivated_at"):
+            return {"success": True, "message": "Account is already active."}
+
+        if user.get("delete_after") and user["delete_after"] <= datetime.utcnow():
+            # Already past window; recommend contacting support
+            raise HTTPException(status_code=410, detail="Account scheduled for deletion or deleted.")
+
+        # Unset deactivation fields
+        await users_collection().update_one(
+            {"_id": user["_id"]},
+            {"$unset": {"deactivated_at": "", "delete_after": ""}, "$set": {"status": "active"}}
+        )
+
+        # Issue fresh tokens
+        user_id = user.get("user_id") or str(user["_id"]) 
+        from ..utils.jwt_handler import create_access_token, create_refresh_token
+        access_token = create_access_token(user_id, user["email"]) 
+        refresh_token = create_refresh_token(user_id, user["email"]) 
+
+        await refresh_tokens_collection().insert_one({
+            "user_id": user_id,
+            "token": refresh_token,
+            "created_at": datetime.now(timezone.utc),
+            "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
+            "revoked": False
+        })
+
+        # Set cookies for convenience
+        set_auth_cookies(response, access_token, refresh_token)
+
+        return {
+            "success": True,
+            "message": "Account reactivated successfully.",
+            "data": {
+                "access_token": access_token,
+                "refresh_token": refresh_token
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reactivating account: {str(e)}")
 
 
 @router.get("/account-stats", response_model=dict)
