@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginUser, signupUser } from "../Services/AuthApi";
+import { loginUser, signupUser, reactivateUser } from "../Services/AuthApi";
 
 const AuthContext = createContext(undefined);
 
@@ -112,8 +112,39 @@ export const AuthProvider = ({ children }) => {
       showPopup({
         type: "error",
         title: "Sign in failed",
-        message: "Invalid credentials. Please try again."
+        message: err.message || "Invalid credentials. Please try again."
       });
+      throw err; // allow caller to react (e.g., open reactivate modal)
+    }
+  };
+
+  const reactivate = async (email, password) => {
+    try {
+      const res = await reactivateUser({ email, password });
+      const payload = res?.data || res;
+
+      const access = payload?.access_token;
+      if (!access) {
+        throw new Error("Access token missing in reactivation response");
+      }
+
+      localStorage.setItem("token", access);
+
+      await refreshUser();
+
+      showPopup({
+        type: "success",
+        title: "Account reactivated",
+        message: "Your account has been reactivated successfully."
+      });
+      navigate("/dashboard");
+    } catch (err) {
+      showPopup({
+        type: "error",
+        title: "Reactivation failed",
+        message: err.message || "Unable to reactivate your account."
+      });
+      throw err;
     }
   };
 
@@ -148,7 +179,7 @@ export const AuthProvider = ({ children }) => {
 };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, refreshUser, reactivate }}>
       {children}
       {popup.open && (
         <div className="fixed top-6 left-1/2 z-50 w-[min(92vw,540px)] -translate-x-1/2">

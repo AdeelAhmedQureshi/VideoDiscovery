@@ -113,6 +113,12 @@ class AuthService:
         if not verify_password(password, user["password"]):
             return None, "Invalid password"
 
+        # Block login if account is deactivated and within 30-day window
+        if user.get("deactivated_at"):
+            delete_after = user.get("delete_after")
+            if delete_after and delete_after > datetime.utcnow():
+                return None, "Account is deactivated. You can reactivate within 30 days."
+
         user_id = user.get("user_id") or str(user["_id"])
 
         # Backfill user_id for older records
@@ -273,6 +279,12 @@ class AuthService:
                     {"_id": user["_id"]},
                     {"$set": {"user_id": str(user["_id"])}}
                 )
+
+            # Block refresh if account is deactivated and within 30-day window
+            if user.get("deactivated_at"):
+                delete_after = user.get("delete_after")
+                if delete_after and delete_after > datetime.utcnow():
+                    return None, "Account is deactivated"
 
             # Generate new access token
             new_access_token = create_access_token(user_id, email)

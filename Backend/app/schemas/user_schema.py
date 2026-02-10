@@ -76,3 +76,20 @@ class DeleteAccount(BaseModel):
             raise ValueError(
                 'Please type "DELETE" to confirm account deletion')
         return v
+
+
+class DeactivateAccount(BaseModel):
+    password: str
+    confirmation: str
+
+    @field_validator('confirmation')
+    @classmethod
+    def confirm_deactivation(cls, v):
+        if v.upper() != "DEACTIVATE":
+            raise ValueError('Please type "DEACTIVATE" to confirm account deactivation')
+        return v
+
+
+class ReactivateAccount(BaseModel):
+    email: EmailStr
+    password: str

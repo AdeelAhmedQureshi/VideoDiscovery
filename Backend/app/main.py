@@ -8,6 +8,8 @@ from .routes.video_routes import router as video_router
 from .routes.feedback_routes import router as feedback_router
 from .routes.user_routes import router as user_router
 from .utils.db_indexes import create_database_indexes
+from .utils.account_cleanup import run_deactivated_cleanup_loop
+import asyncio
 
 
 @asynccontextmanager
@@ -16,6 +18,8 @@ async def lifespan(app: FastAPI):
     # Startup
     print(f"🚀 Starting {settings.PROJECT_NAME}...")
     await create_database_indexes()
+    # Start background cleanup for deactivated accounts
+    asyncio.create_task(run_deactivated_cleanup_loop())
     print(f"✅ {settings.PROJECT_NAME} is ready!")
     yield
     # Shutdown

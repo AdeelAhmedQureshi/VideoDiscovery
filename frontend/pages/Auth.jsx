@@ -12,7 +12,11 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
 
   const nav = useNavigate();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, reactivate } = useAuth();
+  const [showReactivateModal, setShowReactivateModal] = useState(false);
+  const [reactivateEmail, setReactivateEmail] = useState('');
+  const [reactivatePassword, setReactivatePassword] = useState('');
+  const [reactivateLoading, setReactivateLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,8 +30,28 @@ export default function Auth() {
       }
     } catch (err) {
       console.error(err);
+      // Auto-suggest reactivation when backend indicates deactivation
+      const msg = (err?.message || '').toLowerCase();
+      if (!isSignUp && msg.includes('deactivate')) {
+        setReactivateEmail(email);
+        setShowReactivateModal(true);
+      }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleReactivate = async (e) => {
+    e.preventDefault();
+    setReactivateLoading(true);
+    try {
+      await reactivate(reactivateEmail, reactivatePassword);
+      setShowReactivateModal(false);
+      setReactivatePassword('');
+    } catch (err) {
+      // errors shown via context popup
+    } finally {
+      setReactivateLoading(false);
     }
   };
 
@@ -138,10 +162,22 @@ export default function Auth() {
                 <div className="text-right mt-2">
                   <button
                     type="button"
-                    className="text-medium text-cyan-600 hover:text-cyan-700 hover:underline transition-colors"
+                    className="text-medium text-cyan-600 hover:text-cyan-700 hover:underline transition-colors cursor-pointer"
                     onClick={() => nav('/forgot-password')}
                   >
                     Forgot Password?
+                  </button>
+                </div>
+              )}
+
+              {!isSignUp && (
+                <div className="text-right mt-2">
+                  <button
+                    type="button"
+                    className="text-medium text-amber-600 hover:text-amber-700 hover:underline transition-colors cursor-pointer"
+                    onClick={() => { setReactivateEmail(email); setShowReactivateModal(true); }}
+                  >
+                    Reactivate Account?
                   </button>
                 </div>
               )}
@@ -160,11 +196,51 @@ export default function Auth() {
                 type="button"
                 onClick={() => setIsSignUp(!isSignUp)}
                 disabled={isLoading}
-                className="text-sm sm:text-base text-cyan-600 hover:text-cyan-700 hover:underline transition-colors disabled:opacity-50"
+                className="text-sm sm:text-base text-cyan-600 hover:text-cyan-700 hover:underline transition-colors disabled:opacity-50 cursor-pointer"
               >
-                {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+                {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Register Here"}
               </button>
             </div>
+            {showReactivateModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                  <div className="bg-gradient-to-r from-amber-600 to-orange-600 px-6 py-4">
+                    <h3 className="text-lg font-bold text-white">Reactivate Account</h3>
+                    <p className="text-white/85 text-sm">Enter your email and password to reactivate within 30 days.</p>
+                  </div>
+                  <form onSubmit={handleReactivate} className="p-6 space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-900 mb-2">Email</label>
+                      <input
+                        type="email"
+                        value={reactivateEmail}
+                        onChange={e => setReactivateEmail(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none"
+                        placeholder="you@example.com"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-900 mb-2">Password</label>
+                      <input
+                        type="password"
+                        value={reactivatePassword}
+                        onChange={e => setReactivatePassword(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none"
+                        placeholder="••••••••"
+                        required
+                      />
+                    </div>
+                    <div className="flex gap-3 pt-2">
+                      <button type="button" onClick={() => setShowReactivateModal(false)} className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-900 rounded-lg border border-gray-200 hover:bg-gray-200">Cancel</button>
+                      <button type="submit" disabled={reactivateLoading} className="flex-1 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg">
+                        {reactivateLoading ? 'Reactivating...' : 'Reactivate'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
