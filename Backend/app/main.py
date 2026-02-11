@@ -8,18 +8,24 @@ from .routes.video_routes import router as video_router
 from .routes.feedback_routes import router as feedback_router
 from .routes.user_routes import router as user_router
 from .utils.db_indexes import create_database_indexes
-from .utils.account_cleanup import run_deactivated_cleanup_loop
-import asyncio
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application startup and shutdown events"""
+    import sys
+    from pathlib import Path
+    # Add parent directory for sibling imports
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    
     # Startup
     print(f"🚀 Starting {settings.PROJECT_NAME}...")
+    
+    # Initialize AI Models
+    from ai_engine.model_loader import model_loader
+    model_loader.load_models()
+    
     await create_database_indexes()
-    # Start background cleanup for deactivated accounts
-    asyncio.create_task(run_deactivated_cleanup_loop())
     print(f"✅ {settings.PROJECT_NAME} is ready!")
     yield
     # Shutdown
@@ -39,6 +45,8 @@ allowed_origins = [
     "http://localhost:3000",  # React default
     "http://127.0.0.1:5173",
     "http://127.0.0.1:3000",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
     settings.FRONTEND_URL,
 ]
 
@@ -61,3 +69,12 @@ app.include_router(health_router, prefix="/api")
 app.include_router(user_router, prefix="/api/users")
 app.include_router(video_router, prefix="/api/videos")
 app.include_router(feedback_router, prefix="/api/feedback")
+
+
+@app.get("/")
+async def root():
+    return {
+        "message": "Welcome to VideoDiscovery API",
+        "docs_url": "/docs",
+        "status": "online"
+    }

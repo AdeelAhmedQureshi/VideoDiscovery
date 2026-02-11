@@ -1,8 +1,8 @@
-# Backend-specific ignores
+﻿# Backend-specific ignores
 # (Common patterns are in root .gitignore)
 
 # Virtual Environment
-venv/
+venv/ 
 venv_old/
 venv_new/
 .env
@@ -26,4 +26,31 @@ htmlcov/
 dmypy.json
 
 # Logs
-*.log    
+*.log
+*.err
+*.out
+
+# Project Specific
+temp_videos/
+uploads/
+ai_engine/models/
+ai_engine/__pycache__/
+ai_engine/src/processors/__pycache__/
+
+# Model Weights
+*.pt
+*.pth
+*.onnx
+*.bin
+*.pkl
+
+# Debug/Test
+debug_*.py
+test_*.py
+check_*.py
+
+# Credentials
+.env
+.env.*
+!.env.example
+    
