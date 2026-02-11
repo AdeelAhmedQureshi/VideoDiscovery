@@ -33,3 +33,7 @@ def refresh_tokens_collection():
 
 def password_reset_tokens_collection():
     return db.get_collection("password_reset_tokens")
+
+
+def reactivation_tokens_collection():
+    return db.get_collection("reactivation_tokens")
