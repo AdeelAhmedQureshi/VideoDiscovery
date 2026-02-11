@@ -15,7 +15,7 @@ class FaceAnalyzer:
         
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
-            print(f"❌ [FaceAnalyzer] Could not open video: {video_path}")
+            print(f"[FaceAnalyzer] Could not open video: {video_path}")
             return []
 
         try:
@@ -29,7 +29,7 @@ class FaceAnalyzer:
             frame_interval = int(fps)
             if frame_interval < 1: frame_interval = 1
             
-            print(f"ℹ️ [FaceAnalyzer] Video Duration: {duration:.1f}s, Sampling every {frame_interval} frames.")
+            print(f"[FaceAnalyzer] Video Duration: {duration:.1f}s, Sampling every {frame_interval} frames.")
 
             valid_detections = []
             frame_count = 0
@@ -75,10 +75,10 @@ class FaceAnalyzer:
 
             # --- Aggregation Logic ---
             if not valid_detections:
-                print("ℹ️ [FaceAnalyzer] No faces detected in the entire video.")
+                print("[FaceAnalyzer] No faces detected in the entire video.")
                 return []
 
-            print(f"📊 [FaceAnalyzer] Aggregating results from {len(valid_detections)} samples...")
+            print(f"[FaceAnalyzer] Aggregating results from {len(valid_detections)} samples...")
 
             # 1. Age (Mean)
             ages = [d['age'] for d in valid_detections]
@@ -103,12 +103,12 @@ class FaceAnalyzer:
                 "samples_analyzed": len(valid_detections)
             }
 
-            print(f"✅ [DEEPFACE] Result: {dominant_gender}, Age ~{avg_age}, {dominant_emotion.title()} ({emotion_consistency:.1f}%)")
+            print(f"[DEEPFACE] Result: {dominant_gender}, Age ~{avg_age}, {dominant_emotion.title()} ({emotion_consistency:.1f}%)")
             
             return [summary]
 
         except Exception as e:
-            print(f"❌ [FaceAnalyzer] Critical error: {e}")
+            print(f"[FaceAnalyzer] Critical error: {e}")
             return []
             
         finally:

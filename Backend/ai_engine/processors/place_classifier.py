@@ -25,12 +25,12 @@ class PlaceClassifier:
         categories_path = os.path.join(MODELS_DIR, CATEGORIES_FILE)
         
         if not os.path.exists(categories_path):
-            print(f"⬇️ [PlaceClassifier] Downloading category labels...")
+            print(f"[PlaceClassifier] Downloading category labels...")
             try:
                 urllib.request.urlretrieve(CATEGORIES_URL, categories_path)
-                print(f"✅ [PlaceClassifier] Categories downloaded.")
+                print(f"[PlaceClassifier] Categories downloaded.")
             except Exception as e:
-                print(f"❌ [PlaceClassifier] Failed to download categories: {e}")
+                print(f"[PlaceClassifier] Failed to download categories: {e}")
                 return []
         
         # Parse the categories file
@@ -65,13 +65,13 @@ class PlaceClassifier:
         Returns:
             List of top-3 place categories
         """
-        print(f"🏢 [PlaceClassifier] Analyzing environment: {video_path}")
+        print(f"[PlaceClassifier] Analyzing environment: {video_path}")
         
         try:
             # 1. Extract middle frame
             cap = cv2.VideoCapture(video_path)
             if not cap.isOpened():
-                print(f"❌ [PlaceClassifier] Could not open video: {video_path}")
+                print(f"[PlaceClassifier] Could not open video: {video_path}")
                 return []
             
             frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -80,7 +80,7 @@ class PlaceClassifier:
             cap.release()
             
             if not ret:
-                print(f"❌ [PlaceClassifier] Failed to extract frame")
+                print(f"[PlaceClassifier] Failed to extract frame")
                 return []
             
             # 2. Convert BGR to RGB and create PIL Image
@@ -92,7 +92,7 @@ class PlaceClassifier:
             # 4. Get model and run inference
             model = model_loader.get_places365()
             if model is None:
-                print(f"❌ [PlaceClassifier] Model not loaded")
+                print(f"[PlaceClassifier] Model not loaded")
                 return []
             
             with torch.no_grad():
@@ -111,9 +111,9 @@ class PlaceClassifier:
                     category = self.categories[idx]
                     results.append(category)
                     
-            print(f"✅ [SCENE] Environment: {results}")
+            print(f"[SCENE] Environment: {results}")
             return results
             
         except Exception as e:
-            print(f"❌ [PlaceClassifier] Error: {e}")
+            print(f"[PlaceClassifier] Error: {e}")
             return []

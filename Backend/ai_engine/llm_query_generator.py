@@ -99,19 +99,19 @@ Output format (STRICT JSON only):
                 # Parse JSON response
                 parsed = self._parse_llm_response(generated_text)
                 
-                print(f"✅ [LLM/Groq] Generated semantic queries")
-                print(f"   📝 Summary: {parsed.get('summary', 'N/A')[:80]}...")
-                print(f"   🎯 Intent: {parsed.get('intent', 'N/A')}")
-                print(f"   🔍 Queries: {len(parsed.get('queries', []))} variations")
-                print(f"   🏷️  Tags: {parsed.get('semantic_tags', [])}")
+                print(f"[LLM/Groq] Generated semantic queries")
+                print(f"   - Summary: {parsed.get('summary', 'N/A')[:80]}...")
+                print(f"   - Intent: {parsed.get('intent', 'N/A')}")
+                print(f"   - Queries: {len(parsed.get('queries', []))} variations")
+                print(f"   - Tags: {parsed.get('semantic_tags', [])}")
                 
                 return parsed
             else:
-                print(f"⚠️ [LLM/Groq] API Error {response.status_code}: {response.text}")
+                print(f"[LLM/Groq] API Error {response.status_code}: {response.text}")
                 return self._fallback_query(metadata)
                 
         except Exception as e:
-            print(f"❌ [LLM/Groq] Error: {e}")
+            print(f"[LLM/Groq] Error: {e}")
             return self._fallback_query(metadata)
     
     def _build_prompt(self, metadata: Dict) -> str:
@@ -145,21 +145,6 @@ Output format (STRICT JSON only):
         
         prompt = f"""VIDEO METADATA:
 
-🎬 Visual Content:
-   - Objects: {objects_str}
-   - Setting: {places_str}
-   - Theme: {topic_str}
-   - Duration: {duration}
-
-🎭 Human Presence:
-   - {person_desc}
-
-🎯 Activity:
-   - Actions: {actions_str}
-
-🗣️ Audio Transcription:
-   "{transcript_preview}"
-
 Analyze this video and generate semantic search queries that real users would type when looking for this content."""
 
         return prompt
@@ -185,7 +170,7 @@ Analyze this video and generate semantic search queries that real users would ty
             return result
             
         except json.JSONDecodeError:
-            print(f"⚠️ [LLM] Failed to parse JSON, using fallback")
+            print(f"[LLM] Failed to parse JSON, using fallback")
             # Return minimal structure if JSON parsing fails
             return {
                 "summary": "Video content",

@@ -25,4 +25,4 @@ DEEPFACE_METRIC = "cosine"
 os.makedirs(TEMP_VIDEO_DIR, exist_ok=True)
 os.makedirs(MODELS_DIR, exist_ok=True)
 
-print(f"✅ AI Engine Configured. Device: {DEVICE}")
+print(f"AI Engine Configured. Device: {DEVICE}")

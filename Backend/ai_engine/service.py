@@ -25,10 +25,10 @@ async def analyze_video(video_path: str, video_id: str):
         if not os.path.exists(video_path):
              return
 
-        print(f"🎯 Initializing Visual Intelligence Validator...")
+        print(f"Initializing Visual Intelligence Validator...")
         validator = VisualIntelligenceValidator()
         
-        print(f"🚀 Running AI Models in Parallel...")
+        print(f"Running AI Models in Parallel...")
         
         # Define wrappers for parallel execution
         def run_yolo():
@@ -72,7 +72,7 @@ async def analyze_video(video_path: str, video_id: str):
             return result
 
         # Execute concurrently (Performance Target: ~20s)
-        print(f"🚀 [Orchestrator] Starting 6 parallel processing threads...")
+        print(f"[Orchestrator] Starting 6 parallel processing threads...")
         tasks = [
             asyncio.to_thread(run_yolo),
             asyncio.to_thread(run_whisper),
@@ -84,17 +84,17 @@ async def analyze_video(video_path: str, video_id: str):
         
         results = await asyncio.gather(*tasks)
         raw_objects_per_frame, transcript, scene, faces, actions, places = results
-        print(f"✅ [Orchestrator] All 6 parallel tasks completed successfully.")
+        print(f"[Orchestrator] All 6 parallel tasks completed successfully.")
         
         # ==============================================================================
         # 🎯 Running Visual Intelligence & Search Validator...
         # ==============================================================================
         print(f"\n{'='*80}")
-        print(f"🎯 Running Visual Intelligence & Search Validator...")
+        print(f"Running Visual Intelligence & Search Validator...")
         print(f"{'='*80}\n")
 
         # STEP 3: INTELLIGENT QUERY GENERATION
-        print(f"🤖 [LLM] Generating intelligent search queries...")
+        print(f"[LLM] Generating intelligent search queries...")
         from .llm_query_generator import QueryGenerator
         query_gen = QueryGenerator()
         
@@ -131,14 +131,14 @@ async def analyze_video(video_path: str, video_id: str):
         validated_queries_data = await asyncio.to_thread(validator.rank_and_select_queries, candidate_queries)
         validated_queries = [q["query"] for q in validated_queries_data]
 
-        print(f"✅ [AI Service] Analysis Complete for {video_id}!")
-        print(f"   🔹 Scene: {scene}")
-        print(f"   🔹 Places: {places}")
-        print(f"   🔹 Validated Objects: {validated_objects}")
-        print(f"   🔹 Actions: {actions}")
-        print(f"   🔹 Language: {transcript.get('language', 'unknown')}")
-        print(f"   🔹 Validated Queries: {validated_queries[:3]}")
-        print(f"   🔹 Transcript: {transcript.get('text', '')[:100]}...")
+        print(f"[AI Service] Analysis Complete for {video_id}!")
+        print(f"   - Scene: {scene}")
+        print(f"   - Places: {places}")
+        print(f"   - Validated Objects: {validated_objects}")
+        print(f"   - Actions: {actions}")
+        print(f"   - Language: {transcript.get('language', 'unknown')}")
+        print(f"   - Validated Queries: {validated_queries[:3]}")
+        print(f"   - Transcript: {transcript.get('text', '')[:100]}...")
 
         # FINAL AI ANALYSIS SUMMARY
         import json
@@ -154,7 +154,7 @@ async def analyze_video(video_path: str, video_id: str):
         }
         
         print(f"\n{'='*80}")
-        print(f"📊 FINAL AI ANALYSIS SUMMARY (VALIDATED)")
+        print(f"FINAL AI ANALYSIS SUMMARY (VALIDATED)")
         print(f"{'='*80}")
         print(json.dumps(final_summary, indent=2))
         print(f"{'='*80}\n")
@@ -200,7 +200,7 @@ async def analyze_video(video_path: str, video_id: str):
         )
 
     except Exception as e:
-        print(f"❌ [AI Service] Critical Error during analysis: {e}")
+        print(f"[AI Service] Critical Error during analysis: {e}")
         import traceback
         traceback.print_exc()
         await videos_collection().update_one(

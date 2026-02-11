@@ -46,7 +46,7 @@ class VisualIntelligenceValidator:
         # Thresholds
         self.OBJECT_SIMILARITY_THRESHOLD = 0.20  # Minimum similarity for object validation
         
-        print(f"✅ [VisualValidator] Initialized with CLIP and FAISS (dim={self.dimension})")
+        print(f"[VisualValidator] Initialized with CLIP and FAISS (dim={self.dimension})")
     
     # ==================== PHASE 1: INGESTION & VISUAL REFINEMENT ====================
     
@@ -132,7 +132,7 @@ class VisualIntelligenceValidator:
         Filter YOLO detections through CLIP validation (Phase 1).
         """
         # Print requested raw detection log
-        print(f"🔍 [Phase 1] Validating {len(raw_objects)} YOLO objects with CLIP...")
+        print(f"[Phase 1] Validating {len(raw_objects)} YOLO objects with CLIP...")
         
         validated_objects = {}
         removed_count = 0
@@ -142,12 +142,12 @@ class VisualIntelligenceValidator:
             
             if is_valid:
                 validated_objects[obj] = score
-                print(f"   ✅ \"{obj}\" - similarity: {score:.2f}")
+                print(f"   \"{obj}\" - similarity: {score:.2f}")
             else:
                 removed_count += 1
-                print(f"   ❌ \"{obj}\" - similarity: {score:.2f} (removed)")
+                print(f"   \"{obj}\" - similarity: {score:.2f} (removed)")
         
-        print(f"✅ Phase 1: Validated {len(validated_objects)}/{len(raw_objects)} objects")
+        print(f"Phase 1: Validated {len(validated_objects)}/{len(raw_objects)} objects")
         return validated_objects
     
     def process_video_frames(self, video_path: str, raw_objects_per_frame: List[List[str]]) -> Dict:
@@ -162,7 +162,7 @@ class VisualIntelligenceValidator:
             Dictionary with refined objects and frame vectors
         """
         print(f"\n{'='*80}")
-        print(f"🎬 [VisualValidator] Processing Video Frames")
+        print(f"[VisualValidator] Processing Video Frames")
         print(f"{'='*80}")
         
         cap = cv2.VideoCapture(video_path)
@@ -209,7 +209,7 @@ class VisualIntelligenceValidator:
         
         cap.release()
         
-        print(f"\n📊 [Phase 1 Summary]")
+        print(f"\n[Phase 1 Summary]")
         print(f"   • Processed {processed_count} frames")
         print(f"   • Stored {self.index.ntotal} vectors in FAISS")
         print(f"   • Validated objects: {list(all_validated_objects.keys())}")
@@ -232,7 +232,7 @@ class VisualIntelligenceValidator:
         """
         Combine all multimodal signals into a rich JSON context object (Phase 2).
         """
-        print(f"🎭 [Phase 2] Synthesizing Multimodal Context...")
+        print(f"[Phase 2] Synthesizing Multimodal Context...")
         
         # Extract demographics safely
         demographics = faces[0] if faces else {"gender": "Unknown", "age": "Unknown", "emotion": "Unknown"}
@@ -258,9 +258,9 @@ class VisualIntelligenceValidator:
         }
         
         # Calculation of coherence (simulated for logic consistency in blueprint)
-        print(f"   📊 Visual coherence: 0.82")
-        print(f"   📊 Audio-visual alignment: 0.76")
-        print(f"✅ Phase 2: Multimodal context complete")
+        print(f"   Visual coherence: 0.82")
+        print(f"   Audio-visual alignment: 0.76")
+        print(f"Phase 2: Multimodal context complete")
         
         return context
     
@@ -304,7 +304,7 @@ class VisualIntelligenceValidator:
         Rank LLM-generated queries by visual similarity (Phase 3).
         Ensures queries meet the 0.25 similarity threshold.
         """
-        print(f"🎯 [Phase 3] Validating queries against visual content...")
+        print(f"[Phase 3] Validating queries against visual content...")
         
         scored_queries = []
         valid_count = 0
@@ -316,17 +316,17 @@ class VisualIntelligenceValidator:
             
             if is_valid:
                 valid_count += 1
-                status = "✅"
+                status = "[OK]"
                 scored_queries.append({"query": query, "score": score})
             else:
-                status = "❌"
+                status = "[FAIL]"
             
             print(f"   {status} \"{query}\" - FAISS avg: {score:.2f}")
 
         # Sort by score (descending)
         scored_queries.sort(key=lambda x: x['score'], reverse=True)
         
-        print(f"✅ Phase 3: Validated {valid_count}/{len(candidate_queries)} queries")
+        print(f"Phase 3: Validated {valid_count}/{len(candidate_queries)} queries")
         
         return scored_queries[:top_n]
     
@@ -388,11 +388,11 @@ class VisualIntelligenceValidator:
             scene_index = indices[0].item()
             scene = scenes[scene_index]
             
-            print(f"🎬 [SceneClassifier] Detected scene: {scene}")
+            print(f"[SceneClassifier] Detected scene: {scene}")
             return scene
             
         except Exception as e:
-            print(f"❌ [SceneClassifier] Error: {e}")
+            print(f"[SceneClassifier] Error: {e}")
             return "Unknown"
     
     # ==================== MAIN ORCHESTRATION ====================
@@ -455,7 +455,7 @@ class VisualIntelligenceValidator:
         }
         
         print(f"\n{'#'*80}")
-        print(f"# ✅ PIPELINE COMPLETE")
+        print(f"# PIPELINE COMPLETE")
         print(f"{'#'*80}\n")
         
         return output
