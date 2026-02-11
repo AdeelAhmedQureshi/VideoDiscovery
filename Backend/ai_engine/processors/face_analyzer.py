@@ -11,7 +11,7 @@ class FaceAnalyzer:
         Analyzes the video by sampling frames at 1 FPS and aggregating demographic data.
         Returns a summary of the dominant face's attributes.
         """
-        print(f"🕵️ [FaceAnalyzer] Starting robust video analysis: {video_path}")
+        # No log here, relying on orchestrator's Phase header
         
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():

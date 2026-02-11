@@ -1,4 +1,14 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Form
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Form, BackgroundTasks
+import shutil
+import os
+import sys
+from pathlib import Path
+
+# Add parent directory to path for sibling package imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from ai_engine.service import analyze_video
+from ai_engine.config import TEMP_VIDEO_DIR
 from ..database import videos_collection
 from ..utils.helper_functions import generate_id
 from ..utils.jwt_handler import get_current_user
@@ -14,6 +24,7 @@ router = APIRouter()
 async def upload_video(
     file: UploadFile = File(...),
     intelligent_query: str = Form(...),
+    background_tasks: BackgroundTasks = None,
     current_user: dict = Depends(get_current_user)
 ):
     """
@@ -58,6 +69,16 @@ async def upload_video(
 
         # Reset file position for upload
         await file.seek(0)
+        
+        # Save locally for AI processing
+        local_filename = f"{user_id}_{generate_id().replace('-', '')}_{file.filename}"
+        local_path = os.path.join(TEMP_VIDEO_DIR, local_filename)
+        
+        with open(local_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        # Reset file position AGAIN for Cloudinary upload
+        await file.seek(0)
 
         # Upload video to Cloudinary
         cloudinary_result = await CloudinaryService.upload_video(file, user_id)
@@ -88,7 +109,12 @@ async def upload_video(
         })
 
         # Store in database
+        video_doc["status"] = "processing" # Set initial status
         await videos_collection().insert_one(video_doc)
+
+        # Trigger AI Analysis in Background
+        if background_tasks:
+            background_tasks.add_task(analyze_video, local_path, video_id)
 
         return {
             "video_id": video_id,
@@ -169,7 +195,7 @@ async def get_video(
             "video_duration": video.get("video_duration"),
             "uploaded_at": video.get("uploaded_at"),
             "cloudinary_public_id": cloudinary_public_id,
-            "status": "ready_for_processing"
+            "status": video.get("status", "ready_for_processing")
         }
 
     except HTTPException:
