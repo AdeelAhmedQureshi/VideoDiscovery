@@ -90,6 +90,10 @@ class DeactivateAccount(BaseModel):
         return v
 
 
-class ReactivateAccount(BaseModel):
+class ReactivateRequest(BaseModel):
     email: EmailStr
-    password: str
+
+
+class ReactivateVerify(BaseModel):
+    email: EmailStr
+    code: str

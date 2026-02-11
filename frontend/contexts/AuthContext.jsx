@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loginUser, signupUser, reactivateUser } from "../Services/AuthApi";
+import { loginUser, signupUser, requestReactivationCode, verifyReactivationCode } from "../Services/AuthApi";
 
 const AuthContext = createContext(undefined);
 
@@ -118,26 +118,38 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const reactivate = async (email, password) => {
+  const sendReactivationCode = async (email) => {
     try {
-      const res = await reactivateUser({ email, password });
+      const res = await requestReactivationCode({ email });
+      return res;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const verifyReactivation = async (email, code) => {
+    try {
+      const res = await verifyReactivationCode({ email, code });
       const payload = res?.data || res;
 
-      const access = payload?.access_token;
-      if (!access) {
-        throw new Error("Access token missing in reactivation response");
+      if (payload?.access_token) {
+        localStorage.setItem("token", payload.access_token);
+        await refreshUser();
+
+        showPopup({
+          type: "success",
+          title: "Account reactivated",
+          message: "Your account has been successfully reactivated. Welcome back! Your data is restored."
+        });
+        navigate("/dashboard");
+      } else {
+        showPopup({
+          type: "success",
+          title: "Account active",
+          message: res?.message || "Your account is already active."
+        });
       }
-
-      localStorage.setItem("token", access);
-
-      await refreshUser();
-
-      showPopup({
-        type: "success",
-        title: "Account reactivated",
-        message: "Your account has been reactivated successfully."
-      });
-      navigate("/dashboard");
+      return res;
     } catch (err) {
       showPopup({
         type: "error",
@@ -179,7 +191,7 @@ export const AuthProvider = ({ children }) => {
 };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, refreshUser, reactivate }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, refreshUser, sendReactivationCode, verifyReactivation }}>
       {children}
       {popup.open && (
         <div className="fixed top-6 left-1/2 z-50 w-[min(92vw,540px)] -translate-x-1/2">

@@ -64,3 +64,51 @@ class EmailService:
         except Exception as e:
             print(f"Error sending email: {e}")
             return False
+
+    @staticmethod
+    def send_reactivation_code_email(to_email: str, code: str) -> bool:
+        """
+        Send account reactivation verification code
+
+        Args:
+            to_email: Recipient email address
+            code: 6-digit verification code
+
+        Returns:
+            True if email sent successfully, False otherwise
+        """
+        try:
+            subject = "Reactivate Your Account - VideoDiscovery"
+            html_content = f"""
+            <html>
+                <body>
+                    <h2>Account Reactivation</h2>
+                    <p>We received a request to reactivate your account.</p>
+                    <p>Your verification code is:</p>
+                    <p style=\"font-size: 20px; font-weight: bold;\">{code}</p>
+                    <p>This code will expire in 10 minutes.</p>
+                    <p>If you did not request this, you can ignore this email.</p>
+                    <br>
+                    <p>Best regards,<br>VideoDiscovery Team</p>
+                </body>
+            </html>
+            """
+
+            message = MIMEMultipart("alternative")
+            message["Subject"] = subject
+            message["From"] = settings.EMAIL_FROM
+            message["To"] = to_email
+
+            html_part = MIMEText(html_content, "html")
+            message.attach(html_part)
+
+            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+                server.starttls()
+                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+                server.send_message(message)
+
+            return True
+
+        except Exception as e:
+            print(f"Error sending reactivation email: {e}")
+            return False

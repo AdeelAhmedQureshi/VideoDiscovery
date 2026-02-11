@@ -5,14 +5,16 @@ from typing import Optional
 from bson import ObjectId
 from ..schemas.user_schema import (
     UserSignup, UserLogin, UserResponse, ForgotPassword, ResetPassword,
-    UpdateName, UpdateEmail, UpdatePassword, DeleteAccount, DeactivateAccount, ReactivateAccount
+    UpdateName, UpdateEmail, UpdatePassword, DeleteAccount, DeactivateAccount, ReactivateRequest, ReactivateVerify
 )
 from ..services.auth_service import AuthService
+from ..services.email_service import EmailService
 from ..utils.jwt_handler import get_current_user
 from ..utils.password_hasher import verify_password, hash_password
-from ..database import users_collection, videos_collection, feedback_collection, recommendations_collection, refresh_tokens_collection
+from ..database import users_collection, videos_collection, feedback_collection, recommendations_collection, refresh_tokens_collection, reactivation_tokens_collection
 from ..config import settings
 from datetime import datetime, timedelta, timezone
+import secrets
 router = APIRouter()
 
 
@@ -606,39 +608,88 @@ async def deactivate_account(
         raise HTTPException(status_code=500, detail=f"Error deactivating account: {str(e)}")
 
 
-@router.post("/reactivate", response_model=dict)
-async def reactivate_account(payload: ReactivateAccount, response: Response):
+@router.post("/reactivate/request", response_model=dict)
+async def request_reactivation(payload: ReactivateRequest):
     """
-    Reactivate a deactivated account within 30 days.
+    Request a reactivation code for a deactivated account.
+    """
+    try:
+        user = await users_collection().find_one({"email": payload.email})
+        if not user:
+            return {
+                "success": True,
+                "message": "If the account exists, a verification code has been sent."
+            }
 
-    Does not require existing session; accepts email + password.
+        if not user.get("deactivated_at"):
+            return {"success": True, "message": "Account is already active."}
+
+        if user.get("delete_after") and user["delete_after"] <= datetime.utcnow():
+            raise HTTPException(status_code=410, detail="Account scheduled for deletion or deleted.")
+
+        code = f"{secrets.randbelow(1000000):06d}"
+        code_hash = hash_password(code)
+        expires_at = datetime.utcnow() + timedelta(minutes=10)
+
+        await reactivation_tokens_collection().insert_one({
+            "email": payload.email,
+            "user_id": user.get("user_id") or str(user["_id"]),
+            "code_hash": code_hash,
+            "created_at": datetime.utcnow(),
+            "expires_at": expires_at,
+            "used": False
+        })
+
+        EmailService.send_reactivation_code_email(payload.email, code)
+
+        return {
+            "success": True,
+            "message": "Verification code sent to your email."
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error sending reactivation code: {str(e)}")
+
+
+@router.post("/reactivate/verify", response_model=dict)
+async def verify_reactivation(payload: ReactivateVerify, response: Response):
+    """
+    Verify a reactivation code and restore account access.
     """
     try:
         user = await users_collection().find_one({"email": payload.email})
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        if not verify_password(payload.password, user["password"]):
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-
         if not user.get("deactivated_at"):
             return {"success": True, "message": "Account is already active."}
 
         if user.get("delete_after") and user["delete_after"] <= datetime.utcnow():
-            # Already past window; recommend contacting support
             raise HTTPException(status_code=410, detail="Account scheduled for deletion or deleted.")
 
-        # Unset deactivation fields
+        token_doc = await reactivation_tokens_collection().find_one(
+            {"email": payload.email, "used": False, "expires_at": {"$gt": datetime.utcnow()}},
+            sort=[("created_at", -1)]
+        )
+
+        if not token_doc or not verify_password(payload.code, token_doc.get("code_hash", "")):
+            raise HTTPException(status_code=401, detail="Invalid or expired verification code")
+
+        await reactivation_tokens_collection().update_one(
+            {"_id": token_doc["_id"]},
+            {"$set": {"used": True, "used_at": datetime.utcnow()}}
+        )
+
         await users_collection().update_one(
             {"_id": user["_id"]},
             {"$unset": {"deactivated_at": "", "delete_after": ""}, "$set": {"status": "active"}}
         )
 
-        # Issue fresh tokens
-        user_id = user.get("user_id") or str(user["_id"]) 
+        user_id = user.get("user_id") or str(user["_id"])
         from ..utils.jwt_handler import create_access_token, create_refresh_token
-        access_token = create_access_token(user_id, user["email"]) 
-        refresh_token = create_refresh_token(user_id, user["email"]) 
+        access_token = create_access_token(user_id, user["email"])
+        refresh_token = create_refresh_token(user_id, user["email"])
 
         await refresh_tokens_collection().insert_one({
             "user_id": user_id,
@@ -648,7 +699,6 @@ async def reactivate_account(payload: ReactivateAccount, response: Response):
             "revoked": False
         })
 
-        # Set cookies for convenience
         set_auth_cookies(response, access_token, refresh_token)
 
         return {
