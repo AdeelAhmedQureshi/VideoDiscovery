@@ -17,7 +17,7 @@ def setup_ffmpeg():
         try:
             shutil.copy(ffmpeg_exe, target_path)
         except Exception as e:
-            print(f"⚠️ [Transcriber] Failed to create ffmpeg shim: {e}")
+            print(f"[Transcriber] Failed to create ffmpeg shim: {e}")
             
     # Add to PATH so Whisper can find it
     if base_dir not in os.environ["PATH"]:
@@ -40,7 +40,7 @@ def transcribe_audio(video_path):
         # 1. Extraction: Extract audio to temporary WAV file
         # Check if video exists first
         if not os.path.exists(video_path):
-            print(f"❌ [Transcriber] File not found: {video_path}")
+            print(f"[Transcriber] File not found: {video_path}")
             return {'text': "", 'segments': [], 'language': "error"}
 
         try:
@@ -57,10 +57,10 @@ def transcribe_audio(video_path):
         except ffmpeg.Error as e:
             error_msg = e.stderr.decode() if e.stderr else str(e)
             if "Output file does not contain any stream" in error_msg:
-                print(f"ℹ️ [Transcriber] Video contains no audio track. Skipping transcription.")
+                print(f"[Transcriber] Video contains no audio track. Skipping transcription.")
                 return {'text': "", 'segments': [], 'language': "silent"}
             else:
-                print(f"⚠️ [Transcriber] Audio extraction failed: {error_msg}")
+                print(f"[Transcriber] Audio extraction failed: {error_msg}")
                 return {'text': "", 'segments': [], 'language': "error"}
 
         # 2. Transcription using Whisper
@@ -76,7 +76,7 @@ def transcribe_audio(video_path):
         word_count = len(transcript_text.split()) if transcript_text else 0
         
         print(f"Detected language: {detected_lang}")
-        print(f"✅ [WHISPER] Transcribed {word_count} words")
+        print(f"[WHISPER] Transcribed {word_count} words")
         
         return {
             'text': transcript_text,
@@ -85,7 +85,7 @@ def transcribe_audio(video_path):
         }
 
     except Exception as e:
-        print(f"❌ [Transcriber] Unexpected error: {e}")
+        print(f"[Transcriber] Unexpected error: {e}")
         return {'text': "", 'segments': [], 'language': "error"}
         
     finally:
@@ -94,4 +94,4 @@ def transcribe_audio(video_path):
             try:
                 os.remove(temp_audio_path)
             except Exception as cleanup_error:
-                print(f"⚠️ [Transcriber] Failed to delete temp audio: {cleanup_error}")
+                print(f"[Transcriber] Failed to delete temp audio: {cleanup_error}")

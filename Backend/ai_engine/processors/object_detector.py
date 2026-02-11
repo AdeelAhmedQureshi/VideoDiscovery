@@ -20,7 +20,7 @@ class ObjectDetector:
         try:
             cap = cv2.VideoCapture(video_path)
             if not cap.isOpened():
-                print(f"❌ [ObjectDetector] Could not open video: {video_path}")
+                print(f"[ObjectDetector] Could not open video: {video_path}")
                 return []
 
             fps = cap.get(cv2.CAP_PROP_FPS)
@@ -54,7 +54,7 @@ class ObjectDetector:
                 frame_count += 1
         
         except Exception as e:
-            print(f"❌ [ObjectDetector] Error during processing: {e}")
+            print(f"[ObjectDetector] Error during processing: {e}")
             return [] # Return empty list on failure, don't crash
 
         finally:
@@ -62,7 +62,7 @@ class ObjectDetector:
                 cap.release()
         
         objects_list = list(detected_objects)
-        print(f"✅ [YOLO] Detected Objects: {objects_list}")
+        print(f"[YOLO] Detected Objects: {objects_list}")
         return objects_list
     
     def detect_per_frame(self, video_path: str) -> list[list[str]]:
@@ -80,7 +80,7 @@ class ObjectDetector:
         try:
             cap = cv2.VideoCapture(video_path)
             if not cap.isOpened():
-                print(f"❌ [ObjectDetector] Could not open video: {video_path}")
+                print(f"[ObjectDetector] Could not open video: {video_path}")
                 return []
 
             fps = cap.get(cv2.CAP_PROP_FPS)
@@ -116,13 +116,13 @@ class ObjectDetector:
                 frame_count += 1
         
         except Exception as e:
-            print(f"❌ [ObjectDetector] Error during processing: {e}")
+            print(f"[ObjectDetector] Error during processing: {e}")
             return []
 
         finally:
             if cap:
                 cap.release()
         
-        print(f"✅ [YOLO] Detected objects in {len(detected_per_frame)} frames")
+        print(f"[YOLO] Detected objects in {len(detected_per_frame)} frames")
         return detected_per_frame
 

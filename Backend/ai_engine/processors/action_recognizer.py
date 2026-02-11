@@ -81,7 +81,7 @@ class ActionRecognizer:
     def _load_labels(self) -> Dict:
         """Loads Kinetics-400 labels, downloading if necessary."""
         if not os.path.exists(LABELS_FILE):
-            print(f"⬇️ [ActionRecognizer] Downloading Kinetics-400 labels...")
+            print(f"[ActionRecognizer] Downloading Kinetics-400 labels...")
             try:
                 with urllib.request.urlopen(KINETICS_URL) as url:
                     data = json.loads(url.read().decode())
@@ -107,13 +107,13 @@ class ActionRecognizer:
         Runs SlowFast action recognition on the video.
         Returns Top-5 actions.
         """
-        print(f"🏃 [ActionRecognizer] Processing: {video_path}")
+        print(f"[ActionRecognizer] Processing: {video_path}")
         try:
             # 1. Load Video
             try:
                 video = EncodedVideo.from_path(video_path)
             except Exception as e:
-                print(f"❌ [ActionRecognizer] Failed to load video (av/pytorchvideo error): {e}")
+                print(f"[ActionRecognizer] Failed to load video (av/pytorchvideo error): {e}")
                 return []
 
             # 2. Select a Clip (Middle 2 seconds)
@@ -155,7 +155,7 @@ class ActionRecognizer:
                 else:
                     top_actions.append(f"Action_{idx_str}")
 
-            print(f"✅ [SLOWFAST] Top-5 Actions: {top_actions}")
+            print(f"[SLOWFAST] Top-5 Actions: {top_actions}")
             return top_actions
 
         except Exception as e:

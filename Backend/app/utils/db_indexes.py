@@ -61,8 +61,8 @@ async def create_database_indexes():
         await feedback_col.create_index("created_at")
         print("✓ Created indexes on feedback")
 
-        print("[DB Indexes] ✅ All indexes created successfully!")
+        print("[DB Indexes] All indexes created successfully!")
 
     except Exception as e:
-        print(f"[DB Indexes] ⚠️ Error creating indexes: {e}")
+        print(f"[DB Indexes] Error creating indexes: {e}")
         # Don't fail startup if index creation fails
