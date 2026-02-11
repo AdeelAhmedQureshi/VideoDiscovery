@@ -155,7 +155,7 @@ class ActionRecognizer:
                 else:
                     top_actions.append(f"Action_{idx_str}")
 
-            print(f"✅ [SLOWFAST] Actions: {top_actions}")
+            print(f"✅ [SLOWFAST] Top-5 Actions: {top_actions}")
             return top_actions
 
         except Exception as e:

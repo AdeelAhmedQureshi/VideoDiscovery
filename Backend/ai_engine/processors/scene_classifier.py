@@ -52,10 +52,10 @@ def classify_scene(video_path):
             text_features /= text_features.norm(dim=-1, keepdim=True)
             
             similarity = (100.0 * image_features @ text_features.T).softmax(dim=-1)
-            values, indices = similarity[0].topk(1)
-            
         scene_index = indices[0].item()
-        return scenes[scene_index]
+        scene = scenes[scene_index]
+        print(f"✅ [SCENE] Environment: {scene}")
+        return scene
 
     except Exception as e:
         print(f"❌ Error in Scene Classification: {e}")
