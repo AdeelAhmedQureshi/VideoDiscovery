@@ -1,5 +1,6 @@
 import os
 import requests
+import json
 from typing import Dict, List
 from dotenv import load_dotenv
 
@@ -12,8 +13,8 @@ LLM_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 class QueryGenerator:
     """
-    Generates intelligent search queries based on video AI metadata.
-    Uses Groq's fast LLM API with Llama model.
+    Intelligent Video Search Query Generator.
+    Analyzes video metadata to generate highly relevant, human-like search queries.
     """
     
     def __init__(self):
@@ -25,19 +26,18 @@ class QueryGenerator:
     
     def generate_query(self, metadata: Dict) -> Dict[str, any]:
         """
-        Generate intelligent semantic search queries from AI metadata using Groq API.
+        Generate 5 optimized search queries following strict topic priority and noise removal rules.
         
         Args:
             metadata: Dictionary containing AI analysis results
         
         Returns:
-            Dictionary with summary, intent, queries, and semantic_tags
+            Dictionary with queries list and metadata for backward compatibility.
         """
         
         # Build prompt for LLM
-        prompt = self._build_prompt(metadata)
+        prompt_content = self._build_prompt(metadata)
         
-        # Call Groq API with OpenAI-compatible format
         try:
             response = requests.post(
                 LLM_API_URL,
@@ -47,165 +47,126 @@ class QueryGenerator:
                     "messages": [
                         {
                             "role": "system",
-                            "content": """You are VideoDiscoveryAI, an intelligent video understanding and search assistant.
+                            "content": """You are an intelligent video search query generator.
 
-Your task is to convert structured video analysis metadata into meaningful semantic search queries.
+You will receive structured video metadata in JSON format.
+Your task is to analyze the entire metadata and generate short, highly relevant, and accurate search queries.
 
-The metadata describes what happens inside a video using objects, actions, scenes, speech, and emotions detected by AI models.
+Follow these rules strictly:
 
-Your goal is to THINK like a human searching on YouTube or Google.
+1. Identify the dominant topic using:
+   - Audio transcript (highest priority)
+   - Named entities (people, brands, shows, events)
+   - Scene environment
+   - Video topic
+   - Validated objects
+   - Actions (only if contextually relevant)
 
-You must:
-1. Understand the overall context and purpose of the video.
-2. Infer the main topic and user intent.
-3. Generate natural, human-like search queries (not raw keywords).
-4. Produce diverse queries that cover different phrasings.
-5. Avoid repeating words or robotic combinations of tags.
-6. Use semantic understanding, not simple keyword joining.
-7. If transcription is in urdu+hindi, queries should be in roman urdu.
+2. Remove noise:
+   - Ignore generic objects like "person"
+   - Ignore random or low-confidence actions
+   - Ignore technical metadata
+   - Do not repeat unnecessary words
 
-Guidelines:
-- Queries should sound like real search phrases people type.
-- Keep each query short (3–8 words).
-- Do not include explanations.
-- Do not repeat the same wording.
-- Do not output sentences or paragraphs.
-- Do not output anything except valid JSON.
+3. Generate short queries:
+   - EACH individual query MUST be between 5 and 8 words long (STRICT).
+   - If a query is less than 5 words, expand it with relevant context.
+   - If a query is more than 8 words, trim it while keeping core keywords.
+   - No filler words, punctuation, hashtags, or explanations.
 
-Output format (STRICT JSON only):
-{
-  "summary": "One-sentence description of the video",
-  "intent": "Main purpose of the video",
-  "queries": ["query1", "query2", "query3", "query4", "query5"],
-  "semantic_tags": ["tag1", "tag2", "tag3", "tag4", "tag5"]
-}"""
+4. Queries must:
+   - Be contextually accurate
+   - Reflect the dominant theme
+   - Be suitable for YouTube search
+   - Avoid hallucination
+
+5. Return exactly 5 optimized search queries ranked from most relevant to less relevant.
+
+Output format:
+Return only a JSON array of strings. Do not include markdown formatting like ```json or any other text."""
                         },
                         {
                             "role": "user",
-                            "content": prompt
+                            "content": f"VIDEO METADATA (JSON):\n{json.dumps(prompt_content, indent=2)}"
                         }
                     ],
-                    "temperature": 0.7,
-                    "max_tokens": 400,
-                    "response_format": {"type": "json_object"}
+                    "temperature": 0.3, # Low temperature for high precision and compliance
+                    "max_tokens": 300
                 },
                 timeout=15
             )
             
             if response.status_code == 200:
                 result = response.json()
-                generated_text = result['choices'][0]['message']['content']
+                generated_text = result['choices'][0]['message']['content'].strip()
                 
-                # Parse JSON response
-                parsed = self._parse_llm_response(generated_text)
+                # Cleanup markdown if necessary
+                if generated_text.startswith("```"):
+                    lines = generated_text.split("\n")
+                    generated_text = "\n".join(lines[1:-1]) if lines[0].startswith("```") else "\n".join(lines[1:-1])
+
+                # Parse JSON array
+                queries = json.loads(generated_text)
                 
-                print(f"[LLM/Groq] Generated semantic queries")
-                print(f"   - Summary: {parsed.get('summary', 'N/A')[:80]}...")
-                print(f"   - Intent: {parsed.get('intent', 'N/A')}")
-                print(f"   - Queries: {len(parsed.get('queries', []))} variations")
-                print(f"   - Tags: {parsed.get('semantic_tags', [])}")
+                if not isinstance(queries, list):
+                    raise ValueError("LLM did not return a JSON array")
+
+                # Wrap for backend compatibility
+                parsed = {
+                    "summary": queries[0] if queries else "Video content",
+                    "intent": "Intelligent Search",
+                    "queries": queries[:5],
+                    "semantic_tags": metadata.get('actions', []) + metadata.get('scene_environment', []),
+                    "search_query": queries[0] if queries else ""
+                }
                 
+                print(f"[LLM/Search] Generated {len(queries)} optimized search queries")
                 return parsed
             else:
-                print(f"[LLM/Groq] API Error {response.status_code}: {response.text}")
+                print(f"[LLM/Search] API Error {response.status_code}: {response.text}")
                 return self._fallback_query(metadata)
                 
         except Exception as e:
-            print(f"[LLM/Groq] Error: {e}")
+            print(f"[LLM/Search] Error: {e}")
             return self._fallback_query(metadata)
     
-    def _build_prompt(self, metadata: Dict) -> str:
-        """Build a semantic context-rich prompt for the LLM."""
+    def _build_prompt(self, metadata: Dict) -> Dict:
+        """Filter and format metadata for the LLM prompt."""
         
-        # Extract metadata
-        objects = metadata.get('visual_objects', [])
-        transcript = metadata.get('audio_transcript', '')
-        places = metadata.get('scene_environment', [])
-        topic = metadata.get('video_topic', [])
-        actions = metadata.get('actions', [])
-        demographics = metadata.get('demographics', {})
-        duration = metadata.get('video_duration', 'Unknown')
-        
-        # Format for better context
-        objects_str = ", ".join(objects[:10]) if objects else "None visible"
-        places_str = ", ".join(places[:3]) if places else "Unknown location"
-        topic_str = ", ".join(topic[:2]) if topic else "General content"
-        actions_str = ", ".join(actions[:5]) if actions else "No specific actions"
-        
-        # Demographics
-        person_desc = "Not visible"
-        if demographics.get('gender') and demographics.get('gender') != 'Unknown':
-            gender = demographics.get('gender', '')
-            age = demographics.get('age', '')
-            emotion = demographics.get('emotion', '')
-            person_desc = f"{gender}, ~{age} years old, {emotion} expression"
-        
-        # Transcript handling
-        transcript_preview = transcript[:400] if transcript else "No speech detected"
-        
-        prompt = f"""VIDEO METADATA:
-
-Analyze this video and generate semantic search queries that real users would type when looking for this content."""
-
-        return prompt
-    
-    def _parse_llm_response(self, text: str) -> Dict:
-        """Parse JSON response from LLM."""
-        
-        import json
-        
-        try:
-            # Try to parse as JSON
-            result = json.loads(text)
-            
-            # Validate required fields
-            if not isinstance(result.get('queries'), list):
-                result['queries'] = []
-            if not isinstance(result.get('semantic_tags'), list):
-                result['semantic_tags'] = []
-            
-            # Ensure we have the main search query (use first query)
-            result['search_query'] = result['queries'][0] if result.get('queries') else result.get('summary', '')
-            
-            return result
-            
-        except json.JSONDecodeError:
-            print(f"[LLM] Failed to parse JSON, using fallback")
-            # Return minimal structure if JSON parsing fails
-            return {
-                "summary": "Video content",
-                "intent": "General",
-                "queries": [],
-                "semantic_tags": [],
-                "search_query": ""
-            }
-    
-    def _fallback_query(self, metadata: Dict) -> Dict:
-        """Generate a simple fallback query if LLM fails."""
-        
-        objects = metadata.get('visual_objects', [])[:3]
-        places = metadata.get('scene_environment', [])[:2]
-        actions = metadata.get('actions', [])[:2]
-        
-        # Simple concatenation for fallback
-        query_parts = objects + places + actions
-        main_query = " ".join(query_parts[:5])
-        
-        # Generate basic variations
-        queries = [
-            main_query,
-            " ".join(objects + actions) if objects and actions else main_query,
-            " ".join(places + actions) if places and actions else main_query
-        ]
-        
-        # Remove duplicates and empty
-        queries = list(dict.fromkeys([q for q in queries if q.strip()]))[:5]
+        # Filter common noise from objects
+        noise_to_ignore = ["person", "clothing", "human", "face"]
+        objects = [obj for obj in metadata.get('visual_objects', metadata.get('validated_objects', [])) 
+                  if obj.lower() not in noise_to_ignore]
         
         return {
-            "summary": f"Video featuring {', '.join(objects[:3])}" if objects else "Video content",
-            "intent": "General video content",
-            "queries": queries if queries else [main_query],
-            "semantic_tags": (objects + actions)[:5],
-            "search_query": main_query
+            "validated_objects": objects[:10],
+            "audio_transcript": metadata.get('audio_transcript', '')[:500],
+            "scene_environment": metadata.get('scene_environment', [])[:3],
+            "video_topic": metadata.get('video_topic', [])[:2],
+            "demographics": metadata.get('demographics', {}),
+            "actions": metadata.get('actions', [])[:5]
+        }
+    
+    def _fallback_query(self, metadata: Dict) -> Dict:
+        """Generate a basic fallback query array if LLM fails."""
+        
+        objects = metadata.get('visual_objects', metadata.get('validated_objects', []))[:3]
+        places = metadata.get('scene_environment', [])[:2]
+        
+        main_query = " ".join(objects + places)
+        queries = [
+            f"Video of {main_query}",
+            f"Show me {', '.join(objects)}",
+            f"{' '.join(places)} video",
+            f"Clip featuring {', '.join(objects)}",
+            f"Search for {main_query}"
+        ]
+        
+        return {
+            "summary": "AI analyzed video content",
+            "intent": "Fallback Search",
+            "queries": queries,
+            "semantic_tags": objects + places,
+            "search_query": queries[0]
         }
 

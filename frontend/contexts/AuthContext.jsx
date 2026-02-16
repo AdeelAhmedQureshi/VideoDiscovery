@@ -169,26 +169,26 @@ export const AuthProvider = ({ children }) => {
   };
 
   const refreshUser = async () => {
-  try {
-    const token = localStorage.getItem("token");
+    try {
+      const token = localStorage.getItem("token");
 
-    const res = await fetch("http://localhost:8000/api/users/me", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      const res = await fetch("http://localhost:8000/api/users/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) throw new Error("Failed to refresh user");
+      if (!res.ok) throw new Error("Failed to refresh user");
 
-    const userData = data?.data || data;
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
-  } catch (err) {
-    console.error("Refresh user error:", err);
-  }
-};
+      const userData = data?.data || data;
+      setUser(userData);
+      localStorage.setItem("user", JSON.stringify(userData));
+    } catch (err) {
+      console.error("Refresh user error:", err);
+    }
+  };
 
   return (
     <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, refreshUser, sendReactivationCode, verifyReactivation }}>
