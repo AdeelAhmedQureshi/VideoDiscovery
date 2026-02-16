@@ -122,7 +122,7 @@ export function RecommendationsSection() {
                   alt={video.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                
+
                 {/* Play overlay */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <div className="w-14 h-14 rounded-full bg-cyan-500 flex items-center justify-center shadow-lg">

@@ -233,7 +233,7 @@ export default function Account() {
       const token = localStorage.getItem("token");
       const res = await fetch("http://localhost:8000/api/users/update-password", {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`  },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         credentials: "include",
         body: JSON.stringify({
           current_password: currentPassword,
