@@ -38,11 +38,6 @@ const VideoCard = ({ video, index }) => {
                 delay: index * 0.1,
                 ease: [0.22, 1, 0.36, 1]
             }}
-            whileHover={{
-                y: -8,
-                scale: 1.02,
-                transition: { duration: 0.3 }
-            }}
             className="flex gap-8 group cursor-pointer"
             onClick={handleClick}
             onMouseEnter={() => setIsHovered(true)}
