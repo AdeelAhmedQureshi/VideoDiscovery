@@ -1,11 +1,14 @@
 import { useState, useCallback } from "react";
 import { Upload, FileVideo, X, Loader2, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { motion } from "framer-motion";
+import Loading from "./Loading";
 
 export function UploadSection() {
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isUploadComplete, setIsUploadComplete] = useState(false);
+  const [videoId, setVideoId] = useState(null);
   const [popup, setPopup] = useState({
     open: false,
     type: "info",
@@ -40,6 +43,10 @@ export function UploadSection() {
       title,
       message
     });
+  };
+
+  const handlePopupClose = () => {
+    setPopup({ open: false, type: "info", title: "", message: "" });
   };
 
   const validateVideoFile = (file) => {
@@ -93,7 +100,7 @@ export function UploadSection() {
 
     const droppedFile = e.dataTransfer.files[0];
     if (!droppedFile) return;
-    
+
 
     try {
       const validFile = await validateVideoFile(droppedFile);
@@ -108,85 +115,85 @@ export function UploadSection() {
   };
 
   const handleAnalyze = async () => {
-  if (!file) return;
-  setIsAnalyzing(true);
+    if (!file) return;
+    setIsAnalyzing(true);
 
-  try {
-    const token = localStorage.getItem("token");
+    try {
+      const token = localStorage.getItem("token");
 
-    if (!token) {
+      if (!token) {
+        showPopup({
+          type: "error",
+          title: "Session expired",
+          message: "Please log in again to continue."
+        });
+        return;
+      }
+
+      console.log(file);
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("title", "My Video");
+      formData.append("intelligent_query", "dummy query");
+      //console.log("Token being sent:", token);
+
+
+      const response = await fetch(
+        "http://localhost:8000/api/videos/upload",
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`, // THIS IS IMPORTANT 🔥 THIS WAS MISSING
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+
+        // Check if it's a duplicate video message (not an error)
+        const errorMessage = errorData.detail || errorData.message || "Upload failed";
+
+        if (
+          errorMessage.toLowerCase().includes("already uploaded") ||
+          errorMessage.toLowerCase().includes("duplicate") ||
+          errorMessage.toLowerCase().includes("exists") ||
+          errorMessage.includes("id")
+        ) {
+          showPopup({
+            type: "info",
+            title: "Already uploaded",
+            message: errorMessage
+          });
+          setIsAnalyzing(false);
+          return;
+        } else {
+          throw new Error(errorMessage);
+        }
+      }
+
+      const data = await response.json();
+      console.log("Upload success:", data);
+
+      // Store video ID and directly start loading
+      setVideoId(data.video_id || data.id);
+      setIsUploadComplete(true);
+
+      // Notify dashboard to refresh stats without manual reload
+      window.dispatchEvent(new Event("videoUploaded"));
+    } catch (err) {
+      console.error(err);
       showPopup({
         type: "error",
-        title: "Session expired",
-        message: "Please log in again to continue."
+        title: "Upload failed",
+        message: err.message
       });
-      return;
+    } finally {
+      setIsAnalyzing(false);
     }
-
-    console.log(file); 
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("title", "My Video");
-    formData.append("intelligent_query", "dummy query");
-    //console.log("Token being sent:", token);
-
-
-    const response = await fetch(
-      "http://localhost:8000/api/videos/upload",
-      {
-        method: "POST",
-        headers: {
-           "Authorization": `Bearer ${token}`, // THIS IS IMPORTANT 🔥 THIS WAS MISSING
-        },
-        body: formData,
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      
-      // Check if it's a duplicate video message (not an error)
-      const errorMessage = errorData.detail || errorData.message || "Upload failed";
-      
-      if (
-        errorMessage.toLowerCase().includes("already uploaded") ||
-        errorMessage.toLowerCase().includes("duplicate") ||
-        errorMessage.toLowerCase().includes("exists") ||
-        errorMessage.includes("id")
-      ) {
-        showPopup({
-          type: "info",
-          title: "Already uploaded",
-          message: errorMessage
-        });
-        setIsAnalyzing(false);
-        return;
-      } else {
-        throw new Error(errorMessage);
-      }
-    }
-
-    const data = await response.json();
-    showPopup({
-      type: "success",
-      title: "Upload complete",
-      message: "Video uploaded successfully."
-    });
-    console.log("Upload success:", data);
-    // Notify dashboard to refresh stats without manual reload
-    window.dispatchEvent(new Event("videoUploaded"));
-  } catch (err) {
-    console.error(err);
-    showPopup({
-      type: "error",
-      title: "Upload failed",
-      message: err.message
-    });
-  } finally {
-    setIsAnalyzing(false);
-  }
-};
+  };
 
 
   const containerVariants = {
@@ -316,7 +323,7 @@ export function UploadSection() {
                 ) : (
                   <>
                     <Upload className="w-5 h-5" />
-                     Upload  Video
+                    Upload  Video
                   </>
                 )}
               </button>
@@ -358,7 +365,7 @@ export function UploadSection() {
               <p className="text-slate-700 font-medium mb-4">{popup.message}</p>
               <div className="flex justify-end">
                 <button
-                  onClick={() => setPopup({ open: false, type: "info", title: "", message: "" })}
+                  onClick={handlePopupClose}
                   className="px-5 py-2.5 bg-gradient-to-r from-slate-900 to-slate-700 text-white font-bold rounded-2xl hover:from-slate-800 hover:to-slate-600 transition-all shadow-lg"
                 >
                   OK
@@ -368,6 +375,9 @@ export function UploadSection() {
           </div>
         </div>
       )}
+
+      {/* Loading Component */}
+      <Loading videoId={videoId} isUploadComplete={isUploadComplete} />
     </section>
   );
 }
