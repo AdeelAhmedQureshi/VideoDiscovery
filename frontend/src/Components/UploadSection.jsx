@@ -1,11 +1,14 @@
 import { useState, useCallback } from "react";
 import { Upload, FileVideo, X, Loader2, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { motion } from "framer-motion";
+import Loading from "./Loading";
 
 export function UploadSection() {
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isUploadComplete, setIsUploadComplete] = useState(false);
+  const [videoId, setVideoId] = useState(null);
   const [popup, setPopup] = useState({
     open: false,
     type: "info",
@@ -40,6 +43,10 @@ export function UploadSection() {
       title,
       message
     });
+  };
+
+  const handlePopupClose = () => {
+    setPopup({ open: false, type: "info", title: "", message: "" });
   };
 
   const validateVideoFile = (file) => {
@@ -168,12 +175,12 @@ export function UploadSection() {
       }
 
       const data = await response.json();
-      showPopup({
-        type: "success",
-        title: "Upload complete",
-        message: "Video uploaded successfully."
-      });
       console.log("Upload success:", data);
+
+      // Store video ID and directly start loading
+      setVideoId(data.video_id || data.id);
+      setIsUploadComplete(true);
+
       // Notify dashboard to refresh stats without manual reload
       window.dispatchEvent(new Event("videoUploaded"));
     } catch (err) {
@@ -358,7 +365,7 @@ export function UploadSection() {
               <p className="text-slate-700 font-medium mb-4">{popup.message}</p>
               <div className="flex justify-end">
                 <button
-                  onClick={() => setPopup({ open: false, type: "info", title: "", message: "" })}
+                  onClick={handlePopupClose}
                   className="px-5 py-2.5 bg-gradient-to-r from-slate-900 to-slate-700 text-white font-bold rounded-2xl hover:from-slate-800 hover:to-slate-600 transition-all shadow-lg"
                 >
                   OK
@@ -368,6 +375,9 @@ export function UploadSection() {
           </div>
         </div>
       )}
+
+      {/* Loading Component */}
+      <Loading videoId={videoId} isUploadComplete={isUploadComplete} />
     </section>
   );
 }
