@@ -16,6 +16,7 @@ import ResetPassword from "../pages/ResetPassword";
 import Account from "../pages/Account";
 import History from "../pages/History";
 import NotFound from "../pages/NotFound";
+import Recommendation from "./Components/VideoRecommendation.jsx";
 const ScrollToHash = () => {
   const location = useLocation();
 
@@ -93,6 +94,14 @@ export default function App() {
                 element={
                   <ProtectedRoute>
                     <History />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/recommendations/:videoId"
+                element={
+                  <ProtectedRoute>
+                    <Recommendation />
                   </ProtectedRoute>
                 }
               />

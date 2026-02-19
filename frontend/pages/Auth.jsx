@@ -47,7 +47,7 @@ export default function Auth() {
   };
 
   const handleStartReactivation = async () => {
-    const targetEmail = email || reactivateEmail;
+    const targetEmail = reactivateEmail || email;
     if (!targetEmail) {
       setReactivateError('Please enter your email first.');
       setReactivateOpen(true);
