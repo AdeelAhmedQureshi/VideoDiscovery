@@ -340,9 +340,9 @@ export default function History() {
                                 )}
                             </button>
 
-                            <div className="relative p-7 sm:p-8">
-                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 mb-6">
-                                    <div className="flex items-start gap-5 flex-1">
+                            <div className="relative p-7 sm:p-8 pt-16">
+                                <div className="flex flex-col gap-6 mb-6">
+                                    <div className="flex items-start gap-5 flex-1 pr-16">
 
                                         <div className="p-3.5 rounded-xl bg-gradient-to-br from-cyan-100 to-indigo-100 text-cyan-600 shrink-0 border border-cyan-200 shadow">
                                             <Video className="w-6 h-6" />
@@ -361,20 +361,17 @@ export default function History() {
                                                     <Clock className="w-4 h-4" />
                                                     {item.duration}
                                                 </span>
+                                                
+                                                {/* Rating - Show if rating exists */}
+                                                {item.rating && (
+                                                    <span className="flex items-center gap-1.5 bg-gradient-to-br from-yellow-100 to-orange-100 border border-yellow-300 px-3 py-1.5 rounded-full">
+                                                        <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                                                        <span className="font-bold text-yellow-600">{item.rating}</span>
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* Rating - Show if rating exists */}
-                                    {item.rating && (
-                                    <div className="bg-gradient-to-br from-yellow-100 to-orange-100 border border-yellow-300 px-4 py-3 rounded-xl text-center min-w-max">
-                                        <p className="text-yellow-600 font-bold text-sm flex items-center gap-1 justify-center">
-                                            <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" />
-                                            {item.rating}
-                                        </p>
-                                        <p className="text-xs text-yellow-600/70 mt-1">Rating</p>
-                                    </div>
-                                    )}
                                 </div>
 
                                 <div className="my-6 h-px bg-gradient-to-r from-gray-200 via-cyan-200 to-gray-200 w-full" />

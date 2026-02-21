@@ -41,7 +41,6 @@ export function UploadSection() {
   const handleRemoveFile = () => setFile(null);
 
   const showPopup = ({ type = "success", title, message, showTwoButtons = false, duplicateVideoId = null }) => {
-    console.log("Setting popup state:", { type, title, message, showTwoButtons, duplicateVideoId });
     setPopup({
       open: true,
       type,
@@ -170,12 +169,6 @@ export function UploadSection() {
 
         // Check if it's a duplicate video message (not an error)
         const errorMessage = errorData.detail || errorData.message || "Upload failed";
-        
-        console.log("Error response:", errorMessage);
-        console.log("Error message type:", typeof errorMessage);
-        console.log("Lowercase check:", errorMessage.toLowerCase());
-        console.log("Includes 'already':", errorMessage.toLowerCase().includes("already"));
-        console.log("Includes 'uploaded':", errorMessage.toLowerCase().includes("uploaded"));
 
         if (
           errorMessage.toLowerCase().includes("already") &&
@@ -184,9 +177,6 @@ export function UploadSection() {
           // Extract video ID from error message (e.g., "Video ID: vca818c7e8a1e")
           const videoIdMatch = errorMessage.match(/Video ID[:\s]+([a-zA-Z0-9]+)/);
           const duplicateVideoId = videoIdMatch ? videoIdMatch[1] : null;
-
-          console.log("Duplicate detected! Video ID:", duplicateVideoId);
-          console.log("ShowTwoButtons: true");
 
           showPopup({
             type: "info",
@@ -391,7 +381,6 @@ export function UploadSection() {
 
             <div className="px-6 py-5 bg-white/90">
               <p className="text-slate-700 font-medium mb-4">{popup.message}</p>
-              {console.log("Rendering popup buttons. showTwoButtons:", popup.showTwoButtons)}
               <div className="flex justify-end gap-3">
                 {popup.showTwoButtons ? (
                   <>
