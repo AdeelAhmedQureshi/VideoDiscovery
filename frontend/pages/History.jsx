@@ -10,38 +10,97 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 export default function History() {
-    const historyData = [
-        {
-            id: 1,
-            title: "Machine Learning Basics",
-            date: "12 Jan 2026",
-            recommendations: 5,
-            feedback: "Very helpful content, explained clearly.",
-            duration: "12:05",
-            rating: 4.8,
-        },
-        {
-            id: 2,
-            title: "React Hooks Explained",
-            date: "20 Jan 2026",
-            recommendations: 3,
-            feedback: null,
-            duration: "08:30",
-            rating: 4.5,
-        },
-        {
-            id: 3,
-            title: "AI in Healthcare",
-            date: "02 Feb 2026",
-            recommendations: 7,
-            feedback: "Excellent recommendations on diagnostics.",
-            duration: "24:15",
-            rating: 4.9,
-        },
-    ];
     const navigate = useNavigate();
+    const [historyData, setHistoryData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        const fetchHistoryData = async () => {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                setError("Not signed in. Please log in to view history.");
+                setLoading(false);
+                return;
+            }
+
+            try {
+                // Fetch user's video history with recommendations and feedback
+                const historyRes = await fetch("http://localhost:8000/api/videos/user/history", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    credentials: "include",
+                });
+
+                if (!historyRes.ok) {
+                    if (historyRes.status === 401 || historyRes.status === 403) {
+                        setError("Session expired. Please sign in again.");
+                    } else {
+                        setError("Failed to load history. Try again later.");
+                    }
+                    setLoading(false);
+                    return;
+                }
+
+                const historyData = await historyRes.json();
+                const history = historyData.history || [];
+
+                // Transform history to match the display format
+                const formattedData = history.map((item) => {
+                    // Format date
+                    const uploadDate = item.uploaded_at 
+                        ? new Date(item.uploaded_at).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                        })
+                        : "N/A";
+
+                    // Format duration (convert seconds to HH:MM:SS or MM:SS)
+                    const formatDuration = (seconds) => {
+                        if (!seconds || seconds === 0) return "N/A";
+                        
+                        const hours = Math.floor(seconds / 3600);
+                        const mins = Math.floor((seconds % 3600) / 60);
+                        const secs = Math.floor(seconds % 60);
+                        
+                        if (hours > 0) {
+                            return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                        }
+                        return `${mins}:${secs.toString().padStart(2, '0')}`;
+                    };
+
+                    return {
+                        id: item.video_id,
+                        title: item.file_name || "Untitled Video",
+                        query: item.intelligent_query || null,
+                        date: uploadDate,
+                        recommendations: item.recommendation_count || 0,
+                        feedback: item.feedback?.comment || null,
+                        rating: item.feedback?.rating || null,
+                        duration: formatDuration(item.video_duration),
+                        file_url: item.file_url,
+                        thumbnail_url: item.thumbnail_url,
+                    };
+                });
+
+                setHistoryData(formattedData);
+                setLoading(false);
+            } catch (e) {
+                console.error("Error fetching history:", e);
+                setError("Network error while loading history.");
+                setLoading(false);
+            }
+        };
+
+        fetchHistoryData();
+    }, []);
 
     const containerVariants = {
         hidden: { opacity: 0, y: 14 },
@@ -135,7 +194,37 @@ export default function History() {
                     </button>
                 </div>
 
+                {/* Loading State */}
+                {loading && (
+                    <div className="text-center py-16">
+                        <div className="inline-block w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="mt-4 text-gray-600">Loading your history...</p>
+                    </div>
+                )}
+
+                {/* Error State */}
+                {error && !loading && (
+                    <div className="text-center py-16">
+                        <div className="inline-block p-4 rounded-full bg-red-100 mb-4">
+                            <MessageSquare className="w-8 h-8 text-red-500" />
+                        </div>
+                        <p className="text-red-600 font-semibold">{error}</p>
+                    </div>
+                )}
+
+                {/* Empty State */}
+                {!loading && !error && historyData.length === 0 && (
+                    <div className="text-center py-16">
+                        <div className="inline-block p-4 rounded-full bg-gray-100 mb-4">
+                            <Video className="w-8 h-8 text-gray-400" />
+                        </div>
+                        <p className="text-gray-600 font-semibold">No videos uploaded yet</p>
+                        <p className="text-gray-500 text-sm mt-2">Upload your first video to see your history</p>
+                    </div>
+                )}
+
                 {/* Cards */}
+                {!loading && !error && historyData.length > 0 && (
                 <div className="grid gap-6">
                     {historyData.map((item, index) => (
                         <div
@@ -173,14 +262,16 @@ export default function History() {
                                         </div>
                                     </div>
 
-                                    {/* Rating */}
+                                    {/* Rating - Show if rating exists */}
+                                    {item.rating && (
                                     <div className="bg-gradient-to-br from-yellow-100 to-orange-100 border border-yellow-300 px-4 py-3 rounded-xl text-center min-w-max">
-                                        <p className="text-yellow-600 font-bold text-lg flex items-center gap-1">
+                                        <p className="text-yellow-600 font-bold text-sm flex items-center gap-1 justify-center">
                                             <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" />
                                             {item.rating}
                                         </p>
                                         <p className="text-xs text-yellow-600/70 mt-1">Rating</p>
                                     </div>
+                                    )}
                                 </div>
 
                                 <div className="my-6 h-px bg-gradient-to-r from-gray-200 via-cyan-200 to-gray-200 w-full" />
@@ -232,6 +323,7 @@ export default function History() {
                         </div>
                     ))}
                 </div>
+                )}
             </div>
 
             <style>{`
