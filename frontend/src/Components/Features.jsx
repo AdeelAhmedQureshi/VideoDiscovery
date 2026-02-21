@@ -65,10 +65,10 @@ export function Features() {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.65,
+        duration: 0.4,
         ease: "easeOut",
-        delayChildren: 0.05,
-        staggerChildren: 0.1,
+        delayChildren: 0.02,
+        staggerChildren: 0.06,
       },
     },
   };
@@ -79,7 +79,7 @@ export function Features() {
       opacity: 1,
       y: 0,
       filter: "blur(0px)",
-      transition: { duration: 0.6, ease: "easeOut" },
+      transition: { duration: 0.4, ease: "easeOut" },
     },
   };
 
@@ -90,17 +90,17 @@ export function Features() {
       y: 0,
       scale: 1,
       filter: "blur(0px)",
-      transition: { duration: 0.8, ease: "easeOut" },
+      transition: { duration: 0.5, ease: "easeOut" },
     },
   };
 
   return (
     <section
       id="features-section"
-      className="py-16 sm:py-20 px-5 sm:px-6 bg-gradient-to-b from-white to-gray-50 scroll-mt-24"
+      className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white to-gray-50 scroll-mt-24"
     >
       <motion.div
-        className="text-center mb-16"
+        className="text-center mb-12 sm:mb-16"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.7 }}
@@ -108,26 +108,26 @@ export function Features() {
       >
         <div className="inline-block relative mb-4">
           <motion.h1
-            className="inline-block text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
+            className="inline-block text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-300 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
             variants={headingVariants}
           >
             Features
           </motion.h1>
           <motion.div
-            className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
+            className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-300 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
             variants={headingVariants}
           ></motion.div>
         </div>
         <motion.p
-          className="text-base sm:text-lg text-gray-500 mt-4 sm:mt-6"
+          className="text-sm sm:text-base md:text-lg text-gray-500 mt-3 sm:mt-4 md:mt-6 px-4"
           variants={headingVariants}
         >
           Powerful tools for advanced video discovery and analysis
         </motion.p>
       </motion.div>
-      <div className="container mx-auto max-w-7xl cursor-pointer">
+      <div className="container mx-auto max-w-7xl">
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.6 }}
@@ -138,49 +138,50 @@ export function Features() {
               key={index}
               className={`
                 relative overflow-hidden
-                p-8 bg-white rounded-2xl
+                p-5 sm:p-6 md:p-8 bg-white rounded-xl sm:rounded-2xl
                 border border-gray-100
                 shadow-sm
-                transition-all duration-500 ease-out
+                transition-all duration-300 ease-out
                 ${feature.hoverBorder}
                 hover:shadow-lg ${feature.hoverShadow}
                 group
+                cursor-pointer
               `}
               variants={cardVariants}
               whileHover={{ y: -6, scale: 1.02, boxShadow: "0 18px 40px -22px rgba(15, 23, 42, 0.35)" }}
-              transition={{ type: "spring", stiffness: 220, damping: 18 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20 }}
             >
               <motion.div
                 className="pointer-events-none absolute -inset-10 rounded-2xl bg-[radial-gradient(600px_circle_at_0%_0%,rgba(255,255,255,0.85),rgba(255,255,255,0))] opacity-0"
                 initial={false}
                 animate={{ opacity: 0 }}
                 whileHover={{ opacity: 1, x: 18, y: 12 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
               />
               <div
                 className={`
-                  w-14 h-14 rounded-2xl
+                  w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl
                   ${feature.iconBg}
                   flex items-center justify-center
-                  mb-5
-                  transition-all duration-300
+                  mb-4 sm:mb-5
+                  transition-all duration-200
                 `}
               >
                 <motion.div
                   whileHover={{ rotate: 6, scale: 1.08 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 16 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 18 }}
                 >
                   <feature.icon
-                    className={`w-7 h-7 ${feature.iconColor}`}
+                    className={`w-6 h-6 sm:w-7 sm:h-7 ${feature.iconColor}`}
                   />
                 </motion.div>
               </div>
 
-              <h3 className="text-xl font-semibold mb-3 text-gray-900 group-hover:text-gray-950 transition-colors duration-300">
+              <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 text-gray-900 group-hover:text-gray-950 transition-colors duration-200">
                 {feature.title}
               </h3>
 
-              <p className="text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors">
+              <p className="text-sm sm:text-base text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors duration-200">
                 {feature.description}
               </p>
             </motion.div>
