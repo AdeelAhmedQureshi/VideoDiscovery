@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Form
-from ..database import videos_collection
+from ..database import videos_collection, recommendations_collection, feedback_collection
 from ..utils.helper_functions import generate_id
 from ..utils.jwt_handler import get_current_user
 from ..services.cloudinary_service import CloudinaryService
@@ -281,3 +281,72 @@ async def get_user_videos(
             status_code=500,
             detail=f"An error occurred while fetching videos: {str(e)}"
         )
+
+
+@router.get("/user/history")
+async def get_user_history(
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Get complete history of user's videos with recommendations and feedback.
+
+    Args:
+        current_user: Authenticated user information
+
+    Returns:
+        List of videos with recommendation count and feedback for each
+    """
+    try:
+        user_id = current_user.get("user_id")
+
+        # Fetch all videos for this user, sorted by upload date (newest first)
+        cursor = videos_collection().find({"user_id": user_id}).sort("uploaded_at", -1)
+        videos = await cursor.to_list(length=None)
+
+        # Format response with additional data
+        history_list = []
+        for video in videos:
+            video_id = video.get("video_id")
+
+            # Count recommendations for this video
+            recommendation_count = await recommendations_collection().count_documents(
+                {"uploaded_video_id": video_id}
+            )
+
+            # Get feedback for this video
+            feedback_doc = await feedback_collection().find_one({
+                "video_id": video_id,
+                "user_id": user_id
+            })
+
+            history_list.append({
+                "video_id": video_id,
+                "file_name": video.get("file_name"),
+                "file_url": video.get("file_url"),
+                "intelligent_query": video.get("intelligent_query"),
+                "video_format": video.get("video_format"),
+                "video_duration": video.get("video_duration"),
+                "uploaded_at": video.get("uploaded_at"),
+                "thumbnail_url": CloudinaryService.get_thumbnail_url(
+                    video.get("cloudinary_public_id")
+                ) if video.get("cloudinary_public_id") else None,
+                "recommendation_count": recommendation_count,
+                "feedback": {
+                    "rating": feedback_doc.get("rating") if feedback_doc else None,
+                    "comment": feedback_doc.get("comment") if feedback_doc else None,
+                    "created_at": feedback_doc.get("created_at") if feedback_doc else None
+                } if feedback_doc else None
+            })
+
+        return {
+            "total_videos": len(history_list),
+            "history": history_list
+        }
+
+    except Exception as e:
+        print(f"Error fetching user history: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while fetching history: {str(e)}"
+        )
+
