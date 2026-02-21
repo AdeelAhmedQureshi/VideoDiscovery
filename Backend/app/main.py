@@ -7,6 +7,7 @@ from .routes.health import router as health_router
 from .routes.video_routes import router as video_router
 from .routes.feedback_routes import router as feedback_router
 from .routes.user_routes import router as user_router
+from .routes.recommendation_routes import router as recommendation_router
 from .utils.db_indexes import create_database_indexes
 
 
@@ -69,6 +70,7 @@ app.include_router(health_router, prefix="/api")
 app.include_router(user_router, prefix="/api/users")
 app.include_router(video_router, prefix="/api/videos")
 app.include_router(feedback_router, prefix="/api/feedback")
+app.include_router(recommendation_router, prefix="/api/recommendations")
 
 
 @app.get("/")
@@ -78,3 +80,38 @@ async def root():
         "docs_url": "/docs",
         "status": "online"
     }
+
+
+# TEMPORARY DEBUG ENDPOINT — remove after debugging
+@app.get("/api/debug/recs")
+async def debug_recs():
+    from .database import videos_collection, recommendations_collection
+    videos = await videos_collection().find({}).to_list(length=50)
+    recs = await recommendations_collection().find({}).to_list(length=50)
+    
+    video_list = []
+    for v in videos:
+        video_list.append({
+            "_id": str(v.get("_id", "")),
+            "status": v.get("status", ""),
+            "file_name": v.get("file_name", ""),
+            "user_id": v.get("user_id", ""),
+            "has_search_queries": bool(v.get("ai_metadata", {}).get("search_queries", [])),
+            "search_queries": v.get("ai_metadata", {}).get("search_queries", [])[:3],
+        })
+    
+    rec_list = []
+    for r in recs:
+        rec_list.append({
+            "uploaded_video_id": r.get("uploaded_video_id", ""),
+            "title": r.get("title", "")[:60],
+            "video_link": r.get("video_link", "")[:80],
+        })
+    
+    return {
+        "total_videos": len(video_list),
+        "videos": video_list,
+        "total_recommendations": len(rec_list),
+        "recommendations": rec_list,
+    }
+

@@ -143,72 +143,91 @@ export default function Recommendation() {
     const [loading, setLoading] = useState(true);
     const [recommendations, setRecommendations] = useState([]);
     const [uploadedVideo, setUploadedVideo] = useState(null);
+    const [statusMessage, setStatusMessage] = useState("");
 
     useEffect(() => {
-        fetchRecommendations();
-    }, [videoId]);
+        let retryCount = 0;
+        const maxRetries = 12; // retry up to 12 times (60 seconds total)
+        let timeoutId = null;
+        let cancelled = false;
 
-    const fetchRecommendations = async () => {
-        setLoading(true);
-        try {
-            const token = localStorage.getItem("token");
+        const fetchRecommendations = async () => {
+            if (cancelled) return;
+            console.log(`[Recommendation] Fetching for videoId=${videoId}, attempt ${retryCount + 1}/${maxRetries}`);
+            try {
+                const token = localStorage.getItem("token");
+                console.log(`[Recommendation] Token exists: ${!!token}, value: ${token ? token.substring(0, 20) + '...' : 'NULL'}`);
 
-            const response = await fetch(
-                `http://localhost:8000/api/recommendations/${videoId}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                const response = await fetch(
+                    `http://localhost:8000/api/recommendations/${videoId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                        credentials: "include",
+                    }
+                );
+
+                console.log(`[Recommendation] Response status: ${response.status}`);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`[Recommendation] Error response:`, errorText);
+                    throw new Error(`Failed to fetch recommendations: ${response.status}`);
                 }
-            );
 
-            if (!response.ok) throw new Error("Failed to fetch recommendations");
+                const data = await response.json();
+                console.log(`[Recommendation] API response:`, JSON.stringify(data, null, 2));
+                setUploadedVideo(data.uploaded_video || null);
 
-            const data = await response.json();
-            setUploadedVideo(data.uploaded_video || null);
-            setRecommendations(data.recommendations || []);
-        } catch (error) {
-            console.error("Error fetching recommendations:", error);
-            // Mock data with only verified working videos
-            setRecommendations([
-                {
-                    id: 1,
-                    title: "Pakistan vs India - Most Memorable Moments in Cricket History",
-                    thumbnail: "https://i.ytimg.com/vi/0KCWqnldEag/maxresdefault.jpg",
-                    channel: "ICC Cricket",
-                    views: "12M",
-                    uploadedAt: "2 years ago",
-                    duration: "10:45",
-                    similarity: 0.95,
-                    url: "https://www.youtube.com/watch?v=0KCWqnldEag"
-                },
-                {
-                    id: 2,
-                    title: "Babar Azam 196 - Best Innings Highlights",
-                    thumbnail: "https://i.ytimg.com/vi/v4tl9bD8tQI/maxresdefault.jpg",
-                    channel: "Cricket Australia",
-                    views: "5.2M",
-                    uploadedAt: "6 months ago",
-                    duration: "15:30",
-                    similarity: 0.92,
-                    url: "https://www.youtube.com/watch?v=v4tl9bD8tQI"
-                },
-                {
-                    id: 3,
-                    title: "Pakistan Super League 2024 - Best Moments",
-                    thumbnail: "https://i.ytimg.com/vi/rW_fwcmyIfk/maxresdefault.jpg",
-                    channel: "PSL Official",
-                    views: "1.5M",
-                    uploadedAt: "2 weeks ago",
-                    duration: "18:20",
-                    similarity: 0.89,
-                    url: "https://www.youtube.com/watch?v=rW_fwcmyIfk"
-                },
-            ]);
-        } finally {
-            setTimeout(() => setLoading(false), 1200);
-        }
-    };
+                const recs = data.recommendations || [];
+                const message = data.message || "";
+                console.log(`[Recommendation] Recs count: ${recs.length}, message: "${message}"`);
+
+                if (recs.length > 0) {
+                    // We got recommendations — show them
+                    setRecommendations(recs);
+                    setStatusMessage("");
+                    setLoading(false);
+                } else if (
+                    retryCount < maxRetries &&
+                    (message.toLowerCase().includes("still") ||
+                        message.toLowerCase().includes("processing") ||
+                        message.toLowerCase().includes("no search queries") ||
+                        recs.length === 0)
+                ) {
+                    // Video still processing or no recs found yet — retry
+                    retryCount++;
+                    setStatusMessage(
+                        message || `Waiting for AI analysis to complete... (attempt ${retryCount}/${maxRetries})`
+                    );
+                    timeoutId = setTimeout(fetchRecommendations, 5000);
+                } else {
+                    // Max retries reached or final empty
+                    setRecommendations([]);
+                    setStatusMessage("");
+                    setLoading(false);
+                }
+            } catch (error) {
+                console.error("[Recommendation] Error:", error);
+                if (retryCount < maxRetries) {
+                    retryCount++;
+                    setStatusMessage(`Connecting to server... (attempt ${retryCount}/${maxRetries})`);
+                    timeoutId = setTimeout(fetchRecommendations, 5000);
+                } else {
+                    setRecommendations([]);
+                    setStatusMessage("");
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchRecommendations();
+
+        return () => {
+            cancelled = true;
+            if (timeoutId) clearTimeout(timeoutId);
+        };
+    }, [videoId]);
 
     const headingVariants = {
         hidden: { opacity: 0, y: 12, filter: "blur(4px)" },
@@ -279,7 +298,7 @@ export default function Recommendation() {
                                 className="inline-block text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
                                 variants={headingVariants}
                             >
-                                 Video Recommendations
+                                Video Recommendations
                             </motion.h1>
                             <motion.div
                                 className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
@@ -300,6 +319,14 @@ export default function Recommendation() {
                             {[...Array(3)].map((_, i) => (
                                 <SkeletonCard key={i} />
                             ))}
+                            {statusMessage && (
+                                <div className="text-center py-4">
+                                    <div className="inline-flex items-center gap-3 px-6 py-3 bg-cyan-50 border border-cyan-200 rounded-full">
+                                        <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                                        <span className="text-sm font-medium text-cyan-700">{statusMessage}</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     ) : recommendations.length > 0 ? (
                         <motion.div
