@@ -11,7 +11,7 @@ from .video_schema import (
 from .recommendation_schema import (
     RecommendationCreate,
     RecommendationResponse,
-    RecommendationInDB,
+    UploadedVideoSummary,
     RecommendationList
 )
 from .feedback_schema import (
@@ -37,7 +37,7 @@ __all__ = [
     # Recommendation schemas
     "RecommendationCreate",
     "RecommendationResponse",
-    "RecommendationInDB",
+    "UploadedVideoSummary",
     "RecommendationList",
     # Feedback schemas
     "FeedbackCreate",

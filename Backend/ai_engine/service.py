@@ -199,6 +199,55 @@ async def analyze_video(video_path: str, video_id: str):
             }
         )
 
+        # ======================================================================
+        # PHASE 3: YouTube Discovery — Pre-fetch recommendations
+        # ======================================================================
+        print(f"\n[Discovery] Fetching YouTube recommendations for video {video_id}...")
+        try:
+            from app.services.youtube_service import search_youtube
+            from app.database import recommendations_collection
+            from app.utils.helper_functions import generate_id
+
+            best_query = validated_queries[0] if validated_queries else ""
+            if best_query:
+                youtube_results = await search_youtube(best_query, max_results=5)
+
+                if youtube_results:
+                    # Get user_id from the video document
+                    video_doc = await videos_collection().find_one({"_id": video_id})
+                    vid_user_id = video_doc.get("user_id", "") if video_doc else ""
+
+                    rec_docs = []
+                    for result in youtube_results:
+                        rec_docs.append({
+                            "_id": generate_id("rec"),
+                            "recommendation_id": generate_id("rec"),
+                            "uploaded_video_id": video_id,
+                            "user_id": vid_user_id,
+                            "youtube_video_id": result["youtube_video_id"],
+                            "title": result["title"],
+                            "thumbnail_url": result["thumbnail"],
+                            "channel_title": result["channel"],
+                            "views": result["views"],
+                            "view_count": result["view_count"],
+                            "uploaded_at_text": result["uploadedAt"],
+                            "published_at": result.get("published_at", ""),
+                            "duration": result["duration"],
+                            "video_link": result["url"],
+                            "similarity": result["similarity"],
+                            "search_query_used": best_query,
+                            "fetched_at": datetime.now(),
+                        })
+
+                    await recommendations_collection().insert_many(rec_docs)
+                    print(f"[Discovery] Stored {len(rec_docs)} YouTube recommendations for video {video_id}")
+                else:
+                    print(f"[Discovery] No YouTube results found for query: '{best_query}'")
+            else:
+                print(f"[Discovery] No validated queries available for YouTube search")
+        except Exception as yt_err:
+            print(f"[Discovery] YouTube fetch failed (non-critical): {yt_err}")
+
     except Exception as e:
         print(f"[AI Service] Critical Error during analysis: {e}")
         import traceback

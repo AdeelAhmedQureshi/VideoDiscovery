@@ -164,42 +164,7 @@ export default function Recommendation() {
             setRecommendations(data.recommendations || []);
         } catch (error) {
             console.error("Error fetching recommendations:", error);
-            // Mock data with only verified working videos
-            setRecommendations([
-                {
-                    id: 1,
-                    title: "Pakistan vs India - Most Memorable Moments in Cricket History",
-                    thumbnail: "https://i.ytimg.com/vi/0KCWqnldEag/maxresdefault.jpg",
-                    channel: "ICC Cricket",
-                    views: "12M",
-                    uploadedAt: "2 years ago",
-                    duration: "10:45",
-                    similarity: 0.95,
-                    url: "https://www.youtube.com/watch?v=0KCWqnldEag"
-                },
-                {
-                    id: 2,
-                    title: "Babar Azam 196 - Best Innings Highlights",
-                    thumbnail: "https://i.ytimg.com/vi/v4tl9bD8tQI/maxresdefault.jpg",
-                    channel: "Cricket Australia",
-                    views: "5.2M",
-                    uploadedAt: "6 months ago",
-                    duration: "15:30",
-                    similarity: 0.92,
-                    url: "https://www.youtube.com/watch?v=v4tl9bD8tQI"
-                },
-                {
-                    id: 3,
-                    title: "Pakistan Super League 2024 - Best Moments",
-                    thumbnail: "https://i.ytimg.com/vi/rW_fwcmyIfk/maxresdefault.jpg",
-                    channel: "PSL Official",
-                    views: "1.5M",
-                    uploadedAt: "2 weeks ago",
-                    duration: "18:20",
-                    similarity: 0.89,
-                    url: "https://www.youtube.com/watch?v=rW_fwcmyIfk"
-                },
-            ]);
+            setRecommendations([]);
         } finally {
             setTimeout(() => setLoading(false), 1200);
         }
@@ -274,7 +239,7 @@ export default function Recommendation() {
                                 className="inline-block text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
                                 variants={headingVariants}
                             >
-                                 Video Recommendations
+                                Video Recommendations
                             </motion.h1>
                             <motion.div
                                 className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
