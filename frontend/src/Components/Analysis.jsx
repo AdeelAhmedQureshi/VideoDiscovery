@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Video, Brain, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function DashboardStats() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [data, setData] = useState({
@@ -113,10 +115,10 @@ export default function DashboardStats() {
   };
 
   return (
-    <section className="max-h-10 bg-gradient-to-br from-cyan-50 to-slate-100 py-16 sm:py-24">
-      <div className="max-w-6xl mx-auto px-6">
+    <section className="w-full bg-gradient-to-br from-cyan-50 to-slate-100 py-12 sm:py-16 md:py-20 lg:py-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6"
           initial="hidden"
           animate="visible"
         >
@@ -130,11 +132,14 @@ export default function DashboardStats() {
                 scale: 1.02,
                 transition: { duration: 0.3 },
               }}
+              onClick={() => navigate('/history')}
               className={`
-                relative overflow-hidden rounded-2xl
+                relative overflow-hidden rounded-xl sm:rounded-2xl
                 bg-white/70 backdrop-blur-lg
-                shadow-md p-5 sm:p-6
+                shadow-md p-4 sm:p-5 md:p-6
                 border border-transparent ${item.hoverBorder}
+                cursor-pointer
+                transition-all duration-300
               `}
             >
               {/* Glow */}
@@ -146,18 +151,18 @@ export default function DashboardStats() {
               />
 
               {/* Content */}
-              <div className="relative z-10 flex flex-col gap-5 items-center text-center sm:items-start sm:text-left">
+              <div className="relative z-10 flex flex-col gap-3 sm:gap-4 md:gap-5 items-center text-center sm:items-start sm:text-left">
                 <div
-                  className={`w-fit p-3 rounded-xl text-white bg-gradient-to-br ${item.color} shadow-md mx-auto sm:mx-0`}
+                  className={`w-fit p-2.5 sm:p-3 rounded-lg sm:rounded-xl text-white bg-gradient-to-br ${item.color} shadow-md mx-auto sm:mx-0`}
                 >
                   {item.icon}
                 </div>
 
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
                   {item.value}
                 </h2>
 
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">
                   {item.title}
                 </p>
               </div>
