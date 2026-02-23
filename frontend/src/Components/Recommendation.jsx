@@ -153,10 +153,8 @@ export default function Recommendation() {
 
         const fetchRecommendations = async () => {
             if (cancelled) return;
-            console.log(`[Recommendation] Fetching for videoId=${videoId}, attempt ${retryCount + 1}/${maxRetries}`);
             try {
                 const token = localStorage.getItem("token");
-                console.log(`[Recommendation] Token exists: ${!!token}, value: ${token ? token.substring(0, 20) + '...' : 'NULL'}`);
 
                 const response = await fetch(
                     `http://localhost:8000/api/recommendations/${videoId}`,
@@ -168,20 +166,15 @@ export default function Recommendation() {
                     }
                 );
 
-                console.log(`[Recommendation] Response status: ${response.status}`);
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error(`[Recommendation] Error response:`, errorText);
                     throw new Error(`Failed to fetch recommendations: ${response.status}`);
                 }
 
                 const data = await response.json();
-                console.log(`[Recommendation] API response:`, JSON.stringify(data, null, 2));
                 setUploadedVideo(data.uploaded_video || null);
 
                 const recs = data.recommendations || [];
                 const message = data.message || "";
-                console.log(`[Recommendation] Recs count: ${recs.length}, message: "${message}"`);
 
                 if (recs.length > 0) {
                     // We got recommendations — show them
@@ -208,7 +201,6 @@ export default function Recommendation() {
                     setLoading(false);
                 }
             } catch (error) {
-                console.error("[Recommendation] Error:", error);
                 if (retryCount < maxRetries) {
                     retryCount++;
                     setStatusMessage(`Connecting to server... (attempt ${retryCount}/${maxRetries})`);

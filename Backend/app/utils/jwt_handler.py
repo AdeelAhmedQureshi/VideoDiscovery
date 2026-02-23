@@ -121,13 +121,9 @@ def get_current_user(
     # Try to get token from Authorization header first (for API clients)
     if credentials and credentials.scheme.lower() == "bearer":
         token = credentials.credentials
-        print(f"[AUTH DEBUG] Got token from Bearer header: {token[:20]}..." if token else "[AUTH DEBUG] Bearer credentials empty")
     # Fallback to HttpOnly cookie (for browser clients)
     elif access_token:
         token = access_token
-        print(f"[AUTH DEBUG] Got token from cookie: {token[:20]}..." if token else "[AUTH DEBUG] Cookie token empty")
-    else:
-        print(f"[AUTH DEBUG] No credentials found. credentials={credentials}, cookie={'present' if access_token else 'None'}")
 
     if not token:
         raise HTTPException(
@@ -135,10 +131,5 @@ def get_current_user(
             detail="Missing authentication credentials"
         )
 
-    try:
-        result = decode_access_token(token)
-        print(f"[AUTH DEBUG] Token decoded successfully: user_id={result.get('user_id')}")
-        return result
-    except HTTPException as e:
-        print(f"[AUTH DEBUG] Token decode FAILED: {e.detail}")
-        raise
+    return decode_access_token(token)
+

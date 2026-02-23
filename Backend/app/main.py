@@ -81,37 +81,3 @@ async def root():
         "status": "online"
     }
 
-
-# TEMPORARY DEBUG ENDPOINT — remove after debugging
-@app.get("/api/debug/recs")
-async def debug_recs():
-    from .database import videos_collection, recommendations_collection
-    videos = await videos_collection().find({}).to_list(length=50)
-    recs = await recommendations_collection().find({}).to_list(length=50)
-    
-    video_list = []
-    for v in videos:
-        video_list.append({
-            "_id": str(v.get("_id", "")),
-            "status": v.get("status", ""),
-            "file_name": v.get("file_name", ""),
-            "user_id": v.get("user_id", ""),
-            "has_search_queries": bool(v.get("ai_metadata", {}).get("search_queries", [])),
-            "search_queries": v.get("ai_metadata", {}).get("search_queries", [])[:3],
-        })
-    
-    rec_list = []
-    for r in recs:
-        rec_list.append({
-            "uploaded_video_id": r.get("uploaded_video_id", ""),
-            "title": r.get("title", "")[:60],
-            "video_link": r.get("video_link", "")[:80],
-        })
-    
-    return {
-        "total_videos": len(video_list),
-        "videos": video_list,
-        "total_recommendations": len(rec_list),
-        "recommendations": rec_list,
-    }
-
