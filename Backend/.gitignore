@@ -1,8 +1,7 @@
 ﻿# Backend-specific ignores
-# (Common patterns are in root .gitignore)
 
 # Virtual Environment
-venv/ 
+venv/
 venv_old/
 venv_new/
 .env
@@ -11,6 +10,7 @@ env/
 ENV/
 
 # Python bytecode
+__pycache__/
 *.pyc
 *.pyo
 *.pyd
@@ -34,15 +34,18 @@ dmypy.json
 temp_videos/
 uploads/
 ai_engine/models/
-ai_engine/__pycache__/
-ai_engine/src/processors/__pycache__/
 
-# Model Weights
+# Model Weights (LARGE FILES — do NOT push these)
 *.pt
 *.pth
+*.pth.tar
 *.onnx
 *.bin
 *.pkl
+*.h5
+*.hdf5
+*.safetensors
+*.caffemodel
 
 # Debug/Test
 debug_*.py
@@ -53,4 +56,3 @@ check_*.py
 .env
 .env.*
 !.env.example
-    
