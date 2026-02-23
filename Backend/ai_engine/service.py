@@ -9,15 +9,29 @@ from pathlib import Path
 # Add parent directory to sys.path for sibling package imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.database import videos_collection
+from app.database import videos_collection, recommendations_collection
+from app.utils.helper_functions import generate_id
 import os
 import asyncio
 from datetime import datetime
 
+
+async def _update_progress(video_id: str, progress: int, stage: str):
+    """Update the processing progress in the video document."""
+    await videos_collection().update_one(
+        {"_id": video_id},
+        {"$set": {
+            "processing_progress": progress,
+            "processing_stage": stage
+        }}
+    )
+    print(f"[Progress] {progress}% — {stage}")
+
+
 async def analyze_video(video_path: str, video_id: str):
     """
     Orchestrates the Self-Correcting Video Analysis Pipeline (Double-Check Loop).
-    Strictly follows the Architecture Blueprint console output example.
+    Writes real-time progress to the video document for frontend polling.
     """
     print(f"\n[AI Service] Starting analysis for video: {video_id}\n")
     
@@ -25,9 +39,15 @@ async def analyze_video(video_path: str, video_id: str):
         if not os.path.exists(video_path):
              return
 
+        # ── 5% Starting ──
+        await _update_progress(video_id, 5, "Initializing AI models...")
+
         print(f"Initializing Visual Intelligence Validator...")
         validator = VisualIntelligenceValidator()
         
+        # ── 10% Models running ──
+        await _update_progress(video_id, 10, "Running 6 AI models in parallel...")
+
         print(f"Running AI Models in Parallel...")
         
         # Define wrappers for parallel execution
@@ -85,13 +105,19 @@ async def analyze_video(video_path: str, video_id: str):
         results = await asyncio.gather(*tasks)
         raw_objects_per_frame, transcript, scene, faces, actions, places = results
         print(f"[Orchestrator] All 6 parallel tasks completed successfully.")
-        
+
+        # ── 40% All models done ──
+        await _update_progress(video_id, 40, "All models completed. Running validation...")
+
         # ==============================================================================
-        # 🎯 Running Visual Intelligence & Search Validator...
+        # Running Visual Intelligence & Search Validator...
         # ==============================================================================
         print(f"\n{'='*80}")
         print(f"Running Visual Intelligence & Search Validator...")
         print(f"{'='*80}\n")
+
+        # ── 55% CLIP validation ──
+        await _update_progress(video_id, 55, "Validating objects with CLIP...")
 
         # STEP 3: INTELLIGENT QUERY GENERATION
         print(f"[LLM] Generating intelligent search queries...")
@@ -109,7 +135,10 @@ async def analyze_video(video_path: str, video_id: str):
             "demographics": faces[0] if faces else {},
             "actions": actions
         }
-        
+
+        # ── 70% LLM query generation ──
+        await _update_progress(video_id, 70, "Generating search queries with LLM...")
+
         llm_result = query_gen.generate_query(json_summary)
         candidate_queries = llm_result.get('queries', [])
         
@@ -126,7 +155,10 @@ async def analyze_video(video_path: str, video_id: str):
             faces=faces,
             scene=scene
         )
-        
+
+        # ── 85% FAISS validation ──
+        await _update_progress(video_id, 85, "Validating queries with FAISS...")
+
         # PHASE 3: LLM Query Validation (FAISS Search)
         validated_queries_data = await asyncio.to_thread(validator.rank_and_select_queries, candidate_queries)
         validated_queries = [q["query"] for q in validated_queries_data]
@@ -139,6 +171,9 @@ async def analyze_video(video_path: str, video_id: str):
         print(f"   - Language: {transcript.get('language', 'unknown')}")
         print(f"   - Validated Queries: {validated_queries[:3]}")
         print(f"   - Transcript: {transcript.get('text', '')[:100]}...")
+
+        # ── 95% Saving to DB ──
+        await _update_progress(video_id, 95, "Saving analysis results...")
 
         # FINAL AI ANALYSIS SUMMARY
         import json
@@ -194,31 +229,39 @@ async def analyze_video(video_path: str, video_id: str):
                 "$set": {
                     "ai_metadata": ai_metadata,
                     "status": "completed",
+                    "processing_progress": 100,
+                    "processing_stage": "Analysis complete!",
                     "smart_tags": all_tags
                 }
             }
         )
 
+        # ── 100% Done ──
+        print(f"[Progress] 100% — Analysis complete!")
+
         # ======================================================================
-        # PHASE 3: YouTube Discovery — Pre-fetch recommendations
+        # PHASE 3: YouTube Discovery — Pre-fetch recommendations (ALL queries)
         # ======================================================================
         print(f"\n[Discovery] Fetching YouTube recommendations for video {video_id}...")
         try:
             from app.services.youtube_service import search_youtube
-            from app.database import recommendations_collection
-            from app.utils.helper_functions import generate_id
 
-            best_query = validated_queries[0] if validated_queries else ""
-            if best_query:
-                youtube_results = await search_youtube(best_query, max_results=5)
+            if validated_queries:
+                async def fetch_for_query(query):
+                    return {"query": query, "results": await search_youtube(query, max_results=5)}
 
-                if youtube_results:
-                    # Get user_id from the video document
-                    video_doc = await videos_collection().find_one({"_id": video_id})
-                    vid_user_id = video_doc.get("user_id", "") if video_doc else ""
+                fetch_tasks = [fetch_for_query(q) for q in validated_queries]
+                all_results = await asyncio.gather(*fetch_tasks)
 
-                    rec_docs = []
-                    for result in youtube_results:
+                # Get user_id from the video document
+                video_doc = await videos_collection().find_one({"_id": video_id})
+                vid_user_id = video_doc.get("user_id", "") if video_doc else ""
+
+                rec_docs = []
+                for entry in all_results:
+                    query = entry["query"]
+                    results = entry["results"]
+                    for result in results:
                         rec_docs.append({
                             "_id": generate_id("rec"),
                             "recommendation_id": generate_id("rec"),
@@ -235,14 +278,15 @@ async def analyze_video(video_path: str, video_id: str):
                             "duration": result["duration"],
                             "video_link": result["url"],
                             "similarity": result["similarity"],
-                            "search_query_used": best_query,
+                            "search_query_used": query,
                             "fetched_at": datetime.now(),
                         })
 
+                if rec_docs:
                     await recommendations_collection().insert_many(rec_docs)
-                    print(f"[Discovery] Stored {len(rec_docs)} YouTube recommendations for video {video_id}")
+                    print(f"[Discovery] Stored {len(rec_docs)} YouTube recommendations across {len(validated_queries)} queries for video {video_id}")
                 else:
-                    print(f"[Discovery] No YouTube results found for query: '{best_query}'")
+                    print(f"[Discovery] No YouTube results found for any query")
             else:
                 print(f"[Discovery] No validated queries available for YouTube search")
         except Exception as yt_err:
@@ -254,6 +298,10 @@ async def analyze_video(video_path: str, video_id: str):
         traceback.print_exc()
         await videos_collection().update_one(
             {"_id": video_id},
-            {"$set": {"status": "failed", "error": str(e)}}
+            {"$set": {
+                "status": "failed",
+                "error": str(e),
+                "processing_progress": 0,
+                "processing_stage": f"Error: {str(e)[:100]}"
+            }}
         )
-

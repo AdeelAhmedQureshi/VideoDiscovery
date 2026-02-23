@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Video, Play, ArrowLeft, Sparkles, Youtube, ExternalLink } from "lucide-react";
+import { Video, Play, ArrowLeft, Sparkles, Youtube, ExternalLink, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Skeleton Loader
@@ -141,9 +141,13 @@ export default function Recommendation() {
     const { videoId } = useParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
-    const [recommendations, setRecommendations] = useState([]);
+    const [queryTabs, setQueryTabs] = useState([]);
+    const [activeTab, setActiveTab] = useState(0);
     const [uploadedVideo, setUploadedVideo] = useState(null);
     const [statusMessage, setStatusMessage] = useState("");
+
+    // Total video count across all tabs
+    const totalVideos = queryTabs.reduce((sum, tab) => sum + (tab.recommendations?.length || 0), 0);
 
     useEffect(() => {
         let retryCount = 0;
@@ -173,12 +177,15 @@ export default function Recommendation() {
                 const data = await response.json();
                 setUploadedVideo(data.uploaded_video || null);
 
-                const recs = data.recommendations || [];
+                const tabs = data.query_tabs || [];
                 const message = data.message || "";
 
-                if (recs.length > 0) {
-                    // We got recommendations — show them
-                    setRecommendations(recs);
+                // Check if we have any recommendations across all tabs
+                const hasRecs = tabs.some(tab => tab.recommendations && tab.recommendations.length > 0);
+
+                if (hasRecs) {
+                    setQueryTabs(tabs);
+                    setActiveTab(0);
                     setStatusMessage("");
                     setLoading(false);
                 } else if (
@@ -186,17 +193,15 @@ export default function Recommendation() {
                     (message.toLowerCase().includes("still") ||
                         message.toLowerCase().includes("processing") ||
                         message.toLowerCase().includes("no search queries") ||
-                        recs.length === 0)
+                        !hasRecs)
                 ) {
-                    // Video still processing or no recs found yet — retry
                     retryCount++;
                     setStatusMessage(
                         message || `Waiting for AI analysis to complete... (attempt ${retryCount}/${maxRetries})`
                     );
                     timeoutId = setTimeout(fetchRecommendations, 5000);
                 } else {
-                    // Max retries reached or final empty
-                    setRecommendations([]);
+                    setQueryTabs([]);
                     setStatusMessage("");
                     setLoading(false);
                 }
@@ -206,7 +211,7 @@ export default function Recommendation() {
                     setStatusMessage(`Connecting to server... (attempt ${retryCount}/${maxRetries})`);
                     timeoutId = setTimeout(fetchRecommendations, 5000);
                 } else {
-                    setRecommendations([]);
+                    setQueryTabs([]);
                     setStatusMessage("");
                     setLoading(false);
                 }
@@ -243,6 +248,10 @@ export default function Recommendation() {
             },
         },
     };
+
+    // Current tab's recommendations
+    const activeTabData = queryTabs[activeTab] || { query: "", recommendations: [] };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-cyan-50/30">
             {/* Content */}
@@ -267,7 +276,7 @@ export default function Recommendation() {
                                 >
                                     <Sparkles className="w-4 h-4 text-cyan-600" />
                                     <span className="text-sm font-bold text-slate-700">
-                                        {recommendations.length} Videos Found
+                                        {totalVideos} Videos Found
                                     </span>
                                 </motion.div>
                             )}
@@ -279,7 +288,7 @@ export default function Recommendation() {
                 <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
                     {/* Title */}
                     <motion.div
-                        className="text-center mb-3 sm:mb-16"
+                        className="text-center mb-3 sm:mb-10"
                         initial="hidden"
                         whileInView="visible"
                         viewport={{ once: true, amount: 0.7 }}
@@ -301,9 +310,48 @@ export default function Recommendation() {
                             className="text-base sm:text-lg text-gray-500 mt-4 sm:mt-6"
                             variants={headingVariants}
                         >
-                            Based on the video you uploaded, here are some similar videos we found for you.
+                            Based on the video you uploaded, here are similar videos grouped by search query.
                         </motion.p>
                     </motion.div>
+
+                    {/* Query Tabs */}
+                    {!loading && queryTabs.length > 0 && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.2 }}
+                            className="mb-10"
+                        >
+                            <div className="flex items-center gap-3 overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
+                                {queryTabs.map((tab, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => setActiveTab(index)}
+                                        className={`
+                                            flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold
+                                            whitespace-nowrap transition-all duration-300 border
+                                            ${activeTab === index
+                                                ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-transparent shadow-lg shadow-cyan-500/25 scale-105"
+                                                : "bg-white text-slate-600 border-slate-200 hover:border-cyan-300 hover:text-cyan-600 hover:bg-cyan-50/50"
+                                            }
+                                        `}
+                                    >
+                                        <Search className={`w-3.5 h-3.5 ${activeTab === index ? "text-white" : "text-slate-400"}`} />
+                                        <span>{tab.query}</span>
+                                        <span className={`
+                                            ml-1 px-2 py-0.5 rounded-full text-xs font-bold
+                                            ${activeTab === index
+                                                ? "bg-white/20 text-white"
+                                                : "bg-slate-100 text-slate-500"
+                                            }
+                                        `}>
+                                            {tab.recommendations?.length || 0}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
 
                     {/* Videos Grid */}
                     {loading ? (
@@ -320,17 +368,27 @@ export default function Recommendation() {
                                 </div>
                             )}
                         </div>
-                    ) : recommendations.length > 0 ? (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.5 }}
-                            className="space-y-8 max-w-6xl mx-auto"
-                        >
-                            {recommendations.map((video, index) => (
-                                <VideoCard key={video.id} video={video} index={index} />
-                            ))}
-                        </motion.div>
+                    ) : queryTabs.length > 0 ? (
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={activeTab}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                transition={{ duration: 0.3 }}
+                                className="space-y-8 max-w-6xl mx-auto"
+                            >
+                                {activeTabData.recommendations.length > 0 ? (
+                                    activeTabData.recommendations.map((video, index) => (
+                                        <VideoCard key={video.youtube_video_id || index} video={video} index={index} />
+                                    ))
+                                ) : (
+                                    <div className="text-center py-12">
+                                        <p className="text-slate-500 text-lg">No results found for this query.</p>
+                                    </div>
+                                )}
+                            </motion.div>
+                        </AnimatePresence>
                     ) : (
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
@@ -366,4 +424,3 @@ export default function Recommendation() {
         </div>
     );
 }
-

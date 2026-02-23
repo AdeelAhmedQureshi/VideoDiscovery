@@ -2,8 +2,10 @@
 """
 Recommendation API routes.
 Serves YouTube-fetched video recommendations for analyzed videos.
+Uses all AI-generated search queries — each query becomes a separate tab.
 """
 
+import asyncio
 from fastapi import APIRouter, HTTPException, Depends
 from ..database import videos_collection, recommendations_collection
 from ..utils.jwt_handler import get_current_user
@@ -17,6 +19,7 @@ router = APIRouter()
 @router.get("/{video_id}")
 async def get_recommendations(
     video_id: str,
+    refresh: bool = False,
     current_user: dict = Depends(get_current_user)
 ):
     """
@@ -24,12 +27,21 @@ async def get_recommendations(
 
     Flow:
     1. Check if cached recommendations exist in the DB
-    2. If yes, return them immediately
-    3. If no, read the AI-generated search queries from the video,
-       call YouTube API, store results, and return them.
+    2. If yes and multi-query, group by query and return as tabs
+    3. If stale single-query cache or no cache, fetch from YouTube
+       for ALL queries concurrently, store results, and return grouped tabs.
+
+    Query params:
+        refresh: If true, delete cached recs and re-fetch from YouTube.
 
     Returns:
-        { uploaded_video: {...}, recommendations: [...] }
+        {
+            uploaded_video: {...},
+            query_tabs: [
+                { query: "...", recommendations: [...] },
+                ...
+            ]
+        }
     """
     user_id = current_user.get("user_id")
 
@@ -42,19 +54,35 @@ async def get_recommendations(
     if video.get("user_id") != user_id:
         raise HTTPException(status_code=403, detail="You don't have permission to view this video's recommendations")
 
-    # Check for cached recommendations
-    cached = await recommendations_collection().find(
-        {"uploaded_video_id": video_id}
-    ).to_list(length=50)
+    # If force refresh, delete old cache
+    if refresh:
+        await recommendations_collection().delete_many({"uploaded_video_id": video_id})
+        print(f"[Recommendations] Cleared cache for video {video_id} (force refresh)")
+    else:
+        # Check for cached recommendations
+        cached = await recommendations_collection().find(
+            {"uploaded_video_id": video_id}
+        ).to_list(length=200)
 
-    if cached:
-        recommendations = _format_cached(cached)
-        return {
-            "uploaded_video": _format_video_summary(video),
-            "recommendations": recommendations,
-        }
+        if cached:
+            # Check if cache is stale (old single-query format)
+            unique_queries = set(doc.get("search_query_used", "") for doc in cached)
+            ai_metadata = video.get("ai_metadata", {})
+            available_queries = ai_metadata.get("search_queries", [])
 
-    # No cache — fetch from YouTube using AI-generated queries
+            if len(unique_queries) >= min(len(available_queries), 2):
+                # Cache has multiple queries — it's from the new format, serve it
+                query_tabs = _group_cached_by_query(cached)
+                return {
+                    "uploaded_video": _format_video_summary(video),
+                    "query_tabs": query_tabs,
+                }
+            else:
+                # Stale cache (single-query) — clear and re-fetch
+                await recommendations_collection().delete_many({"uploaded_video_id": video_id})
+                print(f"[Recommendations] Cleared stale single-query cache for video {video_id}")
+
+    # No cache — fetch from YouTube using ALL AI-generated queries
     ai_metadata = video.get("ai_metadata", {})
     search_queries = ai_metadata.get("search_queries", [])
 
@@ -64,68 +92,85 @@ async def get_recommendations(
         if status == "processing":
             return {
                 "uploaded_video": _format_video_summary(video),
-                "recommendations": [],
+                "query_tabs": [],
                 "message": "Video is still being analyzed. Recommendations will be available soon.",
             }
         return {
             "uploaded_video": _format_video_summary(video),
-            "recommendations": [],
+            "query_tabs": [],
             "message": "No search queries available for this video.",
         }
 
-    # Use the top query (most relevant) to search YouTube
-    best_query = search_queries[0] if search_queries else ""
-    print(f"[Recommendations] Fetching YouTube results for video {video_id} with query: '{best_query}'")
+    # Fetch 5 videos for EACH query concurrently
+    print(f"[Recommendations] Fetching YouTube results for video {video_id} with {len(search_queries)} queries")
 
-    youtube_results = await search_youtube(best_query, max_results=5)
+    async def fetch_for_query(query):
+        """Fetch YouTube results for a single query."""
+        results = await search_youtube(query, max_results=5)
+        return {"query": query, "results": results}
 
-    if not youtube_results:
-        return {
-            "uploaded_video": _format_video_summary(video),
-            "recommendations": [],
-            "message": "Could not fetch YouTube recommendations at this time.",
-        }
+    tasks = [fetch_for_query(q) for q in search_queries]
+    all_results = await asyncio.gather(*tasks)
 
-    # Store in database for caching
-    docs = []
-    for result in youtube_results:
-        doc = {
-            "_id": generate_id("rec"),
-            "recommendation_id": generate_id("rec"),
-            "uploaded_video_id": video_id,
-            "user_id": user_id,
-            "youtube_video_id": result["youtube_video_id"],
-            "title": result["title"],
-            "thumbnail_url": result["thumbnail"],
-            "channel_title": result["channel"],
-            "views": result["views"],
-            "view_count": result["view_count"],
-            "uploaded_at_text": result["uploadedAt"],
-            "published_at": result.get("published_at", ""),
-            "duration": result["duration"],
-            "video_link": result["url"],
-            "similarity": result["similarity"],
-            "search_query_used": best_query,
-            "fetched_at": datetime.now(timezone.utc),
-        }
-        docs.append(doc)
+    # Build query_tabs and store in database
+    query_tabs = []
+    all_docs = []
 
-    if docs:
-        await recommendations_collection().insert_many(docs)
-        print(f"[Recommendations] Stored {len(docs)} recommendations for video {video_id}")
+    for entry in all_results:
+        query = entry["query"]
+        results = entry["results"]
+
+        if not results:
+            # Still include the tab even if empty
+            query_tabs.append({"query": query, "recommendations": []})
+            continue
+
+        # Store in database for caching
+        for result in results:
+            doc = {
+                "_id": generate_id("rec"),
+                "recommendation_id": generate_id("rec"),
+                "uploaded_video_id": video_id,
+                "user_id": user_id,
+                "youtube_video_id": result["youtube_video_id"],
+                "title": result["title"],
+                "thumbnail_url": result["thumbnail"],
+                "channel_title": result["channel"],
+                "views": result["views"],
+                "view_count": result["view_count"],
+                "uploaded_at_text": result["uploadedAt"],
+                "published_at": result.get("published_at", ""),
+                "duration": result["duration"],
+                "video_link": result["url"],
+                "similarity": result["similarity"],
+                "search_query_used": query,
+                "fetched_at": datetime.now(timezone.utc),
+            }
+            all_docs.append(doc)
+
+        query_tabs.append({"query": query, "recommendations": results})
+
+    if all_docs:
+        await recommendations_collection().insert_many(all_docs)
+        print(f"[Recommendations] Stored {len(all_docs)} recommendations across {len(search_queries)} queries for video {video_id}")
 
     return {
         "uploaded_video": _format_video_summary(video),
-        "recommendations": youtube_results,
+        "query_tabs": query_tabs,
     }
 
 
-def _format_cached(cached_docs: list) -> list:
-    """Format cached recommendation documents for API response."""
-    results = []
-    for i, doc in enumerate(cached_docs):
-        results.append({
-            "id": i + 1,
+def _group_cached_by_query(cached_docs: list) -> list:
+    """Group cached recommendation documents by search_query_used."""
+    from collections import OrderedDict
+
+    groups = OrderedDict()
+    for doc in cached_docs:
+        query = doc.get("search_query_used", "Unknown Query")
+        if query not in groups:
+            groups[query] = []
+        groups[query].append({
+            "id": len(groups[query]) + 1,
             "youtube_video_id": doc.get("youtube_video_id", ""),
             "title": doc.get("title", "Untitled"),
             "thumbnail": doc.get("thumbnail_url", ""),
@@ -137,7 +182,8 @@ def _format_cached(cached_docs: list) -> list:
             "url": doc.get("video_link", ""),
             "similarity": doc.get("similarity", 0.8),
         })
-    return results
+
+    return [{"query": query, "recommendations": recs} for query, recs in groups.items()]
 
 
 def _format_video_summary(video: dict) -> dict:
