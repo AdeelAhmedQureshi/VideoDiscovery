@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Form
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Form, BackgroundTasks
 from ..database import videos_collection, recommendations_collection, feedback_collection
 from ..utils.helper_functions import generate_id
 from ..utils.jwt_handler import get_current_user
@@ -6,6 +6,17 @@ from ..services.cloudinary_service import CloudinaryService
 from ..models.video_model import video_document
 from datetime import datetime, timezone
 import hashlib
+import os
+import sys
+from pathlib import Path
+
+# Add Backend directory to path for ai_engine imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from ai_engine.service import analyze_video
+
+TEMP_VIDEO_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "temp_videos")
+os.makedirs(TEMP_VIDEO_DIR, exist_ok=True)
 
 router = APIRouter()
 
@@ -14,7 +25,7 @@ router = APIRouter()
 async def upload_video(
     file: UploadFile = File(...),
     intelligent_query: str = Form(...),
-    background_tasks: BackgroundTasks = None,
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     current_user: dict = Depends(get_current_user)
 ):
     """
@@ -57,17 +68,15 @@ async def upload_video(
                 detail=f"This video has already been uploaded. Video ID: {existing_video['_id']}"
             )
 
-        # Reset file position for upload
-        await file.seek(0)
-        
-        # Save locally for AI processing
+        # Save locally for AI processing (write from in-memory bytes)
         local_filename = f"{user_id}_{generate_id().replace('-', '')}_{file.filename}"
         local_path = os.path.join(TEMP_VIDEO_DIR, local_filename)
         
         with open(local_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+            buffer.write(file_content)
+        print(f"[Upload] Saved local copy for AI processing: {local_path}")
             
-        # Reset file position AGAIN for Cloudinary upload
+        # Reset file position for Cloudinary upload
         await file.seek(0)
 
         # Upload video to Cloudinary
@@ -103,8 +112,8 @@ async def upload_video(
         await videos_collection().insert_one(video_doc)
 
         # Trigger AI Analysis in Background
-        if background_tasks:
-            background_tasks.add_task(analyze_video, local_path, video_id)
+        print(f"[Upload] Triggering AI analysis for video {video_id}...")
+        background_tasks.add_task(analyze_video, local_path, video_id)
 
         return {
             "video_id": video_id,

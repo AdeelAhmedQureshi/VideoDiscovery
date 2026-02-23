@@ -17,10 +17,10 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7  # Long-lived refresh token
 
     # Cloudinary configuration
-    CLOUDINARY_CLOUD_NAME: str = "dgztjaiuy"
-    CLOUDINARY_API_KEY: str = "192341468861746"
-    CLOUDINARY_API_SECRET: str = "ptsMoam6oKFaHvlpmVAACh5aO6o"
-    CLOUDINARY_URL: str = "cloudinary://192341468861746:ptsMoam6oKFaHvlpmVAACh5aO6o@dgztjaiuy"
+    CLOUDINARY_CLOUD_NAME: str
+    CLOUDINARY_API_KEY: str
+    CLOUDINARY_API_SECRET: str
+    CLOUDINARY_URL: str
 
     # Email configuration for password reset
     SMTP_HOST: str = "smtp.gmail.com"
