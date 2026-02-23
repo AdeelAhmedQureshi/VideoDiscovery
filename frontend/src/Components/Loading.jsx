@@ -1,48 +1,69 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Loading = ({ videoId, isUploadComplete }) => {
   const [progress, setProgress] = useState(0);
   const [currentTask, setCurrentTask] = useState('');
   const navigate = useNavigate();
-
-  const tasks = [
-    { name: 'Uploading video...', duration: 2000 },
-    { name: 'Extracting frames...', duration: 3000 },
-    { name: 'Analyzing content...', duration: 4000 },
-    { name: 'Processing models...', duration: 5000 },
-    { name: 'Generating recommendations...', duration: 3000 }
-  ];
+  const pollRef = useRef(null);
+  const hasNavigated = useRef(false);
 
   useEffect(() => {
-    if (!isUploadComplete) return;
+    if (!isUploadComplete || !videoId) return;
 
-    let totalDuration = tasks.reduce((sum, task) => sum + task.duration, 0);
-    let currentProgress = 0;
-    let taskIndex = 0;
+    const pollProgress = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          `http://localhost:8000/api/videos/${videoId}/progress`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            credentials: "include",
+          }
+        );
 
-    const interval = setInterval(() => {
-      if (taskIndex < tasks.length) {
-        setCurrentTask(tasks[taskIndex].name);
-        const increment = (tasks[taskIndex].duration / totalDuration) * 100;
-        
-        currentProgress += increment / 10;
-        setProgress(Math.min(currentProgress, 100));
+        if (!response.ok) return;
 
-        if (currentProgress >= (taskIndex + 1) * (100 / tasks.length)) {
-          taskIndex++;
-        }
+        const data = await response.json();
+        const serverProgress = data.progress || 0;
+        const stage = data.stage || "Processing...";
+        const status = data.status;
 
-        if (currentProgress >= 100) {
-          clearInterval(interval);
+        // Smoothly animate progress (never go backwards)
+        setProgress(prev => Math.max(prev, serverProgress));
+        setCurrentTask(stage);
+
+        // Navigate when complete
+        if ((serverProgress >= 100 || status === "completed") && !hasNavigated.current) {
+          hasNavigated.current = true;
+          setProgress(100);
+          setCurrentTask("Analysis complete!");
+
+          // Brief pause to show 100% before navigating
           setTimeout(() => {
             navigate(`/recommendations/${videoId}`);
-          }, 500);
+          }, 800);
+          return;
         }
-      }
-    }, tasks[taskIndex]?.duration / 10 || 100);
 
-    return () => clearInterval(interval);
+        // Handle failure
+        if (status === "failed") {
+          setCurrentTask("Processing failed. Please try again.");
+          clearInterval(pollRef.current);
+          return;
+        }
+      } catch (err) {
+        // Silently retry on network errors
+      }
+    };
+
+    // Start polling immediately, then every 2 seconds
+    pollProgress();
+    pollRef.current = setInterval(pollProgress, 2000);
+
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, [isUploadComplete, videoId, navigate]);
 
   if (!isUploadComplete) return null;
@@ -89,7 +110,7 @@ const Loading = ({ videoId, isUploadComplete }) => {
                   strokeLinecap="round"
                   strokeDasharray={`${2 * Math.PI * 70}`}
                   strokeDashoffset={`${2 * Math.PI * 70 * (1 - progress / 100)}`}
-                  className="transition-all duration-300 ease-out"
+                  className="transition-all duration-500 ease-out"
                 />
                 <defs>
                   <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -114,7 +135,7 @@ const Loading = ({ videoId, isUploadComplete }) => {
               {currentTask}
             </p>
             <p className="text-slate-600 text-sm">
-              {progress < 100 ? 'Please wait while we process your video...' : 'Almost done!'}
+              {progress >= 100 ? 'Redirecting to recommendations...' : 'Please wait while we process your video...'}
             </p>
           </div>
         </div>

@@ -21,6 +21,34 @@ os.makedirs(TEMP_VIDEO_DIR, exist_ok=True)
 router = APIRouter()
 
 
+@router.get("/{video_id}/progress")
+async def get_video_progress(
+    video_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Lightweight polling endpoint for real-time processing progress.
+    Returns progress percentage, stage name, and status.
+    """
+    video = await videos_collection().find_one(
+        {"_id": video_id},
+        {"processing_progress": 1, "processing_stage": 1, "status": 1, "user_id": 1}
+    )
+
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    if video.get("user_id") != current_user.get("user_id"):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    return {
+        "status": video.get("status", "processing"),
+        "progress": video.get("processing_progress", 0),
+        "stage": video.get("processing_stage", "Starting..."),
+    }
+
+
+
 @router.post("/upload")
 async def upload_video(
     file: UploadFile = File(...),
