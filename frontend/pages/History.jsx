@@ -6,17 +6,31 @@ import {
     Star,
     ArrowUpRight,
     Clock,
-    ArrowLeft
+    ArrowLeft,
+    Trash2,
+    CheckCircle,
+    AlertCircle,
+    Search
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export default function History() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const targetVideoId = searchParams.get('video');
+    const videoRefs = useRef({});
     const [historyData, setHistoryData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [deletingVideoId, setDeletingVideoId] = useState(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [videoToDelete, setVideoToDelete] = useState(null);
+    const [notification, setNotification] = useState({ show: false, message: "", type: "" });
+    const [highlightedVideo, setHighlightedVideo] = useState(null);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [feedbackOnly, setFeedbackOnly] = useState(false);
 
     useEffect(() => {
         const fetchHistoryData = async () => {
@@ -102,6 +116,81 @@ export default function History() {
         fetchHistoryData();
     }, []);
 
+    // Scroll to and highlight targeted video
+    useEffect(() => {
+        if (targetVideoId && historyData.length > 0) {
+            const videoExists = historyData.some(item => item.id === targetVideoId);
+            if (videoExists) {
+                setHighlightedVideo(targetVideoId);
+                // Wait for DOM to render
+                setTimeout(() => {
+                    const element = videoRefs.current[targetVideoId];
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    // Remove highlight after 3 seconds
+                    setTimeout(() => setHighlightedVideo(null), 3000);
+                }, 100);
+            }
+        }
+    }, [targetVideoId, historyData]);
+
+    const handleDeleteClick = (videoId) => {
+        setVideoToDelete(videoId);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        const videoId = videoToDelete;
+        setShowDeleteModal(false);
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+            setNotification({ show: true, message: "Not signed in. Please log in again.", type: "error" });
+            return;
+        }
+
+        setDeletingVideoId(videoId);
+
+        try {
+            const deleteRes = await fetch(`http://localhost:8000/api/videos/${videoId}`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                credentials: "include",
+            });
+
+            if (!deleteRes.ok) {
+                if (deleteRes.status === 401 || deleteRes.status === 403) {
+                    setNotification({ show: true, message: "Session expired. Please sign in again.", type: "error" });
+                } else if (deleteRes.status === 404) {
+                    setNotification({ show: true, message: "Video not found.", type: "error" });
+                } else {
+                    setNotification({ show: true, message: "Failed to delete video. Please try again later.", type: "error" });
+                }
+                setDeletingVideoId(null);
+                return;
+            }
+
+            // Remove the deleted video from the state
+            setHistoryData((prevData) => prevData.filter((item) => item.id !== videoId));
+            setDeletingVideoId(null);
+            setNotification({ show: true, message: "Video deleted successfully!", type: "success" });
+
+        } catch (e) {
+            console.error("Error deleting video:", e);
+            setNotification({ show: true, message: "Network error while deleting video.", type: "error" });
+            setDeletingVideoId(null);
+        }
+    };
+
+    const cancelDelete = () => {
+        setShowDeleteModal(false);
+        setVideoToDelete(null);
+    };
+
     const containerVariants = {
         hidden: { opacity: 0, y: 14 },
         visible: {
@@ -125,6 +214,19 @@ export default function History() {
             transition: { duration: 0.6, ease: "easeOut" },
         },
     };
+
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const filteredHistory = historyData.filter((item) => {
+        if (feedbackOnly && !item.feedback) {
+            return false;
+        }
+        if (!normalizedQuery) {
+            return true;
+        }
+        const titleMatch = item.title?.toLowerCase().includes(normalizedQuery);
+        const feedbackMatch = item.feedback?.toLowerCase().includes(normalizedQuery);
+        return Boolean(titleMatch || feedbackMatch);
+    });
 
     return (
         <div className="min-h-screen font-sans text-gray-800 bg-white">
@@ -189,10 +291,44 @@ export default function History() {
                 {/* Section Header (Light only) */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 pb-4 border-b border-gray-200 gap-4">
                     <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Recent Activity</h2>
-                    <button className="text-sm text-cyan-600 font-semibold hover:text-cyan-700 flex items-center gap-2 transition-all duration-300 hover:gap-3 bg-white hover:bg-cyan-50 px-4 py-2 rounded-lg border border-cyan-300 shadow">
+                    {/* <button className="text-sm text-cyan-600 font-semibold hover:text-cyan-700 flex items-center gap-2 transition-all duration-300 hover:gap-3 bg-white hover:bg-cyan-50 px-4 py-2 rounded-lg border border-cyan-300 shadow">
                         View all <ArrowUpRight className="w-4 h-4 text-cyan-600" />
-                    </button>
+                    </button> */}
                 </div>
+
+                {/* Search */}
+                {!loading && !error && historyData.length > 0 && (
+                    <div className="mb-8 rounded-3xl border border-cyan-100 bg-gradient-to-r from-cyan-50 via-white to-blue-50 p-4 sm:p-5 shadow-[0_12px_30px_-18px_rgba(14,116,144,0.5)]">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                            <div className="relative flex-1">
+                                <div className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-cyan-500">
+                                    <Search className="h-5 w-5" />
+                                </div>
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(event) => setSearchQuery(event.target.value)}
+                                    placeholder="Search by video title or feedback..."
+                                    className="relative z-0 w-full rounded-2xl border border-cyan-100 bg-white/90 px-12 py-3.5 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition focus:border-cyan-300 focus:outline-none focus:ring-4 focus:ring-cyan-100"
+                                />
+                            </div>
+                            <label className="flex items-center gap-2 rounded-2xl border border-cyan-100 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm">
+                                <input
+                                    type="checkbox"
+                                    checked={feedbackOnly}
+                                    onChange={(event) => setFeedbackOnly(event.target.checked)}
+                                    className="h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-200"
+                                />
+                                Feedback only
+                            </label>
+                        </div>
+                        {normalizedQuery && (
+                            <p className="mt-3 text-xs font-semibold uppercase tracking-widest text-gray-400">
+                                Showing {filteredHistory.length} of {historyData.length}
+                            </p>
+                        )}
+                    </div>
+                )}
 
                 {/* Loading State */}
                 {loading && (
@@ -223,13 +359,26 @@ export default function History() {
                     </div>
                 )}
 
+                {!loading && !error && historyData.length > 0 && filteredHistory.length === 0 && (
+                    <div className="text-center py-16">
+                        <div className="inline-block p-4 rounded-full bg-gray-100 mb-4">
+                            <MessageSquare className="w-8 h-8 text-gray-400" />
+                        </div>
+                        <p className="text-gray-600 font-semibold">No results found</p>
+                        <p className="text-gray-500 text-sm mt-2">Try a different title or feedback keyword.</p>
+                    </div>
+                )}
+
                 {/* Cards */}
-                {!loading && !error && historyData.length > 0 && (
+                {!loading && !error && filteredHistory.length > 0 && (
                 <div className="grid gap-6">
-                    {historyData.map((item, index) => (
+                    {filteredHistory.map((item, index) => (
                         <div
                             key={item.id}
-                            className="group relative overflow-hidden rounded-2xl transition-all duration-500 hover:shadow-2xl "
+                            ref={(el) => (videoRefs.current[item.id] = el)}
+                            className={`group relative overflow-hidden rounded-2xl transition-all duration-500 hover:shadow-2xl ${
+                                highlightedVideo === item.id ? 'ring-4 ring-cyan-400 shadow-2xl' : ''
+                            }`}
                             style={{ animationDelay: `${index * 100}ms` }}
                         >
                             {/* Light Background */}
@@ -237,9 +386,23 @@ export default function History() {
 
                             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 "></div>
 
-                            <div className="relative p-7 sm:p-8">
-                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 mb-6">
-                                    <div className="flex items-start gap-5 flex-1">
+                            {/* Delete Button */}
+                            <button
+                                onClick={() => handleDeleteClick(item.id)}
+                                disabled={deletingVideoId === item.id}
+                                className="absolute top-4 right-4 z-20 p-2.5 rounded-lg bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-400 hover:text-red-600 transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed group/delete"
+                                title="Delete video"
+                            >
+                                {deletingVideoId === item.id ? (
+                                    <div className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                    <Trash2 className="w-5 h-5 group-hover/delete:scale-110 transition-transform duration-200" />
+                                )}
+                            </button>
+
+                            <div className="relative p-7 sm:p-8 pt-16">
+                                <div className="flex flex-col gap-6 mb-6">
+                                    <div className="flex items-start gap-5 flex-1 pr-16">
 
                                         <div className="p-3.5 rounded-xl bg-gradient-to-br from-cyan-100 to-indigo-100 text-cyan-600 shrink-0 border border-cyan-200 shadow">
                                             <Video className="w-6 h-6" />
@@ -258,20 +421,17 @@ export default function History() {
                                                     <Clock className="w-4 h-4" />
                                                     {item.duration}
                                                 </span>
+                                                
+                                                {/* Rating - Show if rating exists */}
+                                                {item.rating && (
+                                                    <span className="flex items-center gap-1.5 bg-gradient-to-br from-yellow-100 to-orange-100 border border-yellow-300 px-3 py-1.5 rounded-full">
+                                                        <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                                                        <span className="font-bold text-yellow-600">{item.rating}</span>
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* Rating - Show if rating exists */}
-                                    {item.rating && (
-                                    <div className="bg-gradient-to-br from-yellow-100 to-orange-100 border border-yellow-300 px-4 py-3 rounded-xl text-center min-w-max">
-                                        <p className="text-yellow-600 font-bold text-sm flex items-center gap-1 justify-center">
-                                            <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" />
-                                            {item.rating}
-                                        </p>
-                                        <p className="text-xs text-yellow-600/70 mt-1">Rating</p>
-                                    </div>
-                                    )}
                                 </div>
 
                                 <div className="my-6 h-px bg-gradient-to-r from-gray-200 via-cyan-200 to-gray-200 w-full" />
@@ -325,6 +485,86 @@ export default function History() {
                 </div>
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed top-6 left-1/2 z-50 w-[min(92vw,540px)] -translate-x-1/2">
+                    <div className="overflow-hidden rounded-3xl border border-red-200 bg-white/95 shadow-2xl">
+                        <div className="px-6 py-4 bg-gradient-to-r from-red-600 to-rose-600">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                                    <Trash2 className="w-5 h-5 text-white" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-sm uppercase tracking-widest text-white/85">Confirmation</p>
+                                    <h3 className="text-lg font-bold text-white">Delete Video</h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="px-6 py-5 bg-white/90">
+                            <p className="text-slate-700 font-medium mb-4">
+                                Are you sure you want to delete this video? This will permanently remove the video along with all its recommendations and feedback. This action cannot be undone.
+                            </p>
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    onClick={cancelDelete}
+                                    className="px-5 py-2.5 bg-gray-100 text-gray-900 font-bold rounded-2xl hover:bg-gray-200 transition-all border border-gray-200"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 text-white font-bold rounded-2xl hover:from-red-700 hover:to-rose-700 transition-all shadow-lg"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Notification Modal */}
+            {notification.show && (
+                <div className="fixed top-6 left-1/2 z-50 w-[min(92vw,540px)] -translate-x-1/2">
+                    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white/95 shadow-2xl">
+                        <div className={`px-6 py-4 ${
+                            notification.type === "success" 
+                                ? "bg-gradient-to-r from-cyan-500 to-blue-500" 
+                                : "bg-gradient-to-r from-red-600 to-rose-600"
+                        }`}>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                                    {notification.type === "success" ? (
+                                        <CheckCircle className="h-5 w-5 text-white" />
+                                    ) : (
+                                        <AlertCircle className="h-5 w-5 text-white" />
+                                    )}
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-sm uppercase tracking-widest text-white/80">Notification</p>
+                                    <h3 className="text-lg font-bold text-white">
+                                        {notification.type === "success" ? "Success" : "Error"}
+                                    </h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="px-6 py-5 bg-white/90">
+                            <p className="text-slate-700 font-medium mb-4">{notification.message}</p>
+                            <div className="flex justify-end">
+                                <button
+                                    onClick={() => setNotification({ show: false, message: "", type: "" })}
+                                    className="px-5 py-2.5 bg-gradient-to-r from-slate-900 to-slate-700 text-white font-bold rounded-2xl hover:from-slate-800 hover:to-slate-600 transition-all shadow-lg"
+                                >
+                                    OK
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <style>{`
         @keyframes fade-in {

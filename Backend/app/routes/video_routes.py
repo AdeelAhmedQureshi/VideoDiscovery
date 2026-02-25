@@ -406,3 +406,76 @@ async def get_user_history(
             detail=f"An error occurred while fetching history: {str(e)}"
         )
 
+
+@router.delete("/{video_id}")
+async def delete_video(
+    video_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Delete a video and all its associated data (recommendations and feedback).
+
+    Args:
+        video_id: ID of the video to delete
+        current_user: Authenticated user information
+
+    Returns:
+        Confirmation of deletion
+    """
+    try:
+        user_id = current_user.get("user_id")
+
+        # Fetch video from database
+        video = await videos_collection().find_one({"_id": video_id})
+
+        if not video:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Video with ID '{video_id}' not found"
+            )
+
+        # Verify the video belongs to the user
+        if video.get("user_id") != user_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You don't have permission to delete this video"
+            )
+
+        # Delete video from Cloudinary if public_id exists
+        cloudinary_public_id = video.get("cloudinary_public_id")
+        if cloudinary_public_id:
+            try:
+                await CloudinaryService.delete_video(cloudinary_public_id)
+            except Exception as cloudinary_error:
+                print(f"Warning: Failed to delete video from Cloudinary: {cloudinary_error}")
+                # Continue with database deletion even if Cloudinary deletion fails
+
+        # Delete all recommendations associated with this video
+        recommendations_result = await recommendations_collection().delete_many(
+            {"uploaded_video_id": video_id}
+        )
+
+        # Delete all feedback associated with this video
+        feedback_result = await feedback_collection().delete_many(
+            {"video_id": video_id}
+        )
+
+        # Delete video document from database
+        await videos_collection().delete_one({"_id": video_id})
+
+        return {
+            "message": "Video deleted successfully",
+            "video_id": video_id,
+            "deleted_recommendations": recommendations_result.deleted_count,
+            "deleted_feedback": feedback_result.deleted_count
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error deleting video: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while deleting the video: {str(e)}"
+        )
+
