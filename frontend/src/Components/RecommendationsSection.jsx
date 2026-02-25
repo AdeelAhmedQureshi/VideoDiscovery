@@ -78,30 +78,30 @@ export function RecommendationsSection() {
   };
 
   return (
-    <section className="py-16 sm:py-24 px-5 sm:px-6 bg-white" id="recommendation-section">
+    <section className="py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-5 md:px-6 bg-white" id="recommendation-section">
       <div className="container mx-auto max-w-7xl">
         {/* Section Header */}
         <motion.div
-          className="text-center mb-12 sm:mb-16"
+          className="text-center mb-8 sm:mb-12 md:mb-14 lg:mb-16"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.7 }}
           variants={containerVariants}
         >
-          <div className="inline-block relative mb-4">
+          <div className="inline-block relative mb-3 sm:mb-4">
             <motion.h1
-              className="inline-block text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
+              className="inline-block text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer px-2 sm:px-0"
               variants={headingVariants}
             >
               Recommended Videos
             </motion.h1>
             <motion.div
-              className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
+              className="absolute -bottom-1 sm:-bottom-2 left-0 right-0 h-0.5 sm:h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1 sm:peer-hover:h-1.5 peer-hover:opacity-80"
               variants={headingVariants}
             ></motion.div>
           </div>
           <motion.p
-            className="text-base sm:text-lg text-gray-500 mt-4 sm:mt-6"
+            className="text-sm sm:text-base md:text-lg text-gray-500 mt-3 sm:mt-4 md:mt-6 px-4 sm:px-6 md:px-8 max-w-3xl mx-auto"
             variants={headingVariants}
           >
             Based on multimodal analysis of your video content, here are the most semantically similar videos we found.
@@ -109,11 +109,11 @@ export function RecommendationsSection() {
         </motion.div>
 
         {/* Recommendations Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
           {mockRecommendations.map((video) => (
             <div
               key={video.id}
-              className="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer"
+              className="group bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer"
             >
               {/* Thumbnail */}
               <div className="relative aspect-video overflow-hidden bg-gray-100">
@@ -125,41 +125,41 @@ export function RecommendationsSection() {
 
                 {/* Play overlay */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <div className="w-14 h-14 rounded-full bg-cyan-500 flex items-center justify-center shadow-lg">
-                    <Play className="w-6 h-6 text-white fill-white ml-1" />
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-cyan-500 flex items-center justify-center shadow-lg">
+                    <Play className="w-5 h-5 sm:w-6 sm:h-6 text-white fill-white ml-0.5 sm:ml-1" />
                   </div>
                 </div>
 
                 {/* Duration badge */}
-                <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-md bg-black/80 text-white text-xs font-medium">
+                <div className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md bg-black/80 text-white text-[10px] sm:text-xs font-medium">
                   {video.duration}
                 </div>
 
                 {/* Similarity badge */}
-                <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-cyan-500 text-white text-xs font-bold shadow-md">
+                <div className="absolute top-2 sm:top-3 right-2 sm:right-3 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-cyan-500 text-white text-[10px] sm:text-xs font-bold shadow-md">
                   {video.similarity}% Match
                 </div>
               </div>
 
               {/* Content */}
-              <div className="p-4 space-y-2.5">
-                <h3 className="font-semibold text-sm sm:text-base leading-tight text-gray-900 group-hover:text-cyan-600 transition-colors line-clamp-2">
+              <div className="p-3 sm:p-4 space-y-2 sm:space-y-2.5">
+                <h3 className="font-semibold text-sm sm:text-base leading-tight text-gray-900 group-hover:text-cyan-600 transition-colors line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem]">
                   {video.title}
                 </h3>
 
                 {/* Tags */}
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5 sm:gap-2">
                   {video.tags.map((tag) => (
-                    <span key={tag} className="px-2.5 py-0.5 bg-gray-100 text-gray-700 text-[11px] sm:text-xs font-medium rounded-full">
+                    <span key={tag} className="px-2 py-0.5 sm:px-2.5 bg-gray-100 text-gray-700 text-[10px] sm:text-xs font-medium rounded-full">
                       {tag}
                     </span>
                   ))}
                 </div>
 
                 {/* Action */}
-                <div className="flex items-center text-xs sm:text-sm text-cyan-600 font-medium pt-1">
+                <div className="flex items-center text-xs sm:text-sm text-cyan-600 font-medium pt-0.5 sm:pt-1">
                   <span>Watch Video</span>
-                  <ExternalLink className="w-4 h-4 ml-1" />
+                  <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1" />
                 </div>
               </div>
             </div>
