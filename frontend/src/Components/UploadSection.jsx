@@ -1,9 +1,11 @@
 import { useState, useCallback } from "react";
 import { Upload, FileVideo, X, Loader2, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import Loading from "./Loading";
 
 export function UploadSection() {
+  const navigate = useNavigate();
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -13,7 +15,9 @@ export function UploadSection() {
     open: false,
     type: "info",
     title: "",
-    message: ""
+    message: "",
+    showTwoButtons: false,
+    duplicateVideoId: null
   });
 
   const allowedFormats = [
@@ -36,17 +40,27 @@ export function UploadSection() {
 
   const handleRemoveFile = () => setFile(null);
 
-  const showPopup = ({ type = "success", title, message }) => {
+  const showPopup = ({ type = "success", title, message, showTwoButtons = false, duplicateVideoId = null }) => {
     setPopup({
       open: true,
       type,
       title,
-      message
+      message,
+      showTwoButtons,
+      duplicateVideoId
     });
   };
 
   const handlePopupClose = () => {
-    setPopup({ open: false, type: "info", title: "", message: "" });
+    setPopup({ open: false, type: "info", title: "", message: "", showTwoButtons: false, duplicateVideoId: null });
+  };
+
+  const handleSeeRecommendations = () => {
+    const videoId = popup.duplicateVideoId;
+    handlePopupClose();
+    if (videoId) {
+      navigate(`/history?video=${videoId}`);
+    }
   };
 
   const validateVideoFile = (file) => {
@@ -157,21 +171,25 @@ export function UploadSection() {
         const errorMessage = errorData.detail || errorData.message || "Upload failed";
 
         if (
-          errorMessage.toLowerCase().includes("already uploaded") ||
-          errorMessage.toLowerCase().includes("duplicate") ||
-          errorMessage.toLowerCase().includes("exists") ||
-          errorMessage.includes("id")
+          errorMessage.toLowerCase().includes("already") &&
+          errorMessage.toLowerCase().includes("uploaded")
         ) {
+          // Extract video ID from error message (e.g., "Video ID: vca818c7e8a1e")
+          const videoIdMatch = errorMessage.match(/Video ID[:\s]+([a-zA-Z0-9]+)/);
+          const duplicateVideoId = videoIdMatch ? videoIdMatch[1] : null;
+
           showPopup({
             type: "info",
-            title: "Already uploaded",
-            message: errorMessage
+            title: "Already Uploaded",
+            message: "This video has already been uploaded to your account.",
+            showTwoButtons: true,
+            duplicateVideoId: duplicateVideoId
           });
           setIsAnalyzing(false);
           return;
-        } else {
-          throw new Error(errorMessage);
         }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -363,13 +381,30 @@ export function UploadSection() {
 
             <div className="px-6 py-5 bg-white/90">
               <p className="text-slate-700 font-medium mb-4">{popup.message}</p>
-              <div className="flex justify-end">
-                <button
-                  onClick={handlePopupClose}
-                  className="px-5 py-2.5 bg-gradient-to-r from-slate-900 to-slate-700 text-white font-bold rounded-2xl hover:from-slate-800 hover:to-slate-600 transition-all shadow-lg"
-                >
-                  OK
-                </button>
+              <div className="flex justify-end gap-3">
+                {popup.showTwoButtons ? (
+                  <>
+                    <button
+                      onClick={handlePopupClose}
+                      className="px-5 py-2.5 bg-gray-100 text-gray-900 font-bold rounded-2xl hover:bg-gray-200 transition-all border border-gray-200"
+                    >
+                      OK
+                    </button>
+                    <button
+                      onClick={handleSeeRecommendations}
+                      className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold rounded-2xl hover:from-cyan-600 hover:to-blue-600 transition-all shadow-lg"
+                    >
+                      See Recommendations
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={handlePopupClose}
+                    className="px-5 py-2.5 bg-gradient-to-r from-slate-900 to-slate-700 text-white font-bold rounded-2xl hover:from-slate-800 hover:to-slate-600 transition-all shadow-lg"
+                  >
+                    OK
+                  </button>
+                )}
               </div>
             </div>
           </div>
