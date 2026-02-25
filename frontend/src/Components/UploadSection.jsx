@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import Loading from "./Loading";
 
 export function UploadSection() {
-  const navigate = useNavigate();
+  
   const [file, setFile] = useState(null);
   const navigate = useNavigate();
   const [isDragging, setIsDragging] = useState(false);
