@@ -62,9 +62,9 @@ async def get_recommendations(
         # Check for cached recommendations
         cached = await recommendations_collection().find(
             {"uploaded_video_id": video_id}
-        ).to_list(length=200)
+        ).to_list(length=200) 
 
-        if cached:
+        if cached: 
             # Check if cache is stale (old single-query format)
             unique_queries = set(doc.get("search_query_used", "") for doc in cached)
             ai_metadata = video.get("ai_metadata", {})
@@ -151,7 +151,7 @@ async def get_recommendations(
         query_tabs.append({"query": query, "recommendations": results})
 
     if all_docs:
-        await recommendations_collection().insert_many(all_docs)
+        await recommendations_collection().       insert_many(all_docs)
         print(f"[Recommendations] Stored {len(all_docs)} recommendations across {len(search_queries)} queries for video {video_id}")
 
     return {

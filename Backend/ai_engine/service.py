@@ -305,3 +305,11 @@ async def analyze_video(video_path: str, video_id: str):
                 "processing_stage": f"Error: {str(e)[:100]}"
             }}
         )
+    finally:
+        # Clean up temp video file to prevent disk space buildup
+        if os.path.exists(video_path):
+            try:
+                os.remove(video_path)
+                print(f"[Cleanup] Deleted temp video: {video_path}")
+            except Exception as cleanup_err:
+                print(f"[Cleanup] Failed to delete temp video: {cleanup_err}")
