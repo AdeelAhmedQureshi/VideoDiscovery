@@ -91,10 +91,13 @@ async def upload_video(
         })
 
         if existing_video:
-            raise HTTPException(
-                status_code=409,
-                detail=f"This video has already been uploaded. Video ID: {existing_video['_id']}"
-            )
+            return {
+                "video_id": existing_video["_id"],
+                "file_url": existing_video.get("file_url", ""),
+                "status": "duplicate",
+                "original_status": existing_video.get("status", "unknown"),
+                "message": "This video was already uploaded. Showing previous recommendations."
+            }
 
         # Save locally for AI processing (write from in-memory bytes)
         local_filename = f"{user_id}_{generate_id().replace('-', '')}_{file.filename}"

@@ -1,10 +1,12 @@
 import { useState, useCallback } from "react";
 import { Upload, FileVideo, X, Loader2, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import Loading from "./Loading";
 
 export function UploadSection() {
   const [file, setFile] = useState(null);
+  const navigate = useNavigate();
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploadComplete, setIsUploadComplete] = useState(false);
@@ -152,30 +154,29 @@ export function UploadSection() {
 
       if (!response.ok) {
         const errorData = await response.json();
-
-        // Check if it's a duplicate video message (not an error)
         const errorMessage = errorData.detail || errorData.message || "Upload failed";
-
-        if (
-          errorMessage.toLowerCase().includes("already uploaded") ||
-          errorMessage.toLowerCase().includes("duplicate") ||
-          errorMessage.toLowerCase().includes("exists") ||
-          errorMessage.includes("id")
-        ) {
-          showPopup({
-            type: "info",
-            title: "Already uploaded",
-            message: errorMessage
-          });
-          setIsAnalyzing(false);
-          return;
-        } else {
-          throw new Error(errorMessage);
-        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
       console.log("Upload success:", data);
+
+      // Handle duplicate video — skip processing, go to recommendations
+      if (data.status === "duplicate") {
+        if (data.original_status === "completed") {
+          // Show notification, then navigate to previous recommendations
+          showPopup({
+            type: "info",
+            title: "Already uploaded",
+            message: data.message || "This video was already uploaded. Showing previous recommendations."
+          });
+          setTimeout(() => {
+            navigate(`/recommendations/${data.video_id}`);
+          }, 2000);
+          return;
+        }
+        // Still processing from a previous upload — show loading screen
+      }
 
       // Store video ID and directly start loading
       setVideoId(data.video_id || data.id);
