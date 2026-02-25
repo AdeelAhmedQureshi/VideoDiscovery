@@ -68,7 +68,7 @@ export default function History() {
                 // Transform history to match the display format
                 const formattedData = history.map((item) => {
                     // Format date
-                    const uploadDate = item.uploaded_at 
+                    const uploadDate = item.uploaded_at
                         ? new Date(item.uploaded_at).toLocaleDateString('en-GB', {
                             day: '2-digit',
                             month: 'short',
@@ -79,11 +79,11 @@ export default function History() {
                     // Format duration (convert seconds to HH:MM:SS or MM:SS)
                     const formatDuration = (seconds) => {
                         if (!seconds || seconds === 0) return "N/A";
-                        
+
                         const hours = Math.floor(seconds / 3600);
                         const mins = Math.floor((seconds % 3600) / 60);
                         const secs = Math.floor(seconds % 60);
-                        
+
                         if (hours > 0) {
                             return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
                         }
@@ -371,118 +371,121 @@ export default function History() {
 
                 {/* Cards */}
                 {!loading && !error && filteredHistory.length > 0 && (
-                <div className="grid gap-6">
-                    {filteredHistory.map((item, index) => (
-                        <div
-                            key={item.id}
-                            ref={(el) => (videoRefs.current[item.id] = el)}
-                            className={`group relative overflow-hidden rounded-2xl transition-all duration-500 hover:shadow-2xl ${
-                                highlightedVideo === item.id ? 'ring-4 ring-cyan-400 shadow-2xl' : ''
-                            }`}
-                            style={{ animationDelay: `${index * 100}ms` }}
-                        >
-                            {/* Light Background */}
-                            <div className="absolute inset-0 border border-gray-200 group-hover:border-cyan-400 transition-all duration-500"></div>
-
-                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 "></div>
-
-                            {/* Delete Button */}
-                            <button
-                                onClick={() => handleDeleteClick(item.id)}
-                                disabled={deletingVideoId === item.id}
-                                className="absolute top-4 right-4 z-20 p-2.5 rounded-lg bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-400 hover:text-red-600 transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed group/delete"
-                                title="Delete video"
+                    <div className="grid gap-6">
+                        {filteredHistory.map((item, index) => (
+                            <div
+                                key={item.id}
+                                ref={(el) => (videoRefs.current[item.id] = el)}
+                                className={`group relative overflow-hidden rounded-2xl transition-all duration-500 hover:shadow-2xl ${highlightedVideo === item.id ? 'ring-4 ring-cyan-400 shadow-2xl' : ''
+                                    }`}
+                                style={{ animationDelay: `${index * 100}ms` }}
                             >
-                                {deletingVideoId === item.id ? (
-                                    <div className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
-                                ) : (
-                                    <Trash2 className="w-5 h-5 group-hover/delete:scale-110 transition-transform duration-200" />
-                                )}
-                            </button>
+                                {/* Light Background */}
+                                <div className="absolute inset-0 border border-gray-200 group-hover:border-cyan-400 transition-all duration-500"></div>
 
-                            <div className="relative p-7 sm:p-8 pt-16">
-                                <div className="flex flex-col gap-6 mb-6">
-                                    <div className="flex items-start gap-5 flex-1 pr-16">
+                                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 "></div>
 
-                                        <div className="p-3.5 rounded-xl bg-gradient-to-br from-cyan-100 to-indigo-100 text-cyan-600 shrink-0 border border-cyan-200 shadow">
-                                            <Video className="w-6 h-6" />
-                                        </div>
+                                {/* Delete Button */}
+                                <button
+                                    onClick={() => handleDeleteClick(item.id)}
+                                    disabled={deletingVideoId === item.id}
+                                    className="absolute top-4 right-4 z-20 p-2.5 rounded-lg bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-400 hover:text-red-600 transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed group/delete"
+                                    title="Delete video"
+                                >
+                                    {deletingVideoId === item.id ? (
+                                        <div className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                                    ) : (
+                                        <Trash2 className="w-5 h-5 group-hover/delete:scale-110 transition-transform duration-200" />
+                                    )}
+                                </button>
 
-                                        <div className="flex-1">
-                                            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 group-hover:text-cyan-600 transition-colors duration-300">
-                                                {item.title}
-                                            </h3>
-                                            <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-500">
-                                                <span className="flex items-center gap-1.5 bg-gray-100 px-3 py-1.5 rounded-full">
-                                                    <Calendar className="w-4 h-4" />
-                                                    {item.date}
-                                                </span>
-                                                <span className="flex items-center gap-1.5 bg-gray-100 px-3 py-1.5 rounded-full">
-                                                    <Clock className="w-4 h-4" />
-                                                    {item.duration}
-                                                </span>
-                                                
-                                                {/* Rating - Show if rating exists */}
-                                                {item.rating && (
-                                                    <span className="flex items-center gap-1.5 bg-gradient-to-br from-yellow-100 to-orange-100 border border-yellow-300 px-3 py-1.5 rounded-full">
-                                                        <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
-                                                        <span className="font-bold text-yellow-600">{item.rating}</span>
+                                <div className="relative p-7 sm:p-8 pt-16">
+                                    <div className="flex flex-col gap-6 mb-6">
+                                        <div className="flex items-start gap-5 flex-1 pr-16">
+
+                                            <div className="p-3.5 rounded-xl bg-gradient-to-br from-cyan-100 to-indigo-100 text-cyan-600 shrink-0 border border-cyan-200 shadow">
+                                                <Video className="w-6 h-6" />
+                                            </div>
+
+                                            <div className="flex-1">
+                                                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 group-hover:text-cyan-600 transition-colors duration-300">
+                                                    {item.title}
+                                                </h3>
+                                                <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-500">
+                                                    <span className="flex items-center gap-1.5 bg-gray-100 px-3 py-1.5 rounded-full">
+                                                        <Calendar className="w-4 h-4" />
+                                                        {item.date}
                                                     </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                                    <span className="flex items-center gap-1.5 bg-gray-100 px-3 py-1.5 rounded-full">
+                                                        <Clock className="w-4 h-4" />
+                                                        {item.duration}
+                                                    </span>
 
-                                <div className="my-6 h-px bg-gradient-to-r from-gray-200 via-cyan-200 to-gray-200 w-full" />
-
-                                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
-
-                                    {/* Recommendations */}
-                                    <div className="md:col-span-4 p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200">
-                                        <div className="flex items-center gap-4">
-                                            <div className="p-3 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600 border border-indigo-200">
-                                                <Brain className="w-6 h-6" />
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-1">
-                                                    AI Recommendations
-                                                </p>
-                                                <p className="text-2xl font-bold bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">
-                                                    {item.recommendations}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Feedback */}
-                                    <div className="md:col-span-8 p-4 rounded-xl bg-gradient-to-br from-pink-50 to-rose-50 border border-pink-200">
-                                        <div className="flex items-start gap-4">
-                                            <div className="p-3 rounded-lg bg-gradient-to-br from-pink-100 to-rose-100 text-pink-600 border border-pink-200">
-                                                <MessageSquare className="w-6 h-6" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-bold uppercase tracking-widest text-pink-500 mb-2">
-                                                    User Feedback
-                                                </p>
-                                                <p className="text-sm text-gray-700 leading-relaxed">
-                                                    {item.feedback ? (
-                                                        <span className="italic text-cyan-600">"{item.feedback}"</span>
-                                                    ) : (
-                                                        <span className="text-gray-400 italic">No feedback submitted yet.</span>
+                                                    {/* Rating - Show if rating exists */}
+                                                    {item.rating && (
+                                                        <span className="flex items-center gap-1.5 bg-gradient-to-br from-yellow-100 to-orange-100 border border-yellow-300 px-3 py-1.5 rounded-full">
+                                                            <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                                                            <span className="font-bold text-yellow-600">{item.rating}</span>
+                                                        </span>
                                                     )}
-                                                </p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                </div>
-                            </div>
+                                    <div className="my-6 h-px bg-gradient-to-r from-gray-200 via-cyan-200 to-gray-200 w-full" />
 
-                            <div className="absolute bottom-0 left-0 h-1 w-0 group-hover:w-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-purple-500 transition-all duration-500"></div>
-                        </div>
-                    ))}
-                </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
+
+                                        {/* Recommendations */}
+                                        <div
+                                            onClick={(e) => { e.stopPropagation(); navigate(`/recommendations/${item.id}`); }}
+                                            className="md:col-span-4 p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 cursor-pointer hover:shadow-lg hover:border-indigo-400 hover:-translate-y-0.5 hover:from-indigo-100 hover:to-purple-100 transition-all duration-300"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="p-3 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600 border border-indigo-200">
+                                                    <Brain className="w-6 h-6" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-xs font-bold uppercase tracking-widest text-indigo-500 mb-1">
+                                                        AI Recommendations
+                                                    </p>
+                                                    <p className="text-2xl font-bold bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">
+                                                        {item.recommendations}
+                                                    </p>
+                                                </div>
+                                                <ArrowUpRight className="w-5 h-5 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                            </div>
+                                        </div>
+
+                                        {/* Feedback */}
+                                        <div className="md:col-span-8 p-4 rounded-xl bg-gradient-to-br from-pink-50 to-rose-50 border border-pink-200">
+                                            <div className="flex items-start gap-4">
+                                                <div className="p-3 rounded-lg bg-gradient-to-br from-pink-100 to-rose-100 text-pink-600 border border-pink-200">
+                                                    <MessageSquare className="w-6 h-6" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs font-bold uppercase tracking-widest text-pink-500 mb-2">
+                                                        User Feedback
+                                                    </p>
+                                                    <p className="text-sm text-gray-700 leading-relaxed">
+                                                        {item.feedback ? (
+                                                            <span className="italic text-cyan-600">"{item.feedback}"</span>
+                                                        ) : (
+                                                            <span className="text-gray-400 italic">No feedback submitted yet.</span>
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                                <div className="absolute bottom-0 left-0 h-1 w-0 group-hover:w-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-purple-500 transition-all duration-500"></div>
+                            </div>
+                        ))}
+                    </div>
                 )}
             </div>
 
@@ -529,11 +532,10 @@ export default function History() {
             {notification.show && (
                 <div className="fixed top-6 left-1/2 z-50 w-[min(92vw,540px)] -translate-x-1/2">
                     <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white/95 shadow-2xl">
-                        <div className={`px-6 py-4 ${
-                            notification.type === "success" 
-                                ? "bg-gradient-to-r from-cyan-500 to-blue-500" 
+                        <div className={`px-6 py-4 ${notification.type === "success"
+                                ? "bg-gradient-to-r from-cyan-500 to-blue-500"
                                 : "bg-gradient-to-r from-red-600 to-rose-600"
-                        }`}>
+                            }`}>
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
                                     {notification.type === "success" ? (
