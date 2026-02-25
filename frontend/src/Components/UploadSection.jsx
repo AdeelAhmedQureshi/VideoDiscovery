@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import Loading from "./Loading";
 
 export function UploadSection() {
-  
+
   const [file, setFile] = useState(null);
   const navigate = useNavigate();
   const [isDragging, setIsDragging] = useState(false);
@@ -60,7 +60,7 @@ export function UploadSection() {
     const videoId = popup.duplicateVideoId;
     handlePopupClose();
     if (videoId) {
-      navigate(`/history?video=${videoId}`);
+      navigate(`/recommendations/${videoId}`);
     }
   };
 
@@ -184,13 +184,27 @@ export function UploadSection() {
             showTwoButtons: true,
             duplicateVideoId: duplicateVideoId
           });
-          setTimeout(() => {
-            navigate(`/recommendations/${data.video_id}`);
-          }, 2000);
           return;
         }
-        
+
         throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      console.log("Upload success:", data);
+
+      // Handle duplicate video — skip processing, go to recommendations
+      if (data.status === "duplicate") {
+        if (data.original_status === "completed") {
+          showPopup({
+            type: "info",
+            title: "Already Uploaded",
+            message: data.message || "This video was already uploaded. Showing previous recommendations.",
+            showTwoButtons: true,
+            duplicateVideoId: data.video_id
+          });
+          return;
+        }
       }
 
       // Store video ID and directly start loading
