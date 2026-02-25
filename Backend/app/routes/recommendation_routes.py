@@ -84,7 +84,7 @@ async def get_recommendations(
 
     # No cache — fetch from YouTube using ALL AI-generated queries
     ai_metadata = video.get("ai_metadata", {})
-    search_queries = ai_metadata.get("search_queries", [])
+    search_queries = ai_metadata.get("search_queries", [])[:5]  # Max 5 queries
 
     if not search_queries:
         # No search queries yet — video may still be processing
