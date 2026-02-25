@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Video, Play, ArrowLeft, Sparkles, Youtube, ExternalLink } from "lucide-react";
+import { Video, Play, ArrowLeft, Sparkles, Youtube, ExternalLink, Star, MessageSquare, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Skeleton Loader
@@ -37,6 +37,11 @@ const VideoCard = ({ video, index }) => {
                 duration: 0.6,
                 delay: index * 0.1,
                 ease: [0.22, 1, 0.36, 1]
+            }}
+            whileHover={{
+                y: -8,
+                scale: 1.02,
+                transition: { duration: 0.3 }
             }}
             className="flex gap-8 group cursor-pointer"
             onClick={handleClick}
@@ -138,6 +143,14 @@ export default function Recommendation() {
     const [loading, setLoading] = useState(true);
     const [recommendations, setRecommendations] = useState([]);
     const [uploadedVideo, setUploadedVideo] = useState(null);
+    
+    // Feedback state
+    const [rating, setRating] = useState(0);
+    const [hoverRating, setHoverRating] = useState(0);
+    const [comment, setComment] = useState("");
+    const [submittingFeedback, setSubmittingFeedback] = useState(false);
+    const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+    const [showFeedbackForm, setShowFeedbackForm] = useState(false);
 
     useEffect(() => {
         fetchRecommendations();
@@ -202,6 +215,54 @@ export default function Recommendation() {
             ]);
         } finally {
             setTimeout(() => setLoading(false), 1200);
+        }
+    };
+
+    const handleSubmitFeedback = async () => {
+        if (rating === 0) {
+            alert("Please select a rating");
+            return;
+        }
+
+        setSubmittingFeedback(true);
+        try {
+            const token = localStorage.getItem("token");
+            
+            const response = await fetch("http://localhost:8000/api/feedback/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                    video_id: videoId,
+                    rating: rating,
+                    comment: comment || null,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to submit feedback");
+            }
+
+            const data = await response.json();
+            console.log("Feedback submitted:", data);
+            
+            setFeedbackSubmitted(true);
+            setShowFeedbackForm(false);
+            
+            // Reset form after 2 seconds
+            setTimeout(() => {
+                setRating(0);
+                setComment("");
+            }, 2000);
+            
+        } catch (error) {
+            console.error("Error submitting feedback:", error);
+            alert("Failed to submit feedback. Please try again.");
+        } finally {
+            setSubmittingFeedback(false);
         }
     };
 
@@ -297,16 +358,180 @@ export default function Recommendation() {
                             ))}
                         </div>
                     ) : recommendations.length > 0 ? (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.5 }}
-                            className="space-y-8 max-w-6xl mx-auto"
-                        >
-                            {recommendations.map((video, index) => (
-                                <VideoCard key={video.id} video={video} index={index} />
-                            ))}
-                        </motion.div>
+                        <>
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.5 }}
+                                className="space-y-8 max-w-6xl mx-auto"
+                            >
+                                {/* Render first 3 recommendations */}
+                                {recommendations.slice(0, 3).map((video, index) => (
+                                    <VideoCard key={video.id} video={video} index={index} />
+                                ))}
+                            </motion.div>
+
+                            {/* Feedback Section - Appears after first 3 recommendations */}
+                            {recommendations.length > 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.5, duration: 0.6 }}
+                                    className="max-w-3xl mx-auto my-16"
+                                >
+                                {feedbackSubmitted ? (
+                                    <motion.div
+                                        initial={{ scale: 0.8, opacity: 0 }}
+                                        animate={{ scale: 1, opacity: 1 }}
+                                        className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-8 text-center"
+                                    >
+                                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <Star className="w-8 h-8 text-green-600 fill-green-600" />
+                                        </div>
+                                        <h3 className="text-2xl font-bold text-green-900 mb-2">
+                                            Thank You for Your Feedback!
+                                        </h3>
+                                        <p className="text-green-700">
+                                            Your feedback helps us improve our recommendations.
+                                        </p>
+                                    </motion.div>
+                                ) : !showFeedbackForm ? (
+                                    <button
+                                        onClick={() => setShowFeedbackForm(true)}
+                                        className="w-full bg-white border-2 border-cyan-200 hover:border-cyan-400 rounded-2xl p-6 text-center transition-all duration-300 hover:shadow-lg group"
+                                    >
+                                        <div className="flex items-center justify-center gap-3">
+                                            <MessageSquare className="w-6 h-6 text-cyan-600 group-hover:scale-110 transition-transform" />
+                                            <span className="text-lg font-bold text-gray-800">
+                                                Share Your Feedback (Optional)
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-gray-500 mt-2">
+                                            How satisfied are you with these recommendations?
+                                        </p>
+                                    </button>
+                                ) : (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden"
+                                    >
+                                        <div className="bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-4">
+                                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                                <MessageSquare className="w-5 h-5" />
+                                                Share Your Feedback
+                                            </h3>
+                                            <p className="text-cyan-50 text-sm mt-1">
+                                                Help us improve your experience
+                                            </p>
+                                        </div>
+
+                                        <div className="p-6 space-y-6">
+                                            {/* Star Rating */}
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                                    Rate these recommendations *
+                                                </label>
+                                                <div className="flex items-center gap-2">
+                                                    {[1, 2, 3, 4, 5].map((star) => (
+                                                        <button
+                                                            key={star}
+                                                            type="button"
+                                                            onClick={() => setRating(star)}
+                                                            onMouseEnter={() => setHoverRating(star)}
+                                                            onMouseLeave={() => setHoverRating(0)}
+                                                            className="transition-transform hover:scale-125 focus:outline-none"
+                                                        >
+                                                            <Star
+                                                                className={`w-10 h-10 transition-colors ${
+                                                                    (hoverRating || rating) >= star
+                                                                        ? "text-yellow-400 fill-yellow-400"
+                                                                        : "text-gray-300"
+                                                                }`}
+                                                            />
+                                                        </button>
+                                                    ))}
+                                                    {rating > 0 && (
+                                                        <span className="ml-3 text-sm font-medium text-gray-600">
+                                                            {rating === 1 && "Poor"}
+                                                            {rating === 2 && "Fair"}
+                                                            {rating === 3 && "Good"}
+                                                            {rating === 4 && "Very Good"}
+                                                            {rating === 5 && "Excellent"}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Comment */}
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                    Additional Comments (Optional)
+                                                </label>
+                                                <textarea
+                                                    value={comment}
+                                                    onChange={(e) => setComment(e.target.value)}
+                                                    placeholder="Tell us more about your experience..."
+                                                    rows={4}
+                                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none transition-all"
+                                                    maxLength={500}
+                                                />
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    {comment.length}/500 characters
+                                                </p>
+                                            </div>
+
+                                            {/* Buttons */}
+                                            <div className="flex gap-3 justify-end">
+                                                <button
+                                                    onClick={() => {
+                                                        setShowFeedbackForm(false);
+                                                        setRating(0);
+                                                        setComment("");
+                                                    }}
+                                                    className="px-6 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all"
+                                                    disabled={submittingFeedback}
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    onClick={handleSubmitFeedback}
+                                                    disabled={submittingFeedback || rating === 0}
+                                                    className="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold rounded-xl hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                                                >
+                                                    {submittingFeedback ? (
+                                                        <>
+                                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                            Submitting...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Send className="w-4 h-4" />
+                                                            Submit Feedback
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+                                </motion.div>
+                            )}
+
+                            {/* Remaining recommendations after feedback */}
+                            {recommendations.length > 3 && (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ duration: 0.5 }}
+                                    className="space-y-8 max-w-6xl mx-auto mt-8"
+                                >
+                                    {recommendations.slice(3).map((video, index) => (
+                                        <VideoCard key={video.id} video={video} index={index + 3} />
+                                    ))}
+                                </motion.div>
+                            )}
+                        </>
                     ) : (
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
