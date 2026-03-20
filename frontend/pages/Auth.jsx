@@ -21,6 +21,8 @@ export default function Auth() {
   const [reactivateVerifying, setReactivateVerifying] = useState(false);
   const [reactivateMessage, setReactivateMessage] = useState('');
   const [reactivateError, setReactivateError] = useState('');
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [termsNoticeOpen, setTermsNoticeOpen] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,6 +31,11 @@ export default function Auth() {
 
     try {
       if (isSignUp) {
+        if (!agreeToTerms) {
+          setTermsNoticeOpen(true);
+          setIsLoading(false);
+          return;
+        }
         await signUp(fullName, email, password);
       } else {
         await signIn(email, password);
@@ -117,7 +124,7 @@ export default function Auth() {
           <div className="p-8">
             <div className="mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                {isSignUp ? 'Create Account' : 'Welcome Back'}
+                {isSignUp ? 'Create Account' : 'Login Account'}
               </h2>
               <p className="text-sm sm:text-base text-gray-600 mt-1">
                 {isSignUp ? 'Sign up to start analyzing your videos' : 'Sign in to continue to your account'}
@@ -202,6 +209,22 @@ export default function Auth() {
                 </div>
               )}
 
+              {isSignUp && (
+                <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <input
+                    id="terms"
+                    type="checkbox"
+                    checked={agreeToTerms}
+                    onChange={e => setAgreeToTerms(e.target.checked)}
+                    disabled={isLoading}
+                    className="w-5 h-5 mt-0.5 text-cyan-600 border-gray-300 rounded cursor-pointer focus:ring-2 focus:ring-cyan-500 focus:ring-offset-0 transition-all"
+                  />
+                  <label htmlFor="terms" className="text-sm text-gray-700 cursor-pointer flex-1 leading-relaxed">
+                    I agree to the <span className="text-cyan-600 hover:text-cyan-700 font-medium cursor-pointer">Terms of Service</span> and <span className="text-cyan-600 hover:text-cyan-700 font-medium cursor-pointer">Privacy Policy</span>
+                  </label>
+                </div>
+              )}
+
               {!isSignUp && (
                 <div className="mt-3">
                   {deactivatedNotice && (
@@ -222,8 +245,8 @@ export default function Auth() {
 
               <button
                 type="submit"
-                disabled={isLoading}
-                className="w-full py-3 bg-cyan-500 hover:bg-cyan-600 text-base sm:text-lg font-semibold text-white rounded-lg cursor-pointer"
+                disabled={isLoading || (isSignUp && !agreeToTerms)}
+                className="w-full py-3 bg-cyan-500 hover:bg-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed text-base sm:text-lg font-semibold text-white rounded-lg cursor-pointer transition-all"
               >
                 {isLoading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
               </button>
@@ -241,7 +264,7 @@ export default function Auth() {
             </div>
             {reactivateOpen && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[380px] overflow-hidden">
                   <div className="bg-gradient-to-r from-amber-600 to-orange-600 px-6 py-4">
                     <h3 className="text-lg font-bold text-white">Reactivate Account</h3>
                     <p className="text-white/85 text-sm">Enter the verification code sent to your email.</p>
@@ -316,13 +339,45 @@ export default function Auth() {
                 </div>
               </div>
             )}
+            {termsNoticeOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[380px] overflow-hidden">
+                  <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-4">
+                    <h3 className="text-lg font-bold text-white">Terms & Service Agreement Required</h3>
+                    <p className="text-white/85 text-sm">Please accept to continue</p>
+                  </div>
+                  <div className="p-6 space-y-4">
+                    <p className="text-sm text-gray-700">
+                      You must agree to our <span className="font-semibold text-gray-900">Terms of Service</span> and <span className="font-semibold text-gray-900">Privacy Policy</span> to create an account.
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      By accepting, you agree to our policies and commit to using this platform responsibly.
+                    </p>
+                    <div className="flex gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setTermsNoticeOpen(false)}
+                        className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-900 rounded-lg border border-gray-200 hover:bg-gray-200 font-medium"
+                      >
+                        Close
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTermsNoticeOpen(false);
+                          setAgreeToTerms(true);
+                        }}
+                        className="flex-1 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium"
+                      >
+                        I Agree
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Additional Info */}
-        <p className="text-center text-xs sm:text-sm text-gray-500">
-          By continuing, you agree to our Terms of Service and Privacy Policy
-        </p>
       </div>
     </div>
   );

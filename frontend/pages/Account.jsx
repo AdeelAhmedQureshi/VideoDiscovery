@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { User, Mail, Lock, Trash2, ArrowLeft, Shield, CheckCircle2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { useRef, useState } from "react";
+import { User, Mail, Lock, Trash2, ArrowLeft, Shield, CheckCircle2, AlertCircle, Eye, EyeOff, Pencil } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -10,7 +10,11 @@ export default function Account() {
 
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
-  const [emailPassword, setEmailPassword] = useState("");
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const nameInputRef = useRef(null);
+  const emailInputRef = useRef(null);
+  const [emailConfirmPassword, setEmailConfirmPassword] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -18,10 +22,12 @@ export default function Account() {
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [showEmailConfirmModal, setShowEmailConfirmModal] = useState(false);
   const [deactivatePassword, setDeactivatePassword] = useState("");
   const [deactivateConfirmation, setDeactivateConfirmation] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showEmailConfirmPassword, setShowEmailConfirmPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [popup, setPopup] = useState({
@@ -41,6 +47,23 @@ export default function Account() {
       onClose: onClose || null
     });
   };
+
+  const handleEnableNameEdit = () => {
+    setIsEditingName(true);
+    requestAnimationFrame(() => {
+      nameInputRef.current?.focus();
+      nameInputRef.current?.setSelectionRange(name.length, name.length);
+    });
+  };
+
+  const handleEnableEmailEdit = () => {
+    setIsEditingEmail(true);
+    requestAnimationFrame(() => {
+      emailInputRef.current?.focus();
+      emailInputRef.current?.setSelectionRange(email.length, email.length);
+    });
+  };
+
   const handleDeactivateAccount = async () => {
     try {
       if (!deactivatePassword) {
@@ -110,7 +133,7 @@ export default function Account() {
     return "";
   };
 
-  const handleUpdateName = async () => {
+  const handleUpdateName = async (showSuccessPopup = true) => {
     try {
       const token = localStorage.getItem("token");
       const res = await fetch("http://localhost:8000/api/users/update-name", {
@@ -126,11 +149,14 @@ export default function Account() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Error updating name");
 
-      showPopup({
-        type: "success",
-        title: "Name updated",
-        message: data.message || "Your name has been updated successfully."
-      });
+      if (showSuccessPopup) {
+        showPopup({
+          type: "success",
+          title: "Name updated",
+          message: data.message || "Your name has been updated successfully."
+        });
+      }
+      setIsEditingName(false);
       await refreshUser();
     } catch (err) {
       showPopup({
@@ -141,14 +167,14 @@ export default function Account() {
     }
   };
 
-  const handleUpdateEmail = async () => {
+  const handleUpdateEmail = async (password) => {
     try {
       const token = localStorage.getItem("token");
       const res = await fetch("http://localhost:8000/api/users/update-email", {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         credentials: "include",
-        body: JSON.stringify({ email, password: emailPassword }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
@@ -160,7 +186,10 @@ export default function Account() {
         message: data.message || "Your email has been updated. Please log in again.",
         onClose: () => navigate("/auth")
       });
-      setEmailPassword("");
+      setIsEditingEmail(false);
+      setEmailConfirmPassword("");
+      setShowEmailConfirmModal(false);
+      setShowEmailConfirmPassword(false);
       await refreshUser();
     } catch (err) {
       showPopup({
@@ -185,7 +214,38 @@ export default function Account() {
         return;
       }
 
-      if (emailChanged && !emailPassword) {
+      if (emailChanged) {
+        setShowEmailConfirmModal(true);
+        return;
+      }
+
+      if (nameChanged) {
+        await handleUpdateName();
+      }
+    } catch (err) {
+      showPopup({
+        type: "error",
+        title: "Save failed",
+        message: err.message || "Failed to save changes."
+      });
+    }
+  };
+  const handleConfirmEmailChange = async () => {
+    try {
+      const emailChanged = email.trim() !== (user?.email || "").trim();
+      const nameChanged = name.trim() !== (user?.name || "").trim();
+
+      if (!emailChanged) {
+        setShowEmailConfirmModal(false);
+        setEmailConfirmPassword("");
+        setShowEmailConfirmPassword(false);
+        if (nameChanged) {
+          await handleUpdateName();
+        }
+        return;
+      }
+
+      if (!emailConfirmPassword) {
         showPopup({
           type: "warning",
           title: "Password required",
@@ -195,12 +255,10 @@ export default function Account() {
       }
 
       if (nameChanged) {
-        await handleUpdateName();
+        await handleUpdateName(false);
       }
 
-      if (emailChanged) {
-        await handleUpdateEmail();
-      }
+      await handleUpdateEmail(emailConfirmPassword);
     } catch (err) {
       showPopup({
         type: "error",
@@ -379,13 +437,13 @@ export default function Account() {
           >
             <div className="inline-block relative mb-5">
               <motion.h1
-                className="inline-block text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
+                className="inline-block text-4xl sm:text-5xl leading-[1.15] pb-1 font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
                 variants={headingVariants}
               >
                 Account Settings
               </motion.h1>
               <motion.div
-                className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
+                className="absolute -bottom-3 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
                 variants={headingVariants}
               ></motion.div>
             </div>
@@ -419,7 +477,7 @@ export default function Account() {
             </div>
 
             <div className="p-8 bg-white/80">
-              <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-base font-bold text-gray-700 mb-2">
                     Full Name
@@ -427,11 +485,25 @@ export default function Account() {
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
+                      ref={nameInputRef}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
+                      readOnly={!isEditingName}
                       placeholder="Enter your name"
-                      className="w-full pl-12 pr-4 py-3.5 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all text-slate-900 shadow-sm"
+                      className={`w-full pl-12 pr-12 py-3.5 border border-slate-200 rounded-2xl transition-all text-slate-900 shadow-sm ${
+                        isEditingName
+                          ? "bg-white/90 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                          : "bg-slate-50/90 cursor-default"
+                      }`}
                     />
+                    <button
+                      type="button"
+                      onClick={handleEnableNameEdit}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-cyan-600"
+                      aria-label="Edit full name"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
 
@@ -442,34 +514,25 @@ export default function Account() {
                   <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
+                      ref={emailInputRef}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      readOnly={!isEditingEmail}
                       placeholder="your.email@example.com"
                       type="email"
-                      className="w-full pl-12 pr-4 py-3.5 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all text-slate-900 shadow-sm"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-base font-bold text-gray-700 mb-2">
-                    Current Password (for email change)
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type={showCurrentPassword ? "text" : "password"}
-                      value={emailPassword}
-                      onChange={(e) => setEmailPassword(e.target.value)}
-                      placeholder="Enter your current password"
-                      className="w-full pl-12 pr-12 py-3.5 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all text-slate-900 shadow-sm"
+                      className={`w-full pl-12 pr-12 py-3.5 border border-slate-200 rounded-2xl transition-all text-slate-900 shadow-sm ${
+                        isEditingEmail
+                          ? "bg-white/90 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                          : "bg-slate-50/90 cursor-default"
+                      }`}
                     />
                     <button
                       type="button"
-                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      onClick={handleEnableEmailEdit}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-cyan-600"
+                      aria-label="Edit email"
                     >
-                      {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      <Pencil className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -628,10 +691,10 @@ export default function Account() {
 
               <button
                 onClick={() => setShowDeactivateModal(true)}
-                className="mb-6 px-6 py-3.5 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold rounded-2xl hover:from-amber-700 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl inline-flex items-center cursor-pointer"
+                className="mb-6 w-full sm:w-50 px-6 py-3.5 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold rounded-2xl hover:from-amber-700 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl inline-flex items-center justify-center cursor-pointer"
               >
                 <Shield className="w-4 h-4 mr-2" />
-                Deactivate for 30 days
+                Deactivate 
               </button>
 
               <div className="bg-red-50 border border-red-200 rounded-2xl p-5 mb-6">
@@ -648,7 +711,7 @@ export default function Account() {
 
               <button
                 onClick={() => setShowDeleteModal(true)}
-                className="px-6 py-3.5 bg-gradient-to-r from-red-600 to-rose-600 text-white font-bold rounded-2xl hover:from-red-700 hover:to-rose-700 transition-all duration-300 shadow-lg hover:shadow-xl inline-flex items-center cursor-pointer"
+                className="w-full sm:w-48 px-6 py-3.5 bg-gradient-to-r from-red-600 to-rose-600 text-white font-bold rounded-2xl hover:from-red-700 hover:to-rose-700 transition-all duration-300 shadow-lg hover:shadow-xl inline-flex items-center justify-center cursor-pointer"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete Account
@@ -661,7 +724,7 @@ export default function Account() {
       {/* Deactivate Modal */}
       {showDeactivateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-[400px] w-full overflow-hidden">
             <div className="bg-gradient-to-r from-amber-600 to-orange-600 px-8 py-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
@@ -731,7 +794,7 @@ export default function Account() {
       {/* Enhanced Delete Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-[500px] w-full overflow-hidden">
             <div className="bg-gradient-to-r from-red-600 to-rose-600 px-8 py-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
@@ -809,8 +872,73 @@ export default function Account() {
         </div>
       )}
 
+      {showEmailConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-[460px] w-full overflow-hidden">
+            <div className="bg-gradient-to-r from-cyan-600 to-blue-600 px-8 py-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-white">Confirm Email Change</h3>
+              </div>
+            </div>
+
+            <div className="p-8 bg-white/90">
+              <p className="text-gray-900 font-medium mb-4">
+                For security, please enter your current password to update your email address.
+              </p>
+
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Current Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type={showEmailConfirmPassword ? "text" : "password"}
+                      value={emailConfirmPassword}
+                      onChange={(e) => setEmailConfirmPassword(e.target.value)}
+                      placeholder="Enter your current password"
+                      className="w-full pl-12 pr-12 py-3 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all text-slate-900 shadow-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowEmailConfirmPassword(!showEmailConfirmPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showEmailConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowEmailConfirmModal(false);
+                    setEmailConfirmPassword("");
+                    setShowEmailConfirmPassword(false);
+                  }}
+                  className="flex-1 px-4 py-3.5 bg-gray-100 text-gray-900 font-bold rounded-2xl hover:bg-gray-200 transition-all border border-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmEmailChange}
+                  className="flex-1 px-4 py-3.5 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold rounded-2xl hover:from-cyan-700 hover:to-blue-700 transition-all shadow-lg"
+                >
+                  Confirm & Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {popup.open && (
-        <div className="fixed top-6 left-1/2 z-50 w-[min(92vw,540px)] -translate-x-1/2">
+        <div className="fixed top-6 left-1/2 z-50 w-[min(85vw,380px)] -translate-x-1/2">
           <div className="account-card overflow-hidden rounded-3xl border border-slate-200 bg-white/95 shadow-2xl">
             <div className="px-6 py-4 bg-gradient-to-r from-cyan-500 to-blue-500">
               <div className="flex items-center gap-3">

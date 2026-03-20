@@ -251,13 +251,13 @@ export function UploadSection() {
         >
           <div className="inline-block relative mb-4">
             <motion.h1
-              className="inline-block text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
+              className="inline-block text-4xl sm:text-5xl leading-[1.15] pb-1 font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
               variants={headingVariants}
             >
               Upload Section
             </motion.h1>
             <motion.div
-              className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
+              className="absolute -bottom-3 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
               variants={headingVariants}
             ></motion.div>
           </div>
@@ -276,7 +276,7 @@ export function UploadSection() {
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`relative border-2 border-dashed rounded-xl p-8 sm:p-16 text-center transition-all ${isDragging
+              className={`group relative border-2 border-dashed rounded-xl p-8 sm:p-16 text-center transition-all duration-300 ${isDragging
                 ? "border-cyan-500 bg-cyan-50/50"
                 : "border-gray-300 hover:border-cyan-400 hover:bg-gray-50"
                 }`}
@@ -297,8 +297,8 @@ export function UploadSection() {
                   Drop your video here or click to browse
                 </p>
 
-                <button className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 bg-white border-2 border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors pointer-events-none">
-                  <FileVideo className="w-4 h-4" />
+                <button className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 bg-white border-2 border-gray-300 text-gray-700 font-medium rounded-lg pointer-events-none transition-all duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] group-hover:border-cyan-400 group-hover:text-cyan-700 group-hover:shadow-md">
+                  <FileVideo className="w-4 h-4 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110" />
                   Select Video File
                 </button>
               </div>
@@ -359,7 +359,7 @@ export function UploadSection() {
       </div>
 
       {popup.open && (
-        <div className="fixed top-6 left-1/2 z-50 w-[min(92vw,540px)] -translate-x-1/2">
+        <div className="fixed top-6 left-1/2 z-50 w-[min(85vw,380px)] -translate-x-1/2">
           <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white/95 shadow-2xl">
             <div className="px-6 py-4 bg-gradient-to-r from-cyan-500 to-blue-500">
               <div className="flex items-center gap-3">
@@ -394,7 +394,7 @@ export function UploadSection() {
                       onClick={handleSeeRecommendations}
                       className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold rounded-2xl hover:from-cyan-600 hover:to-blue-600 transition-all shadow-lg"
                     >
-                      See Recommendations
+                       Recommendations
                     </button>
                   </>
                 ) : (
