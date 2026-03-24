@@ -76,29 +76,32 @@ def _time_ago(published_at: str) -> str:
 async def search_youtube(query: str, max_results: int = 5) -> List[Dict]:
     """
     Search YouTube using the Data API v3 and return enriched video data.
+    Always returns exactly max_results (default 5) videos per query.
+    Searches across all time — no date restriction.
 
     Args:
         query: Search query string (from LLM-generated queries)
-        max_results: Number of videos to fetch (default 5, max 10)
+        max_results: Number of videos to return (default 5)
 
     Returns:
-        List of video dicts with: title, thumbnail, channel, views,
-        uploadedAt, duration, url, youtube_video_id
+        List of exactly max_results video dicts with: title, thumbnail,
+        channel, views, uploadedAt, duration, url, youtube_video_id
     """
     if not YOUTUBE_API_KEY:
         print("[YouTube] ERROR: YOUTUBE_API_KEY not set in .env")
         return []
 
-    max_results = min(max_results, 10)
+    # Over-fetch to guarantee we can return exactly max_results
+    fetch_count = min(max_results * 2, 15)
 
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
-            # Step 1: Search for videos
+            # Step 1: Search for videos (no date filter = all time)
             search_params = {
                 "part": "snippet",
                 "q": query,
                 "type": "video",
-                "maxResults": max_results,
+                "maxResults": fetch_count,
                 "order": "relevance",
                 "videoEmbeddable": "true",
                 "key": YOUTUBE_API_KEY,
@@ -132,7 +135,7 @@ async def search_youtube(query: str, max_results: int = 5) -> List[Dict]:
             if stats_resp.status_code != 200:
                 print(f"[YouTube] Videos API Error {stats_resp.status_code}: {stats_resp.text[:200]}")
                 # Fallback: return basic data from search results
-                return _build_basic_results(items)
+                return _build_basic_results(items, max_results)
 
             stats_data = stats_resp.json()
             stats_map = {
@@ -166,7 +169,9 @@ async def search_youtube(query: str, max_results: int = 5) -> List[Dict]:
                     "similarity": round(max(0.75, 1.0 - (i * 0.05)), 2),
                 })
 
-            print(f"[YouTube] Fetched {len(results)} videos for query: '{query}'")
+            # Trim to exactly max_results
+            results = results[:max_results]
+            print(f"[YouTube] Returning {len(results)} videos for query: '{query}'")
             return results
 
     except httpx.TimeoutException:
@@ -177,10 +182,10 @@ async def search_youtube(query: str, max_results: int = 5) -> List[Dict]:
         return []
 
 
-def _build_basic_results(items: list) -> List[Dict]:
-    """Fallback: build results from search data only (no stats)."""
+def _build_basic_results(items: list, max_results: int = 5) -> List[Dict]:
+    """Fallback: build results from search data only (no stats). Returns exactly max_results."""
     results = []
-    for i, item in enumerate(items):
+    for i, item in enumerate(items[:max_results]):
         video_id = item["id"]["videoId"]
         snippet = item["snippet"]
         results.append({
