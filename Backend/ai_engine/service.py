@@ -240,57 +240,91 @@ async def analyze_video(video_path: str, video_id: str):
         print(f"[Progress] 100% — Analysis complete!")
 
         # ======================================================================
-        # PHASE 3: YouTube Discovery — Pre-fetch recommendations (ALL queries)
+        # PHASE 4: Multi-Platform Discovery — YouTube + Dailymotion → CLIP re-rank → top 5
         # ======================================================================
-        print(f"\n[Discovery] Fetching YouTube recommendations for video {video_id}...")
+        print(f"\n[Discovery] Fetching video recommendations for video {video_id}...")
+        print(f"[Discovery] Using top {len(validated_queries)} queries, fetching from YouTube + Dailymotion...")
         try:
             from app.services.youtube_service import search_youtube
+            from app.services.dailymotion_service import search_dailymotion
 
             if validated_queries:
+                # Fetch from YouTube (5 per query) + Dailymotion (3 per query) concurrently
                 async def fetch_for_query(query):
-                    return {"query": query, "results": await search_youtube(query, max_results=5)}
+                    yt_results, dm_results = await asyncio.gather(
+                        search_youtube(query, max_results=5),
+                        search_dailymotion(query, max_results=3),
+                    )
+                    return {"query": query, "youtube": yt_results, "dailymotion": dm_results}
 
                 fetch_tasks = [fetch_for_query(q) for q in validated_queries]
                 all_results = await asyncio.gather(*fetch_tasks)
+
+                # Flatten all results into a single list
+                all_videos = []
+                yt_count = 0
+                dm_count = 0
+                for entry in all_results:
+                    query = entry["query"]
+                    for result in entry["youtube"]:
+                        result["search_query_used"] = query
+                        all_videos.append(result)
+                        yt_count += 1
+                    for result in entry["dailymotion"]:
+                        result["search_query_used"] = query
+                        all_videos.append(result)
+                        dm_count += 1
+                
+                print(f"[Discovery] Fetched {len(all_videos)} total videos (YouTube: {yt_count}, Dailymotion: {dm_count})")
+
+                # CLIP Re-rank: Score ALL videos against the video's frame vectors
+                # The re-ranker is platform-agnostic — picks the best by semantic similarity
+                top_videos = await asyncio.to_thread(
+                    validator.rerank_youtube_results, all_videos, 5
+                )
 
                 # Get user_id from the video document
                 video_doc = await videos_collection().find_one({"_id": video_id})
                 vid_user_id = video_doc.get("user_id", "") if video_doc else ""
 
+                # Store only the top 5 CLIP-ranked videos
                 rec_docs = []
-                for entry in all_results:
-                    query = entry["query"]
-                    results = entry["results"]
-                    for result in results:
-                        rec_docs.append({
-                            "_id": generate_id("rec"),
-                            "recommendation_id": generate_id("rec"),
-                            "uploaded_video_id": video_id,
-                            "user_id": vid_user_id,
-                            "youtube_video_id": result["youtube_video_id"],
-                            "title": result["title"],
-                            "thumbnail_url": result["thumbnail"],
-                            "channel_title": result["channel"],
-                            "views": result["views"],
-                            "view_count": result["view_count"],
-                            "uploaded_at_text": result["uploadedAt"],
-                            "published_at": result.get("published_at", ""),
-                            "duration": result["duration"],
-                            "video_link": result["url"],
-                            "similarity": result["similarity"],
-                            "search_query_used": query,
-                            "fetched_at": datetime.now(),
-                        })
+                for rank, result in enumerate(top_videos):
+                    rec_docs.append({
+                        "_id": generate_id("rec"),
+                        "recommendation_id": generate_id("rec"),
+                        "uploaded_video_id": video_id,
+                        "user_id": vid_user_id,
+                        "youtube_video_id": result["youtube_video_id"],
+                        "title": result["title"],
+                        "thumbnail_url": result["thumbnail"],
+                        "channel_title": result["channel"],
+                        "views": result["views"],
+                        "view_count": result["view_count"],
+                        "uploaded_at_text": result["uploadedAt"],
+                        "published_at": result.get("published_at", ""),
+                        "duration": result["duration"],
+                        "video_link": result["url"],
+                        "similarity": result["similarity"],  # Real CLIP similarity
+                        "clip_faiss_score": result.get("_faiss_score", 0),
+                        "clip_cosine_score": result.get("_cosine_score", 0),
+                        "search_query_used": result.get("search_query_used", ""),
+                        "platform": result.get("platform", "youtube"),
+                        "rank": rank + 1,
+                        "fetched_at": datetime.now(),
+                    })
 
                 if rec_docs:
                     await recommendations_collection().insert_many(rec_docs)
-                    print(f"[Discovery] Stored {len(rec_docs)} YouTube recommendations across {len(validated_queries)} queries for video {video_id}")
+                    print(f"[Discovery] Stored top {len(rec_docs)} CLIP-ranked recommendations for video {video_id}")
                 else:
-                    print(f"[Discovery] No YouTube results found for any query")
+                    print(f"[Discovery] No videos survived CLIP re-ranking")
             else:
                 print(f"[Discovery] No validated queries available for YouTube search")
         except Exception as yt_err:
             print(f"[Discovery] YouTube fetch failed (non-critical): {yt_err}")
+            import traceback
+            traceback.print_exc()
 
     except Exception as e:
         print(f"[AI Service] Critical Error during analysis: {e}")

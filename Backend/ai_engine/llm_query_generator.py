@@ -26,7 +26,8 @@ class QueryGenerator:
     
     def generate_query(self, metadata: Dict) -> Dict[str, any]:
         """
-        Generate 5 optimized search queries following strict topic priority and noise removal rules.
+        Generate 8 optimized search queries following strict topic priority and noise removal rules.
+        More candidates are generated so that FAISS validation can select the best 3.
         
         Args:
             metadata: Dictionary containing AI analysis results
@@ -47,51 +48,51 @@ class QueryGenerator:
                     "messages": [
                         {
                             "role": "system",
-                            "content": """You are an intelligent video search query generator.
+                            "content": """You are a precision video search query generator optimized for maximum retrieval accuracy.
 
 You will receive structured video metadata in JSON format.
-Your task is to analyze the entire metadata and generate short, highly relevant, and accurate search queries.
+Your task is to analyze ALL metadata signals and generate highly specific, accurate search queries that will retrieve the MOST SIMILAR videos on YouTube.
 
 Follow these rules strictly:
 
-1. Identify the dominant topic using:
-   - Audio transcript (highest priority)
-   - Named entities (people, brands, shows, events)
-   - Scene environment
-   - Video topic
-   - Validated objects
-   - Actions (only if contextually relevant)
+1. PRIORITY ORDER for identifying the dominant topic:
+   a) Audio transcript — extract EXACT named entities (people, brands, shows, events, products)
+   b) Specific keywords and phrases from the transcript (use verbatim terms when possible)
+   c) Scene environment + video topic combined
+   d) Validated objects (only specific ones, never generic)
+   e) Actions (only if they define the core activity)
 
-2. Remove noise:
-   - Ignore generic objects like "person"
-   - Ignore random or low-confidence actions
-   - Ignore technical metadata
-   - Do not repeat unnecessary words
+2. STRICT noise removal:
+   - NEVER include generic objects: "person", "human", "face", "clothing", "hand"
+   - NEVER include vague actions: "standing", "sitting", "walking"
+   - NEVER include technical terms or metadata
+   - NEVER repeat words across queries
+   - NEVER hallucinate — only use information present in the metadata
 
-3. Generate short queries:
-   - EACH individual query MUST be between 5 and 8 words long (STRICT).
-   - If a query is less than 5 words, expand it with relevant context.
-   - If a query is more than 8 words, trim it while keeping core keywords.
-   - No filler words, punctuation, hashtags, or explanations.
+3. Query construction:
+   - EACH query MUST be 5-8 words long (STRICT)
+   - Use SPECIFIC nouns and verbs, not generic ones
+   - Include brand names, show names, or person names if found in transcript
+   - Each query should target a DIFFERENT ANGLE of the same video topic
+   - Queries must work as YouTube search strings
 
-4. Queries must:
-   - Be contextually accurate
-   - Reflect the dominant theme
-   - Be suitable for YouTube search
-   - Avoid hallucination
+4. DIVERSITY requirement:
+   - Query 1-3: Directly about the main topic (most specific)
+   - Query 4-5: Related subtopics or context
+   - Query 6-8: Broader but still relevant variations
 
-5. Return exactly 5 optimized search queries ranked from most relevant to less relevant.
+5. Return exactly 8 optimized search queries ranked from most specific to broader.
 
 Output format:
-Return only a JSON array of strings. Do not include markdown formatting like ```json or any other text."""
+Return ONLY a JSON array of 8 strings. No markdown, no explanations."""
                         },
                         {
                             "role": "user",
                             "content": f"VIDEO METADATA (JSON):\n{json.dumps(prompt_content, indent=2)}"
                         }
                     ],
-                    "temperature": 0.3, # Low temperature for high precision and compliance
-                    "max_tokens": 300
+                    "temperature": 0.2, # Very low temperature for maximum precision
+                    "max_tokens": 400
                 },
                 timeout=15
             )
@@ -115,12 +116,13 @@ Return only a JSON array of strings. Do not include markdown formatting like ```
                 parsed = {
                     "summary": queries[0] if queries else "Video content",
                     "intent": "Intelligent Search",
-                    "queries": queries[:5],
+                    "queries": queries[:8],
                     "semantic_tags": metadata.get('actions', []) + metadata.get('scene_environment', []),
-                    "search_query": queries[0] if queries else ""
+                    "search_query": queries[0] if queries else "",
+                    "tags": metadata.get('actions', []) + metadata.get('scene_environment', [])
                 }
                 
-                print(f"[LLM/Search] Generated {len(queries)} optimized search queries")
+                print(f"[LLM/Search] Generated {len(queries)} candidate search queries (top 3 will be selected by FAISS)")
                 return parsed
             else:
                 print(f"[LLM/Search] API Error {response.status_code}: {response.text}")

@@ -166,7 +166,8 @@ async def search_youtube(query: str, max_results: int = 5) -> List[Dict]:
                     "published_at": snippet.get("publishedAt", ""),
                     "duration": _parse_duration(content_details.get("duration", "")),
                     "url": f"https://www.youtube.com/watch?v={video_id}",
-                    "similarity": round(max(0.75, 1.0 - (i * 0.05)), 2),
+                    "similarity": 0.0,  # Will be overwritten by CLIP re-ranking
+                    "platform": "youtube",
                 })
 
             # Trim to exactly max_results
@@ -200,6 +201,7 @@ def _build_basic_results(items: list, max_results: int = 5) -> List[Dict]:
             "published_at": snippet.get("publishedAt", ""),
             "duration": "",
             "url": f"https://www.youtube.com/watch?v={video_id}",
-            "similarity": round(max(0.75, 1.0 - (i * 0.05)), 2),
+            "similarity": 0.0,
+            "platform": "youtube",
         })
     return results

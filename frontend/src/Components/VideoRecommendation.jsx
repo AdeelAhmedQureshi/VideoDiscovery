@@ -29,6 +29,22 @@ const VideoCard = ({ video, index }) => {
         }
     };
 
+    const isDailymotion = video.platform === "dailymotion";
+    const platformLabel = isDailymotion ? "Dailymotion" : "YouTube";
+
+    // Format similarity as percentage
+    const similarityPercent = video.similarity
+        ? Math.round(video.similarity * 100)
+        : null;
+
+    // Color based on similarity score
+    const getSimilarityColor = (percent) => {
+        if (percent >= 80) return "from-green-500 to-emerald-500";
+        if (percent >= 60) return "from-cyan-500 to-blue-500";
+        if (percent >= 40) return "from-yellow-500 to-orange-500";
+        return "from-gray-500 to-slate-500";
+    };
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -87,24 +103,42 @@ const VideoCard = ({ video, index }) => {
                     )}
                 </AnimatePresence>
 
-                {/* Match Badge */}
-                {video.similarity && (
-                    <div className="absolute top-3 left-3">
-                        <div className="px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full shadow-lg flex items-center gap-1.5">
+                {/* Rank Badge */}
+                <div className="absolute top-3 left-3">
+                    <div className="w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
+                        <span className="text-sm font-black text-slate-800">#{index + 1}</span>
+                    </div>
+                </div>
+
+                {/* CLIP Similarity Badge */}
+                {similarityPercent !== null && (
+                    <div className="absolute top-3 right-3">
+                        <div className={`px-3 py-1.5 bg-gradient-to-r ${getSimilarityColor(similarityPercent)} rounded-full shadow-lg flex items-center gap-1.5`}>
                             <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
                             <span className="text-white text-xs font-bold">
-                                {Math.round(video.similarity * 100)}% Match
+                                {similarityPercent}% Match
                             </span>
                         </div>
                     </div>
                 )}
 
-                {/* Duration */}
                 {video.duration && (
                     <div className="absolute bottom-3 right-3 px-2.5 py-1 bg-black/90 rounded-lg text-white text-xs font-semibold">
                         {video.duration}
                     </div>
                 )}
+
+                {/* Platform Badge */}
+                <div className="absolute bottom-3 left-3">
+                    <div className={`px-2 py-1 rounded-md text-white text-[10px] font-bold flex items-center gap-1 shadow-md ${isDailymotion ? 'bg-blue-600' : 'bg-red-600'}`}>
+                        {isDailymotion ? (
+                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12.894 21.921c-2.253.098-4.181-.49-5.785-1.764C5.502 18.879 4.547 17.27 4.24 15.42L4.1 15.42l-.18 6.241-3.921 0 0-21.379L4.1.282 4.1 8.923l.14 0c.585-1.288 1.429-2.272 2.532-2.953 1.106-.681 2.367-1.021 3.784-1.021 2.382 0 4.268.898 5.653 2.693 1.387 1.797 2.08 4.136 2.08 7.019 0 2.91-.749 5.28-2.247 7.107-1.498 1.83-3.474 2.79-5.928 2.877l-.725.026-.495-.75zm-.7-13.662c-1.471 0-2.666.555-3.581 1.666-.915 1.111-1.373 2.552-1.373 4.325 0 1.773.458 3.216 1.373 4.327.915 1.113 2.11 1.668 3.581 1.668 1.471 0 2.657-.542 3.562-1.625.903-1.084 1.355-2.541 1.355-4.37 0-1.829-.452-3.284-1.355-4.367-.905-1.083-2.091-1.624-3.562-1.624z"/></svg>
+                        ) : (
+                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                        )}
+                        {platformLabel}
+                    </div>
+                </div>
             </div>
 
             {/* Info */}
@@ -128,9 +162,19 @@ const VideoCard = ({ video, index }) => {
                     {video.uploadedAt && <span>{video.uploadedAt}</span>}
                 </div>
 
+                {/* Search query badge */}
+                {video.search_query_used && (
+                    <div className="flex items-center gap-1.5 mb-3">
+                        <Search className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-xs text-slate-400 font-medium truncate max-w-[250px]">
+                            Found via: "{video.search_query_used}"
+                        </span>
+                    </div>
+                )}
+
                 <div className="flex items-center gap-2">
                     <ExternalLink className="w-4 h-4 text-cyan-500" />
-                    <span className="text-sm text-cyan-600 font-medium">Watch on YouTube</span>
+                    <span className="text-sm text-cyan-600 font-medium">Watch on {platformLabel}</span>
                 </div>
             </div>
         </motion.div>
@@ -141,8 +185,7 @@ export default function Recommendation() {
     const { videoId } = useParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
-    const [queryTabs, setQueryTabs] = useState([]);
-    const [activeTabIndex, setActiveTabIndex] = useState(0);
+    const [topRecommendations, setTopRecommendations] = useState([]);
     const [uploadedVideo, setUploadedVideo] = useState(null);
 
     // Feedback state
@@ -175,11 +218,21 @@ export default function Recommendation() {
 
             const data = await response.json();
             setUploadedVideo(data.uploaded_video || null);
-            setQueryTabs(data.query_tabs || []);
-            setActiveTabIndex(0);
+
+            // Use the new flat top_recommendations field
+            // Fallback to old query_tabs format for backward compatibility
+            if (data.top_recommendations && data.top_recommendations.length > 0) {
+                setTopRecommendations(data.top_recommendations);
+            } else if (data.query_tabs && data.query_tabs.length > 0) {
+                // Flatten query tabs as fallback
+                const flat = data.query_tabs.flatMap(tab => tab.recommendations || []);
+                setTopRecommendations(flat.slice(0, 5));
+            } else {
+                setTopRecommendations([]);
+            }
         } catch (error) {
             console.error("Error fetching recommendations:", error);
-            setQueryTabs([]);
+            setTopRecommendations([]);
         } finally {
             setTimeout(() => setLoading(false), 1200);
         }
@@ -256,13 +309,6 @@ export default function Recommendation() {
         },
     };
 
-    // Get current tab's recommendations
-    const activeTab = queryTabs[activeTabIndex] || null;
-    const recommendations = activeTab?.recommendations || [];
-    const totalRecommendations = queryTabs.reduce((sum, tab) => sum + (tab.recommendations?.length || 0), 0);
-
-
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-cyan-50/30">
             {/* Content */}
@@ -285,9 +331,9 @@ export default function Recommendation() {
                                     animate={{ opacity: 1, scale: 1 }}
                                     className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-full border border-cyan-200"
                                 >
-                                    {/*Sparkles className="w-4 h-4 text-cyan-600" />*/}
+                                    <Sparkles className="w-4 h-4 text-cyan-600" />
                                     <span className="text-sm font-bold text-slate-700">
-                                        {totalRecommendations} Videos Found
+                                        Top {topRecommendations.length} AI-Ranked Videos
                                     </span>
                                 </motion.div>
                             )}
@@ -310,7 +356,7 @@ export default function Recommendation() {
                                 className="inline-block text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
                                 variants={headingVariants}
                             >
-                                Video Recommendations
+                                Best Matches
                             </motion.h1>
                             <motion.div
                                 className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
@@ -321,12 +367,12 @@ export default function Recommendation() {
                             className="text-base sm:text-lg text-gray-500 mt-4 sm:mt-6"
                             variants={headingVariants}
                         >
-                            Based on the video you uploaded, here are some similar videos we found for you.
+                            Top 5 most similar videos ranked by AI semantic analysis of your uploaded content.
                         </motion.p>
                     </motion.div>
 
-                    {/* Feedback Section — at the top, before videos */}
-                    {!loading && totalRecommendations > 0 && (
+                    {/* Feedback Section */}
+                    {!loading && topRecommendations.length > 0 && (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -471,82 +517,23 @@ export default function Recommendation() {
                         </motion.div>
                     )}
 
-                    {/* Query Tabs */}
-                    {!loading && queryTabs.length > 1 && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                            className="mb-10 max-w-6xl mx-auto"
-                        >
-                            <div className="flex flex-wrap gap-2 bg-white/80 backdrop-blur-sm rounded-2xl p-2 border border-slate-200 shadow-sm">
-                                {queryTabs.map((tab, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => setActiveTabIndex(index)}
-                                        className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 cursor-pointer ${activeTabIndex === index
-                                            ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-200/50 scale-[1.02]"
-                                            : "text-slate-600 hover:bg-slate-100 hover:text-cyan-600 hover:shadow-sm"
-                                            }`}
-                                    >
-                                        <Search className="w-4 h-4" />
-                                        <span className="truncate max-w-[200px]">{tab.query}</span>
-                                        <span className={`ml-1 text-xs px-2 py-0.5 rounded-full ${activeTabIndex === index
-                                            ? "bg-white/20 text-white"
-                                            : "bg-slate-200 text-slate-500"
-                                            }`}>
-                                            {tab.recommendations?.length || 0}
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
-                        </motion.div>
-                    )}
-
-                    {/* Videos Grid */}
+                    {/* Videos List — Flat top 5 ranked by CLIP similarity */}
                     {loading ? (
                         <div className="space-y-8 max-w-6xl mx-auto">
                             {[...Array(3)].map((_, i) => (
                                 <SkeletonCard key={i} />
                             ))}
                         </div>
-                    ) : recommendations.length > 0 ? (
-                        <AnimatePresence mode="wait">
-                            <motion.div
-                                key={activeTabIndex}
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                transition={{ duration: 0.4 }}
-                            >
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ duration: 0.5 }}
-                                    className="space-y-8 max-w-6xl mx-auto"
-                                >
-                                    {recommendations.map((video, index) => (
-                                        <VideoCard key={video.id || index} video={video} index={index} />
-                                    ))}
-                                </motion.div>
-                            </motion.div>
-                        </AnimatePresence>
-                    ) : totalRecommendations > 0 ? (
-                        // Current tab is empty but other tabs have results
+                    ) : topRecommendations.length > 0 ? (
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="flex flex-col items-center justify-center py-16 text-center"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.5 }}
+                            className="space-y-8 max-w-6xl mx-auto"
                         >
-                            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center mb-5">
-                                <Search className="w-10 h-10 text-cyan-400" />
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-900 mb-2">
-                                No Results for This Query
-                            </h3>
-                            <p className="text-slate-600 max-w-md">
-                                Try switching to another query tab to see more recommendations.
-                            </p>
+                            {topRecommendations.map((video, index) => (
+                                <VideoCard key={video.youtube_video_id || video.id || index} video={video} index={index} />
+                            ))}
                         </motion.div>
                     ) : (
                         <motion.div

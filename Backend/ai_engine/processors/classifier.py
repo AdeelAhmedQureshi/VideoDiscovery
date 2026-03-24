@@ -299,16 +299,16 @@ class VisualIntelligenceValidator:
         
         return avg_similarity
     
-    def rank_and_select_queries(self, candidate_queries: List[str], top_n: int = 5) -> List[Dict]:
+    def rank_and_select_queries(self, candidate_queries: List[str], top_n: int = 3) -> List[Dict]:
         """
         Rank LLM-generated queries by visual similarity (Phase 3).
-        Ensures queries meet the 0.25 similarity threshold.
+        Selects only the top 3 most relevant queries for maximum precision.
         """
-        print(f"[Phase 3] Validating queries against visual content...")
+        print(f"[Phase 3] Validating {len(candidate_queries)} candidate queries against visual content...")
         
         scored_queries = []
         valid_count = 0
-        VALID_THRESHOLD = 0.25 # Stricter threshold from blueprint
+        VALID_THRESHOLD = 0.28  # Stricter threshold for higher precision
         
         for query in candidate_queries:
             score = self.validate_query(query)
@@ -326,9 +326,12 @@ class VisualIntelligenceValidator:
         # Sort by score (descending)
         scored_queries.sort(key=lambda x: x['score'], reverse=True)
         
-        print(f"Phase 3: Validated {valid_count}/{len(candidate_queries)} queries")
+        selected = scored_queries[:top_n]
+        print(f"Phase 3: Validated {valid_count}/{len(candidate_queries)} queries, selected top {len(selected)}")
+        if selected:
+            print(f"   Top queries: {[q['query'] for q in selected]}")
         
-        return scored_queries[:top_n]
+        return selected
     
     def classify_scene(self, video_path: str) -> str:
         """
@@ -394,6 +397,99 @@ class VisualIntelligenceValidator:
         except Exception as e:
             print(f"[SceneClassifier] Error: {e}")
             return "Unknown"
+    
+    # ==================== PHASE 4: CLIP RE-RANKING ====================
+    
+    def rerank_youtube_results(self, youtube_results: List[Dict], top_n: int = 5) -> List[Dict]:
+        """
+        Re-rank YouTube results using CLIP semantic similarity.
+        
+        For each YouTube video, encodes its title with CLIP and compares
+        against the FAISS frame index to compute real visual relevance.
+        Deduplicates by youtube_video_id and returns the top N.
+        
+        Args:
+            youtube_results: List of YouTube video dicts (with 'title', 'youtube_video_id', etc.)
+            top_n: Number of top results to return (default 5)
+            
+        Returns:
+            Top N videos sorted by real CLIP similarity score
+        """
+        if not youtube_results:
+            return []
+        
+        if self.index.ntotal == 0:
+            print("[CLIP Re-rank] WARNING: FAISS index is empty, returning results as-is")
+            return youtube_results[:top_n]
+        
+        print(f"\n{'='*80}")
+        print(f"[CLIP Re-rank] Re-ranking {len(youtube_results)} YouTube videos against {self.index.ntotal} frame vectors")
+        print(f"{'='*80}")
+        
+        # Compute mean frame vector for global video representation
+        if self.frame_vectors:
+            mean_frame_vector = np.mean(self.frame_vectors, axis=0).astype('float32')
+            # Normalize for cosine similarity
+            mean_frame_vector = mean_frame_vector / np.linalg.norm(mean_frame_vector)
+        else:
+            mean_frame_vector = None
+        
+        scored_results = []
+        seen_ids = set()  # For deduplication
+        
+        for video in youtube_results:
+            vid_id = video.get("youtube_video_id", "")
+            
+            # Skip duplicates (same video found by different queries)
+            if vid_id in seen_ids:
+                continue
+            seen_ids.add(vid_id)
+            
+            title = video.get("title", "")
+            if not title:
+                continue
+            
+            # CLIP-encode the YouTube title
+            title_vector = self.vectorize_text(title)
+            
+            # Score 1: FAISS KNN search (K=5 nearest frames)
+            title_vector_2d = title_vector.reshape(1, -1)
+            k = min(5, self.index.ntotal)
+            distances, indices = self.index.search(title_vector_2d, k)
+            faiss_similarities = [1 / (1 + d) for d in distances[0]]
+            faiss_score = float(np.mean(faiss_similarities))
+            
+            # Score 2: Cosine similarity with mean frame vector
+            if mean_frame_vector is not None:
+                title_norm = title_vector / np.linalg.norm(title_vector)
+                cosine_score = float(np.dot(title_norm, mean_frame_vector))
+            else:
+                cosine_score = faiss_score
+            
+            # Combined score: weighted average (cosine is more reliable for ranking)
+            combined_score = 0.4 * faiss_score + 0.6 * cosine_score
+            
+            # Store the scored result
+            scored_video = video.copy()
+            scored_video["similarity"] = round(combined_score, 4)
+            scored_video["_faiss_score"] = round(faiss_score, 4)
+            scored_video["_cosine_score"] = round(cosine_score, 4)
+            scored_results.append(scored_video)
+            
+            print(f"   [{combined_score:.3f}] \"{title[:60]}\" (FAISS:{faiss_score:.3f} Cosine:{cosine_score:.3f})")
+        
+        # Sort by combined score descending
+        scored_results.sort(key=lambda x: x["similarity"], reverse=True)
+        
+        # Select top N
+        top_results = scored_results[:top_n]
+        
+        print(f"\n[CLIP Re-rank] Selected top {len(top_results)} from {len(scored_results)} unique videos")
+        for i, v in enumerate(top_results):
+            print(f"   #{i+1}: [{v['similarity']:.3f}] \"{v['title'][:60]}\"")
+        print(f"{'='*80}\n")
+        
+        return top_results
     
     # ==================== MAIN ORCHESTRATION ====================
     
