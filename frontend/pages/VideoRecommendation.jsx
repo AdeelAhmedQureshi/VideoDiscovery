@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Video, Play, ArrowLeft, Sparkles, Youtube, ExternalLink, Star, MessageSquare, Send } from "lucide-react";
+import { Video, Play, ArrowLeft, Sparkles, Youtube, ExternalLink, Star, MessageSquare, Send, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Skeleton Loader
@@ -150,6 +150,7 @@ export default function Recommendation() {
     const [comment, setComment] = useState("");
     const [submittingFeedback, setSubmittingFeedback] = useState(false);
     const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+    const [submittedRating, setSubmittedRating] = useState(0);
     const [showFeedbackForm, setShowFeedbackForm] = useState(false);
 
     useEffect(() => {
@@ -249,6 +250,7 @@ export default function Recommendation() {
             const data = await response.json();
             console.log("Feedback submitted:", data);
             
+            setSubmittedRating(rating);
             setFeedbackSubmitted(true);
             setShowFeedbackForm(false);
             
@@ -359,25 +361,13 @@ export default function Recommendation() {
                         </div>
                     ) : recommendations.length > 0 ? (
                         <>
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ duration: 0.5 }}
-                                className="space-y-8 max-w-6xl mx-auto"
-                            >
-                                {/* Render first 3 recommendations */}
-                                {recommendations.slice(0, 3).map((video, index) => (
-                                    <VideoCard key={video.id} video={video} index={index} />
-                                ))}
-                            </motion.div>
-
-                            {/* Feedback Section - Appears after first 3 recommendations */}
+                            {/* Feedback Section - Appears before recommendations */}
                             {recommendations.length > 0 && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.5, duration: 0.6 }}
-                                    className="max-w-3xl mx-auto my-16"
+                                    transition={{ delay: 0.3, duration: 0.6 }}
+                                    className="max-w-3xl mx-auto mb-12"
                                 >
                                 {feedbackSubmitted ? (
                                     <motion.div
@@ -386,7 +376,7 @@ export default function Recommendation() {
                                         className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-8 text-center"
                                     >
                                         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                            <Star className="w-8 h-8 text-green-600 fill-green-600" />
+                                            <CheckCircle2 className="w-8 h-8 text-green-600" />
                                         </div>
                                         <h3 className="text-2xl font-bold text-green-900 mb-2">
                                             Thank You for Your Feedback!
@@ -394,6 +384,25 @@ export default function Recommendation() {
                                         <p className="text-green-700">
                                             Your feedback helps us improve our recommendations.
                                         </p>
+                                        {submittedRating > 0 && (
+                                            <div className="mt-4 flex flex-col items-center gap-2">
+                                                <p className="text-sm font-semibold text-green-800">
+                                                    Submitted Rating: {submittedRating}/5
+                                                </p>
+                                                <div className="flex items-center gap-1" aria-label={`Submitted rating ${submittedRating} out of 5`}>
+                                                    {[1, 2, 3, 4, 5].map((star) => (
+                                                        <Star
+                                                            key={`submitted-star-${star}`}
+                                                            className={`w-5 h-5 ${
+                                                                submittedRating >= star
+                                                                    ? "text-yellow-400 fill-yellow-400"
+                                                                    : "text-gray-300"
+                                                            }`}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </motion.div>
                                 ) : !showFeedbackForm ? (
                                     <button
@@ -517,6 +526,18 @@ export default function Recommendation() {
                                 )}
                                 </motion.div>
                             )}
+
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.5 }}
+                                className="space-y-8 max-w-6xl mx-auto"
+                            >
+                                {/* Render first 3 recommendations */}
+                                {recommendations.slice(0, 3).map((video, index) => (
+                                    <VideoCard key={video.id} video={video} index={index} />
+                                ))}
+                            </motion.div>
 
                             {/* Remaining recommendations after feedback */}
                             {recommendations.length > 3 && (
