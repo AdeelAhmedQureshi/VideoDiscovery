@@ -194,7 +194,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, refreshUser, sendReactivationCode, verifyReactivation }}>
       {children}
       {popup.open && (
-        <div className="fixed top-6 left-1/2 z-50 w-[min(92vw,540px)] -translate-x-1/2">
+        <div className="fixed top-6 left-1/2 z-50 w-[min(85vw,380px)] -translate-x-1/2">
           <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white/95 shadow-2xl">
             <div className="px-6 py-4 bg-gradient-to-r from-cyan-500 to-blue-500">
               <div className="flex items-center gap-3">

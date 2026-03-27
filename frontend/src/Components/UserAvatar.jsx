@@ -62,7 +62,7 @@ export const UserAvatar = () => {
       </DropdownMenuContent>
     </DropdownMenu>
     {showSignOutModal && (
-      <div className="fixed top-6 left-1/2 z-50 w-[min(92vw,540px)] -translate-x-1/2">
+      <div className="fixed top-6 left-1/2 z-50 w-[min(85vw,380px)] -translate-x-1/2">
         <div className="overflow-hidden rounded-3xl border border-red-200 bg-white/95 shadow-2xl">
           <div className="px-6 py-4 bg-gradient-to-r from-red-600 to-rose-600">
             <div className="flex items-center gap-3">

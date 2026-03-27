@@ -270,13 +270,13 @@ export default function History() {
                 >
                     <div className="inline-block relative mb-4">
                         <motion.h1
-                            className="inline-block text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
+                            className="inline-block text-4xl sm:text-5xl leading-[1.15] pb-1 font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
                             variants={headingVariants}
                         >
                             History & Activity
                         </motion.h1>
                         <motion.div
-                            className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
+                            className="absolute -bottom-3 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
                             variants={headingVariants}
                         ></motion.div>
                     </div>
@@ -491,7 +491,7 @@ export default function History() {
 
             {/* Delete Confirmation Modal */}
             {showDeleteModal && (
-                <div className="fixed top-6 left-1/2 z-50 w-[min(92vw,540px)] -translate-x-1/2">
+                <div className="fixed top-6 left-1/2 z-50 w-[min(85vw,380px)] -translate-x-1/2">
                     <div className="overflow-hidden rounded-3xl border border-red-200 bg-white/95 shadow-2xl">
                         <div className="px-6 py-4 bg-gradient-to-r from-red-600 to-rose-600">
                             <div className="flex items-center gap-3">
@@ -507,7 +507,7 @@ export default function History() {
 
                         <div className="px-6 py-5 bg-white/90">
                             <p className="text-slate-700 font-medium mb-4">
-                                Are you sure you want to delete this video? This will permanently remove the video along with all its recommendations and feedback. This action cannot be undone.
+                                Are you sure you want to delete this video?  This action cannot be undone.
                             </p>
                             <div className="flex justify-end gap-3">
                                 <button
@@ -530,7 +530,7 @@ export default function History() {
 
             {/* Notification Modal */}
             {notification.show && (
-                <div className="fixed top-6 left-1/2 z-50 w-[min(92vw,540px)] -translate-x-1/2">
+                <div className="fixed top-6 left-1/2 z-50 w-[min(85vw,380px)] -translate-x-1/2">
                     <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white/95 shadow-2xl">
                         <div className={`px-6 py-4 ${notification.type === "success"
                                 ? "bg-gradient-to-r from-cyan-500 to-blue-500"

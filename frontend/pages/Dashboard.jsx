@@ -185,7 +185,7 @@ export const Dashboard = () => {
                 )}
             </header>
 
-            <main className="mt-20 space-y-16 sm:space-y-24">
+            <main className="mt-20 space-y-2 sm:space-y-4">
                 <section id="analytics">
                     <AnalyticsPanel />
                 </section>
