@@ -129,7 +129,9 @@ async def analyze_video(video_path: str, video_id: str):
         
         json_summary = {
             "visual_objects": unique_objects,
-            "audio_transcript": transcript.get("text", "")[:500],
+            "audio_transcript": transcript.get("text", "")[:500] if transcript.get("has_meaningful_speech", True) else "",
+            "audio_language": transcript.get("language", "unknown"),
+            "has_meaningful_speech": transcript.get("has_meaningful_speech", True),
             "scene_environment": places,
             "video_topic": [scene],
             "demographics": faces[0] if faces else {},
@@ -149,7 +151,7 @@ async def analyze_video(video_path: str, video_id: str):
         # PHASE 2: Multimodal Context Synthesis
         context = validator.synthesize_context(
             validated_objects=validated_objects,
-            transcript=transcript.get("text", ""),
+            transcript=transcript.get("text", "") if transcript.get("has_meaningful_speech", True) else "",
             places=places,
             actions=actions,
             faces=faces,
@@ -179,7 +181,7 @@ async def analyze_video(video_path: str, video_id: str):
         import json
         final_summary = {
             "validated_objects": validated_objects,
-            "audio_transcript": transcript.get("text", "")[:100] + "...",
+            "audio_transcript": transcript.get("text", "")[:100] + "..." if transcript.get("has_meaningful_speech", True) else "No meaningful speech",
             "scene_environment": places,
             "video_topic": [scene],
             "demographics": faces[0] if faces else {},
@@ -277,10 +279,30 @@ async def analyze_video(video_path: str, video_id: str):
                 
                 print(f"[Discovery] Fetched {len(all_videos)} total videos (YouTube: {yt_count}, Dailymotion: {dm_count})")
 
-                # CLIP Re-rank: Score ALL videos against the video's frame vectors
-                # The re-ranker is platform-agnostic — picks the best by semantic similarity
+                # Build context string from the uploaded video's AI analysis
+                # This gives the re-ranker S3 (Context Match) signal: comparing
+                # candidate video metadata against what our AI detected in the input
+                context_parts = []
+                # Only include speech if it's meaningful
+                valid_speech = transcript.get("text", "") if transcript.get("has_meaningful_speech", True) else ""
+                if valid_speech:
+                    context_parts.append(f"Speech: {valid_speech[:300]}")
+                if validated_objects:
+                    context_parts.append(f"Objects: {', '.join(validated_objects)}")
+                if scene:
+                    context_parts.append(f"Scene: {scene}")
+                if actions:
+                    context_parts.append(f"Actions: {', '.join(actions)}")
+                if places:
+                    context_parts.append(f"Environment: {', '.join(places)}")
+                video_context = ". ".join(context_parts) if context_parts else None
+                
+                if video_context:
+                    print(f"[Discovery] Built video context for re-ranking ({len(video_context)} chars)")
+
+                # CLIP Re-rank: Score ALL videos with 3-signal deep comparison
                 top_videos = await asyncio.to_thread(
-                    validator.rerank_youtube_results, all_videos, 5
+                    validator.rerank_youtube_results, all_videos, 5, None, video_context
                 )
 
                 # Get user_id from the video document
@@ -305,9 +327,11 @@ async def analyze_video(video_path: str, video_id: str):
                         "published_at": result.get("published_at", ""),
                         "duration": result["duration"],
                         "video_link": result["url"],
-                        "similarity": result["similarity"],  # Real CLIP similarity
+                        "similarity": result["similarity"],  # Real CLIP combined score
                         "clip_faiss_score": result.get("_faiss_score", 0),
-                        "clip_cosine_score": result.get("_cosine_score", 0),
+                        "clip_richtext_score": result.get("_richtext_score", 0),
+                        "clip_context_score": result.get("_context_score", 0),
+                        "above_threshold": result.get("above_threshold", False),
                         "search_query_used": result.get("search_query_used", ""),
                         "platform": result.get("platform", "youtube"),
                         "rank": rank + 1,

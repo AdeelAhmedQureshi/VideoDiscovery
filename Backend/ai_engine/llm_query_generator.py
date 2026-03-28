@@ -83,6 +83,29 @@ Follow these rules strictly:
 
 5. Return exactly 8 optimized search queries ranked from most specific to broader.
 
+86: DRAMA / SERIES / EPISODE / MOVIE detection (CRITICAL):
+   If the transcript contains dialogue that sounds like a TV show, drama, web series, movie, or episodic content:
+   - Look for character names, show/series names, or famous dialogue lines in the transcript
+   - Look for emotional dialogue, dramatic scenes, background music cues mentioned
+   - If you detect this is from a known show, series, or movie, use the EXACT show name in queries
+   - If the show name is uncertain but it looks like drama/series content, use descriptive queries like:
+     "drama scene [key dialogue phrase]" or "[language] drama [topic] scene"
+   - For regional content (Urdu/Hindi/Korean/Turkish drama), include the language/region
+
+7. MULTI-LANGUAGE QUERY GENERATION (CRITICAL):
+   If the 'audio_language' is NOT English (e.g., urdu, hindi, spanish, etc.):
+   - At least 3-4 queries MUST be in the native language's Romanized script (e.g., Roman Urdu/Hindi like "kya haal hai" instead of native script).
+   - At least 1-2 queries MUST be in the actual native script if applicable (e.g., Urdu/Hindi script).
+   - The remaining queries should be the English translation of the core topic.
+   - Example for Urdu: generate queries like "best pakistani drama scene", "aj ka episode", "آج کا ایپی سوڈ".
+
+8. MEDIA CONTENT PRIORITY:
+   When the video appears to be a clip from existing media (not original/user-created content):
+   - At least 2-3 queries MUST include the show/movie/series name if identifiable
+   - Include episode-related terms: "episode", "scene", "clip", "drama"
+   - Include character names if mentioned in transcript
+   - Use exact memorable dialogue quotes (3-5 words) as search terms
+
 Output format:
 Return ONLY a JSON array of 8 strings. No markdown, no explanations."""
                         },

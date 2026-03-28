@@ -11,6 +11,7 @@ Author: VideoDiscovery Team
 """
 
 import numpy as np
+from typing import Optional
 import torch
 import clip
 import faiss
@@ -398,22 +399,63 @@ class VisualIntelligenceValidator:
             print(f"[SceneClassifier] Error: {e}")
             return "Unknown"
     
-    # ==================== PHASE 4: CLIP RE-RANKING ====================
+    # ==================== PHASE 4: DEEP CLIP RE-RANKING (3 SIGNALS) ====================
     
-    def rerank_youtube_results(self, youtube_results: List[Dict], top_n: int = 5) -> List[Dict]:
+    # Minimum combined score to consider a result a "good" semantic match.
+    MIN_SIMILARITY_THRESHOLD = 0.15
+
+    # Signal weights (must sum to 1.0)
+    W_FAISS = 0.40    # S4: FAISS KNN (rich text vs frame index)
+    W_RICHTEXT = 0.40 # S2: Rich text cosine vs mean frame vector
+    W_CONTEXT = 0.20  # S3: Rich text vs uploaded video's AI context
+
+    @staticmethod
+    def _build_rich_text(video: Dict) -> str:
         """
-        Re-rank YouTube results using CLIP semantic similarity.
+        Combine title + description + tags into a single CLIP-friendly text.
+        CLIP's text encoder has a 77-token limit, so we keep it concise but rich.
+        """
+        parts = []
         
-        For each YouTube video, encodes its title with CLIP and compares
-        against the FAISS frame index to compute real visual relevance.
-        Deduplicates by youtube_video_id and returns the top N.
+        title = video.get("title", "")
+        if title:
+            parts.append(title)
+        
+        description = video.get("description", "")
+        if description:
+            desc_snippet = description[:150].split("\n")[0]
+            parts.append(desc_snippet)
+        
+        tags = video.get("tags", [])
+        if tags and isinstance(tags, list):
+            tag_str = ", ".join(tags[:5])
+            parts.append(tag_str)
+        
+        return ". ".join(parts) if parts else ""
+
+    def rerank_youtube_results(
+        self, 
+        youtube_results: List[Dict], 
+        top_n: int = 5, 
+        min_similarity: Optional[float] = None,
+        video_context: Optional[str] = None
+    ) -> List[Dict]:
+        """
+        Deep re-rank video results using 3-signal CLIP comparison.
+        
+        Signals:
+          S4 (40%): FAISS KNN - rich text vector vs frame index (K=5 nearest keyframes)
+          S2 (40%): Rich Text Cosine - rich text vector vs mean frame vector
+          S3 (20%): Context Match - rich text vector vs uploaded video AI context vector
         
         Args:
-            youtube_results: List of YouTube video dicts (with 'title', 'youtube_video_id', etc.)
+            youtube_results: List of video dicts with title, description, tags, etc.
             top_n: Number of top results to return (default 5)
-            
+            min_similarity: Override minimum threshold (default 0.15)
+            video_context: AI-generated context string from the uploaded video
+        
         Returns:
-            Top N videos sorted by real CLIP similarity score
+            Top N videos sorted by combined 3-signal score.
         """
         if not youtube_results:
             return []
@@ -423,70 +465,106 @@ class VisualIntelligenceValidator:
             return youtube_results[:top_n]
         
         print(f"\n{'='*80}")
-        print(f"[CLIP Re-rank] Re-ranking {len(youtube_results)} YouTube videos against {self.index.ntotal} frame vectors")
+        print(f"[CLIP Re-rank] 3-SIGNAL DEEP RE-RANKING")
+        print(f"   Candidates: {len(youtube_results)} videos")
+        print(f"   Frame vectors: {self.index.ntotal}")
+        print(f"   Weights: FAISS={self.W_FAISS:.0%}, RichText={self.W_RICHTEXT:.0%}, Context={self.W_CONTEXT:.0%}")
         print(f"{'='*80}")
         
-        # Compute mean frame vector for global video representation
+        # Mean frame vector (video fingerprint)
         if self.frame_vectors:
             mean_frame_vector = np.mean(self.frame_vectors, axis=0).astype('float32')
-            # Normalize for cosine similarity
             mean_frame_vector = mean_frame_vector / np.linalg.norm(mean_frame_vector)
         else:
             mean_frame_vector = None
         
+        # Context vector from uploaded video's AI analysis
+        context_vector = None
+        if video_context and len(video_context.strip()) > 10:
+            context_vector = self.vectorize_text(video_context)
+            context_vector = context_vector / np.linalg.norm(context_vector)
+            print(f"   Context vector computed ({len(video_context)} chars)")
+        else:
+            print(f"   Context vector: UNAVAILABLE (fallback to avg of S2+S4)")
+        
         scored_results = []
-        seen_ids = set()  # For deduplication
+        seen_ids = set()
         
         for video in youtube_results:
             vid_id = video.get("youtube_video_id", "")
-            
-            # Skip duplicates (same video found by different queries)
             if vid_id in seen_ids:
                 continue
             seen_ids.add(vid_id)
             
-            title = video.get("title", "")
-            if not title:
+            rich_text = self._build_rich_text(video)
+            if not rich_text:
                 continue
             
-            # CLIP-encode the YouTube title
-            title_vector = self.vectorize_text(title)
+            # CLIP-encode rich text (reused for all 3 signals)
+            rich_vector = self.vectorize_text(rich_text)
+            rich_vector_norm = rich_vector / np.linalg.norm(rich_vector)
             
-            # Score 1: FAISS KNN search (K=5 nearest frames)
-            title_vector_2d = title_vector.reshape(1, -1)
+            # S4: FAISS KNN (40%)
+            rich_vector_2d = rich_vector.reshape(1, -1)
             k = min(5, self.index.ntotal)
-            distances, indices = self.index.search(title_vector_2d, k)
-            faiss_similarities = [1 / (1 + d) for d in distances[0]]
-            faiss_score = float(np.mean(faiss_similarities))
+            distances, _ = self.index.search(rich_vector_2d, k)
+            faiss_sims = [1 / (1 + d) for d in distances[0]]
+            s4_faiss = float(np.mean(faiss_sims))
             
-            # Score 2: Cosine similarity with mean frame vector
+            # S2: Rich Text Cosine (40%)
             if mean_frame_vector is not None:
-                title_norm = title_vector / np.linalg.norm(title_vector)
-                cosine_score = float(np.dot(title_norm, mean_frame_vector))
+                s2_richtext = float(np.dot(rich_vector_norm, mean_frame_vector))
             else:
-                cosine_score = faiss_score
+                s2_richtext = s4_faiss
             
-            # Combined score: weighted average (cosine is more reliable for ranking)
-            combined_score = 0.4 * faiss_score + 0.6 * cosine_score
+            # S3: Context Match (20%)
+            if context_vector is not None:
+                s3_context = float(np.dot(rich_vector_norm, context_vector))
+            else:
+                s3_context = (s2_richtext + s4_faiss) / 2
             
-            # Store the scored result
+            # Combined
+            combined = (
+                self.W_FAISS * s4_faiss +
+                self.W_RICHTEXT * s2_richtext +
+                self.W_CONTEXT * s3_context
+            )
+            
             scored_video = video.copy()
-            scored_video["similarity"] = round(combined_score, 4)
-            scored_video["_faiss_score"] = round(faiss_score, 4)
-            scored_video["_cosine_score"] = round(cosine_score, 4)
+            scored_video["similarity"] = round(combined, 4)
+            scored_video["_faiss_score"] = round(s4_faiss, 4)
+            scored_video["_richtext_score"] = round(s2_richtext, 4)
+            scored_video["_context_score"] = round(s3_context, 4)
             scored_results.append(scored_video)
             
-            print(f"   [{combined_score:.3f}] \"{title[:60]}\" (FAISS:{faiss_score:.3f} Cosine:{cosine_score:.3f})")
+            print(f"   [{combined:.3f}] \"{video.get('title', '')[:55]}\" "
+                  f"(FAISS:{s4_faiss:.3f} Rich:{s2_richtext:.3f} Ctx:{s3_context:.3f})")
         
-        # Sort by combined score descending
+        # Sort and apply threshold
         scored_results.sort(key=lambda x: x["similarity"], reverse=True)
         
-        # Select top N
-        top_results = scored_results[:top_n]
+        threshold = min_similarity if min_similarity is not None else self.MIN_SIMILARITY_THRESHOLD
+        above = [v for v in scored_results if v["similarity"] >= threshold]
+        below = [v for v in scored_results if v["similarity"] < threshold]
         
-        print(f"\n[CLIP Re-rank] Selected top {len(top_results)} from {len(scored_results)} unique videos")
+        print(f"\n[CLIP Re-rank] Threshold={threshold:.3f}: {len(above)} above / {len(below)} below")
+        
+        if above:
+            for v in above:
+                v["above_threshold"] = True
+            for v in below:
+                v["above_threshold"] = False
+            top_results = above[:top_n]
+        else:
+            print(f"[CLIP Re-rank] WARNING: No results above threshold. Returning top {top_n} anyway.")
+            for v in scored_results:
+                v["above_threshold"] = False
+            top_results = scored_results[:top_n]
+        
+        print(f"[CLIP Re-rank] Selected top {len(top_results)} from {len(scored_results)} unique videos")
         for i, v in enumerate(top_results):
-            print(f"   #{i+1}: [{v['similarity']:.3f}] \"{v['title'][:60]}\"")
+            quality = "OK" if v.get("above_threshold") else "LOW"
+            print(f"   [{quality}] #{i+1}: [{v['similarity']:.3f}] \"{v['title'][:60]}\"")
         print(f"{'='*80}\n")
         
         return top_results

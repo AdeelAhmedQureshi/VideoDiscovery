@@ -153,10 +153,15 @@ async def search_youtube(query: str, max_results: int = 5) -> List[Dict]:
 
                 view_count_raw = int(statistics.get("viewCount", 0))
 
+                # Get enriched snippet from stats API (has more detail than search snippet)
+                enriched_snippet = stats_item.get("snippet", snippet)
+
                 results.append({
                     "id": i + 1,
                     "youtube_video_id": video_id,
                     "title": snippet.get("title", "Untitled"),
+                    "description": enriched_snippet.get("description", "")[:300],
+                    "tags": enriched_snippet.get("tags", []),
                     "thumbnail": snippet.get("thumbnails", {}).get("high", {}).get("url",
                                  snippet.get("thumbnails", {}).get("medium", {}).get("url", "")),
                     "channel": snippet.get("channelTitle", "Unknown Channel"),
@@ -193,6 +198,8 @@ def _build_basic_results(items: list, max_results: int = 5) -> List[Dict]:
             "id": i + 1,
             "youtube_video_id": video_id,
             "title": snippet.get("title", "Untitled"),
+            "description": snippet.get("description", "")[:300],
+            "tags": snippet.get("tags", []),
             "thumbnail": snippet.get("thumbnails", {}).get("high", {}).get("url", ""),
             "channel": snippet.get("channelTitle", "Unknown Channel"),
             "views": "",

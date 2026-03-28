@@ -74,14 +74,45 @@ def transcribe_audio(video_path):
         detected_lang = result.get('language', 'unknown')
         transcript_text = result['text'].strip()
         word_count = len(transcript_text.split()) if transcript_text else 0
+        segments = result.get('segments', [])
         
-        print(f"Detected language: {detected_lang}")
-        print(f"[WHISPER] Transcribed {word_count} words")
+        # ── Speech Quality Analysis ──
+        # Whisper transcribes even music/background noise as garbled text.
+        # Use segment-level no_speech_prob to detect if audio has real human speech.
+        has_meaningful_speech = True
+        speech_confidence = 1.0
+        
+        if not transcript_text or word_count < 3:
+            # Too short to be meaningful speech
+            has_meaningful_speech = False
+            speech_confidence = 0.0
+            print(f"[Transcriber] No meaningful speech detected (word_count={word_count})")
+        elif segments:
+            # Check what fraction of segments have actual speech (low no_speech_prob)
+            speech_segments = sum(1 for seg in segments if seg.get('no_speech_prob', 0) < 0.5)
+            total_segments = len(segments)
+            speech_ratio = speech_segments / total_segments if total_segments > 0 else 0
+            speech_confidence = round(speech_ratio, 2)
+            
+            if speech_ratio < 0.30:
+                # Less than 30% of audio has real speech → music/tone/sfx only
+                has_meaningful_speech = False
+                print(f"[Transcriber] Audio is music/tone/sfx only (speech_ratio={speech_ratio:.0%})")
+            elif word_count < 8 and speech_ratio < 0.50:
+                # Very few words + low speech ratio → likely noise
+                has_meaningful_speech = False
+                print(f"[Transcriber] Audio too noisy for reliable speech (words={word_count}, ratio={speech_ratio:.0%})")
+            else:
+                print(f"[Transcriber] Real speech detected (words={word_count}, ratio={speech_ratio:.0%})")
+        
+        print(f"[Transcriber] Language: {detected_lang} | Speech: {has_meaningful_speech} | Confidence: {speech_confidence}")
         
         return {
             'text': transcript_text,
-            'segments': result['segments'], # Contains start, end, text
-            'language': detected_lang
+            'segments': segments,
+            'language': detected_lang,
+            'has_meaningful_speech': has_meaningful_speech,
+            'speech_confidence': speech_confidence
         }
 
     except Exception as e:

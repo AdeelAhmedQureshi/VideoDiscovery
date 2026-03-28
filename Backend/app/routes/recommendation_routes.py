@@ -3,6 +3,10 @@
 Recommendation API routes.
 Serves YouTube-fetched video recommendations for analyzed videos.
 Returns CLIP-ranked top 5 recommendations (flat list) plus query tabs for transparency.
+
+Implements strict quality threshold:
+  - If ALL results score below MIN_SIMILARITY_THRESHOLD, returns empty list + not_found_reason
+  - If some results are below threshold, returns a warning in not_found_reason
 """
 
 import asyncio
@@ -15,6 +19,9 @@ from ..services.dailymotion_service import search_dailymotion
 from datetime import datetime, timezone
 
 router = APIRouter()
+
+# Must match classifier.py MIN_SIMILARITY_THRESHOLD
+MIN_SIMILARITY_THRESHOLD = 0.15
 
 
 @router.get("/{video_id}")
@@ -29,14 +36,20 @@ async def get_recommendations(
     Returns CLIP-ranked top 5 videos (flat list) sorted by real semantic similarity.
     Also includes query_tabs for transparency (which query found which videos).
 
+    Quality threshold logic:
+      - If ALL top 5 are below threshold → empty list + not_found_reason
+      - If some are below → results returned with not_found_reason warning
+      - If all above → results returned, not_found_reason is null
+
     Query params:
         refresh: If true, delete cached recs and re-fetch from YouTube.
 
     Returns:
         {
             uploaded_video: {...},
-            top_recommendations: [...],  # Flat top 5 sorted by CLIP similarity
-            query_tabs: [...]            # Grouped by query for transparency
+            top_recommendations: [...],
+            query_tabs: [...],
+            not_found_reason: str | null
         }
     """
     user_id = current_user.get("user_id")
@@ -61,13 +74,24 @@ async def get_recommendations(
         ).sort("similarity", -1).to_list(length=200)
 
         if cached:
-            # Build flat top recommendations (sorted by CLIP similarity)
             top_recommendations = _format_cached_flat(cached)
             query_tabs = _group_cached_by_query(cached)
+            not_found_reason = _compute_not_found_reason(top_recommendations)
+            # If ALL below threshold, return empty list
+            if not_found_reason and all(
+                r.get("similarity", 0) < MIN_SIMILARITY_THRESHOLD for r in top_recommendations
+            ):
+                return {
+                    "uploaded_video": _format_video_summary(video),
+                    "top_recommendations": [],
+                    "query_tabs": query_tabs,
+                    "not_found_reason": not_found_reason,
+                }
             return {
                 "uploaded_video": _format_video_summary(video),
                 "top_recommendations": top_recommendations,
                 "query_tabs": query_tabs,
+                "not_found_reason": not_found_reason,
             }
 
     # No cache — fetch from YouTube using top 3 AI-generated queries
@@ -82,13 +106,14 @@ async def get_recommendations(
                 "uploaded_video": _format_video_summary(video),
                 "top_recommendations": [],
                 "query_tabs": [],
+                "not_found_reason": None,
                 "message": "Video is still being analyzed. Recommendations will be available soon.",
             }
         return {
             "uploaded_video": _format_video_summary(video),
             "top_recommendations": [],
             "query_tabs": [],
-            "message": "No search queries available for this video.",
+            "not_found_reason": "No search queries could be generated for this video. The content may be too generic or unclear.",
         }
 
     # Fetch 5 YouTube + 3 Dailymotion videos for EACH query concurrently
@@ -136,6 +161,7 @@ async def get_recommendations(
                 "duration": result["duration"],
                 "video_link": result["url"],
                 "similarity": result["similarity"],
+                "above_threshold": result.get("above_threshold", False),
                 "search_query_used": query,
                 "platform": result.get("platform", "youtube"),
                 "fetched_at": datetime.now(timezone.utc),
@@ -162,11 +188,57 @@ async def get_recommendations(
         if len(top_recommendations) >= 5:
             break
 
+    # ── Quality threshold check ──
+    not_found_reason = _compute_not_found_reason(top_recommendations)
+
+    if not_found_reason and all(
+        r.get("similarity", 0) < MIN_SIMILARITY_THRESHOLD for r in top_recommendations
+    ):
+        # ALL below threshold → show Not Found
+        print(f"[Recommendations] ALL {len(top_recommendations)} results below threshold {MIN_SIMILARITY_THRESHOLD} — returning Not Found")
+        return {
+            "uploaded_video": _format_video_summary(video),
+            "top_recommendations": [],
+            "query_tabs": query_tabs,
+            "not_found_reason": not_found_reason,
+        }
+
     return {
         "uploaded_video": _format_video_summary(video),
         "top_recommendations": top_recommendations,
         "query_tabs": query_tabs,
+        "not_found_reason": not_found_reason,
     }
+
+
+def _compute_not_found_reason(top_recommendations: list) -> str | None:
+    """
+    Determine the not_found_reason based on quality threshold.
+    Returns None if results are good quality.
+    """
+    if not top_recommendations:
+        return "No videos were found on YouTube or Dailymotion matching your uploaded content."
+
+    above_count = sum(
+        1 for r in top_recommendations
+        if r.get("similarity", 0) >= MIN_SIMILARITY_THRESHOLD
+        or r.get("above_threshold", False)
+    )
+    total = len(top_recommendations)
+
+    if above_count == 0:
+        return (
+            "We found some videos but none closely matched your uploaded content. "
+            "The video may contain very niche or uncommon content. "
+            "Try uploading a clip with more distinctive visuals or dialogue."
+        )
+    elif above_count < total:
+        return (
+            f"Only {above_count} of {total} results are strong matches. "
+            f"The remaining results have lower confidence."
+        )
+
+    return None  # All good
 
 
 def _format_cached_flat(cached_docs: list) -> list:
@@ -190,6 +262,7 @@ def _format_cached_flat(cached_docs: list) -> list:
             "duration": doc.get("duration", ""),
             "url": doc.get("video_link", ""),
             "similarity": doc.get("similarity", 0),
+            "above_threshold": doc.get("above_threshold", False),
             "search_query_used": doc.get("search_query_used", ""),
             "platform": doc.get("platform", "youtube"),
         })

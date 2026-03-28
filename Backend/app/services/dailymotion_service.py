@@ -80,7 +80,7 @@ async def search_dailymotion(query: str, max_results: int = 3) -> List[Dict]:
         async with httpx.AsyncClient(timeout=10.0) as client:
             params = {
                 "search": query,
-                "fields": "id,title,thumbnail_720_url,thumbnail_480_url,owner.screenname,views_total,duration,created_time,url",
+                "fields": "id,title,description,tags,thumbnail_720_url,thumbnail_480_url,owner.screenname,views_total,duration,created_time,url",
                 "limit": max_results,
                 "sort": "relevance",
             }
@@ -104,10 +104,16 @@ async def search_dailymotion(query: str, max_results: int = 3) -> List[Dict]:
                 view_count_raw = int(video.get("views_total", 0) or 0)
                 thumbnail = video.get("thumbnail_720_url") or video.get("thumbnail_480_url", "")
 
+                # Tags can sometimes be returned as a list directly depending on API endpoint behavior
+                raw_tags = video.get("tags") or []
+                tags_list = raw_tags.split(",") if isinstance(raw_tags, str) else raw_tags
+                
                 results.append({
                     "id": i + 1,
                     "youtube_video_id": f"dm_{video_id}",  # Prefixed to avoid collision with YouTube IDs
                     "title": video.get("title", "Untitled"),
+                    "description": (video.get("description") or "")[:300],
+                    "tags": tags_list,
                     "thumbnail": thumbnail,
                     "channel": video.get("owner.screenname", "Unknown Channel"),
                     "views": _format_view_count(view_count_raw),
