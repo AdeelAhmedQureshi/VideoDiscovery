@@ -39,6 +39,7 @@ export const Header = () => {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-10">
+            <a href="/" className="nav-link text-lg font-semibold text-gray-600">Home</a>
             {user && (
               <a
                 href="/dashboard"
@@ -79,6 +80,15 @@ export const Header = () => {
       {menuOpen && (
         <div className="md:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-lg">
           <div className="container mx-auto px-4 sm:px-6 py-4 space-y-3">
+            <button
+              onClick={() => {
+                navigate("/");
+                setMenuOpen(false);
+              }}
+              className="w-full text-left text-base font-semibold text-gray-700 hover:text-cyan-600"
+            >
+              Home
+            </button>
             {user && (
               <button
                 onClick={() => {

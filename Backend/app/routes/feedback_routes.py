@@ -12,7 +12,7 @@ router = APIRouter()
 
 class FeedbackIn(BaseModel):
     video_id: str
-    rating: int   # 1-5 star rating
+    rating: int   # 0-5 star rating (0 means no star selected)
     comment: Optional[str] = None
 
 
@@ -30,9 +30,13 @@ async def submit_feedback(
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid user authentication")
     
-    # Validate rating
-    if not (1 <= payload.rating <= 5):
-        raise HTTPException(status_code=400, detail="Rating must be between 1 and 5")
+    # Validate rating and ensure feedback is not completely empty
+    if not (0 <= payload.rating <= 5):
+        raise HTTPException(status_code=400, detail="Rating must be between 0 and 5")
+
+    comment_text = (payload.comment or "").strip()
+    if payload.rating == 0 and not comment_text:
+        raise HTTPException(status_code=400, detail="Please provide a comment if rating is 0")
     
     # Check if feedback already exists
     existing_feedback = await feedback_collection().find_one({
@@ -46,7 +50,7 @@ async def submit_feedback(
             {"_id": existing_feedback["_id"]},
             {"$set": {
                 "rating": payload.rating,
-                "comment": payload.comment,
+                "comment": comment_text or None,
                 "updated_at": datetime.now(timezone.utc)
             }}
         )
@@ -63,7 +67,7 @@ async def submit_feedback(
             "video_id": payload.video_id,
             "user_id": user_id,
             "rating": payload.rating,
-            "comment": payload.comment,
+            "comment": comment_text or None,
             "created_at": datetime.now(timezone.utc)
         }
         await feedback_collection().insert_one(doc)
