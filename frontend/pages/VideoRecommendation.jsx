@@ -132,9 +132,9 @@ const VideoCard = ({ video, index }) => {
                 <div className="absolute bottom-3 left-3">
                     <div className={`px-2 py-1 rounded-md text-white text-[10px] font-bold flex items-center gap-1 shadow-md ${isDailymotion ? 'bg-blue-600' : 'bg-red-600'}`}>
                         {isDailymotion ? (
-                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12.894 21.921c-2.253.098-4.181-.49-5.785-1.764C5.502 18.879 4.547 17.27 4.24 15.42L4.1 15.42l-.18 6.241-3.921 0 0-21.379L4.1.282 4.1 8.923l.14 0c.585-1.288 1.429-2.272 2.532-2.953 1.106-.681 2.367-1.021 3.784-1.021 2.382 0 4.268.898 5.653 2.693 1.387 1.797 2.08 4.136 2.08 7.019 0 2.91-.749 5.28-2.247 7.107-1.498 1.83-3.474 2.79-5.928 2.877l-.725.026-.495-.75zm-.7-13.662c-1.471 0-2.666.555-3.581 1.666-.915 1.111-1.373 2.552-1.373 4.325 0 1.773.458 3.216 1.373 4.327.915 1.113 2.11 1.668 3.581 1.668 1.471 0 2.657-.542 3.562-1.625.903-1.084 1.355-2.541 1.355-4.37 0-1.829-.452-3.284-1.355-4.367-.905-1.083-2.091-1.624-3.562-1.624z"/></svg>
+                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12.894 21.921c-2.253.098-4.181-.49-5.785-1.764C5.502 18.879 4.547 17.27 4.24 15.42L4.1 15.42l-.18 6.241-3.921 0 0-21.379L4.1.282 4.1 8.923l.14 0c.585-1.288 1.429-2.272 2.532-2.953 1.106-.681 2.367-1.021 3.784-1.021 2.382 0 4.268.898 5.653 2.693 1.387 1.797 2.08 4.136 2.08 7.019 0 2.91-.749 5.28-2.247 7.107-1.498 1.83-3.474 2.79-5.928 2.877l-.725.026-.495-.75zm-.7-13.662c-1.471 0-2.666.555-3.581 1.666-.915 1.111-1.373 2.552-1.373 4.325 0 1.773.458 3.216 1.373 4.327.915 1.113 2.11 1.668 3.581 1.668 1.471 0 2.657-.542 3.562-1.625.903-1.084 1.355-2.541 1.355-4.37 0-1.829-.452-3.284-1.355-4.367-.905-1.083-2.091-1.624-3.562-1.624z" /></svg>
                         ) : (
-                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" /></svg>
                         )}
                         {platformLabel}
                     </div>
@@ -187,6 +187,7 @@ export default function Recommendation() {
     const [loading, setLoading] = useState(true);
     const [topRecommendations, setTopRecommendations] = useState([]);
     const [uploadedVideo, setUploadedVideo] = useState(null);
+    const [notFoundReason, setNotFoundReason] = useState(null);
 
     // Feedback state
     const [rating, setRating] = useState(0);
@@ -218,6 +219,7 @@ export default function Recommendation() {
 
             const data = await response.json();
             setUploadedVideo(data.uploaded_video || null);
+            setNotFoundReason(data.not_found_reason || null);
 
             // Use the new flat top_recommendations field
             // Fallback to old query_tabs format for backward compatibility
@@ -531,6 +533,17 @@ export default function Recommendation() {
                             transition={{ duration: 0.5 }}
                             className="space-y-8 max-w-6xl mx-auto"
                         >
+                            {/* Partial match warning */}
+                            {notFoundReason && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800"
+                                >
+                                    <span className="text-lg">⚠️</span>
+                                    <p>{notFoundReason}</p>
+                                </motion.div>
+                            )}
                             {topRecommendations.map((video, index) => (
                                 <VideoCard key={video.youtube_video_id || video.id || index} video={video} index={index} />
                             ))}
@@ -545,16 +558,20 @@ export default function Recommendation() {
                                 <Video className="w-14 h-14 text-slate-400" />
                             </div>
                             <h3 className="text-2xl font-bold text-slate-900 mb-3">
-                                No Recommendations Available
+                                No Matching Videos Found
                             </h3>
-                            <p className="text-slate-600 mb-8 max-w-md">
-                                We couldn't find matching videos. Try uploading a different video.
+                            <p className="text-slate-600 mb-3 max-w-md">
+                                {notFoundReason ||
+                                    "We couldn't find videos matching your uploaded content on YouTube or Dailymotion."}
+                            </p>
+                            <p className="text-slate-400 text-sm mb-8 max-w-sm">
+                                Try uploading a video with more distinctive scenes, objects, or dialogue.
                             </p>
                             <button
                                 onClick={() => navigate("/dashboard")}
                                 className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold rounded-xl hover:shadow-2xl hover:shadow-cyan-500/40 transition-all transform hover:scale-105 cursor-pointer"
                             >
-                                Go to Dashboard
+                                Try Another Video
                             </button>
                         </motion.div>
                     )}
