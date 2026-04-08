@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { User, Mail, Lock, Trash2, ArrowLeft, Shield, CheckCircle2, AlertCircle, Eye, EyeOff, Pencil } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -35,18 +35,37 @@ export default function Account() {
     type: "info",
     title: "",
     message: "",
-    onClose: null
+    onClose: null,
+    autoCloseMs: 2400,
+    requireAction: false
   });
 
-  const showPopup = ({ type, title, message, onClose }) => {
+  const showPopup = ({ type, title, message, onClose, autoCloseMs, requireAction = false }) => {
+    const resolvedAutoCloseMs = autoCloseMs ?? (requireAction ? 0 : 2400);
     setPopup({
       open: true,
       type,
       title,
       message,
-      onClose: onClose || null
+      onClose: onClose || null,
+      autoCloseMs: resolvedAutoCloseMs,
+      requireAction
     });
   };
+
+  useEffect(() => {
+    if (!popup.open || !popup.autoCloseMs) {
+      return undefined;
+    }
+
+    const timeoutId = setTimeout(() => {
+      const next = popup.onClose;
+      setPopup((prev) => ({ ...prev, open: false, onClose: null }));
+      if (next) next();
+    }, popup.autoCloseMs);
+
+    return () => clearTimeout(timeoutId);
+  }, [popup.open, popup.autoCloseMs, popup.onClose]);
 
   const handleEnableNameEdit = () => {
     setIsEditingName(true);
@@ -104,12 +123,11 @@ export default function Account() {
         message:
           data.message ||
           "Your account is deactivated. You can reactivate within 30 days; after that it will be permanently deleted.",
-        onClose: () => navigate("/auth")
+        onClose: () => signOut()
       });
       setDeactivatePassword("");
       setDeactivateConfirmation("");
       setShowDeactivateModal(false);
-      signOut();
     } catch (err) {
       showPopup({
         type: "error",
@@ -353,12 +371,12 @@ export default function Account() {
       showPopup({
         type: "success",
         title: "Account deleted",
-        message: data.message || "Your account has been deleted successfully."
+        message: data.message || "Your account has been deleted successfully.",
+        onClose: () => signOut()
       });
       setDeletePassword("");
       setDeleteConfirmation("");
       setShowDeleteModal(false);
-      signOut();
     } catch (err) {
       showPopup({
         type: "error",
@@ -938,11 +956,12 @@ export default function Account() {
       )}
 
       {popup.open && (
-        <div className="fixed top-6 left-1/2 z-50 w-[min(85vw,380px)] -translate-x-1/2">
-          <div className="account-card overflow-hidden rounded-3xl border border-slate-200 bg-white/95 shadow-2xl">
-            <div className="px-6 py-4 bg-gradient-to-r from-cyan-500 to-blue-500">
+        <div className={`fixed left-1/2 z-50 -translate-x-1/2 ${popup.requireAction ? "top-5 w-[min(88vw,420px)]" : "top-4 w-max max-w-[92vw]"}`}>
+          <div className="account-card overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 shadow-[0_24px_65px_-24px_rgba(15,23,42,0.5)] backdrop-blur-sm animate-[fadeIn_220ms_ease-out]">
+            <div className={`relative px-6 py-4 ${popup.type === "success" ? "bg-gradient-to-r from-emerald-600 to-green-600" : popup.type === "error" ? "bg-gradient-to-r from-rose-600 to-red-600" : popup.type === "warning" ? "bg-gradient-to-r from-amber-500 to-orange-500" : "bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-500"}`}>
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.25),transparent_60%)]" />
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/35">
                   {popup.type === "success" ? (
                     <CheckCircle2 className="w-5 h-5 text-white" />
                   ) : (
@@ -950,28 +969,39 @@ export default function Account() {
                   )}
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm uppercase tracking-widest text-white/80">Notification</p>
+                  {popup.requireAction && <p className="text-xs uppercase tracking-[0.22em] text-white/80">Notification</p>}
                   <h3 className="text-lg font-bold text-white">{popup.title}</h3>
+                  {!popup.requireAction && <p className="text-white/90 text-sm">{popup.message}</p>}
                 </div>
               </div>
             </div>
 
-            <div className="px-6 py-5 bg-white/90">
-              <p className="text-slate-700 font-medium mb-4">{popup.message}</p>
-              <div className="flex justify-end">
-                <button
-                  onClick={() => {
-                    const next = popup.onClose;
-                    setPopup({ ...popup, open: false, onClose: null });
-                    if (next) next();
-                  }}
-                  className="px-5 py-2.5 bg-gradient-to-r from-slate-900 to-slate-700 text-white font-bold rounded-2xl hover:from-slate-800 hover:to-slate-600 transition-all shadow-lg"
-                >
-                  OK
-                </button>
+            {!popup.requireAction ? (
+              <div className="h-1.5 bg-white/25">
+                <div
+                  className="h-full bg-white/90 origin-left"
+                  style={{ animation: `notificationTimer ${popup.autoCloseMs}ms linear forwards` }}
+                />
               </div>
-            </div>
+            ) : (
+              <div className="px-6 py-5 bg-white/90">
+                <p className="text-slate-700 font-medium leading-relaxed mb-5">{popup.message}</p>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      const next = popup.onClose;
+                      setPopup({ ...popup, open: false, onClose: null });
+                      if (next) next();
+                    }}
+                    className="px-5 py-2.5 bg-gradient-to-r from-slate-900 to-slate-700 text-white font-bold rounded-2xl hover:from-slate-800 hover:to-slate-600 transition-all shadow-lg shadow-slate-900/20"
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
+          <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}@keyframes notificationTimer{from{transform:scaleX(1)}to{transform:scaleX(0)}}`}</style>
         </div>
       )}
     </section>

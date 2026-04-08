@@ -407,6 +407,220 @@ async def get_user_history(
         )
 
 
+@router.get("/user/rated-videos")
+async def get_rated_videos(
+    current_user: dict = Depends(get_current_user),
+    min_rating: int = 3
+):
+    """
+    Get all user's videos with ratings >= min_rating.
+    These are the videos the user has rated positively (3 stars or higher).
+    
+    Args:
+        current_user: Authenticated user information
+        min_rating: Minimum rating threshold (default: 3)
+    
+    Returns:
+        List of videos with ratings >= min_rating, sorted by rating (highest first)
+    """
+    try:
+        user_id = current_user.get("user_id")
+        
+        if not user_id:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid user authentication"
+            )
+        
+        # Get all feedback for this user with rating >= min_rating
+        feedback_cursor = feedback_collection().find({
+            "user_id": user_id,
+            "rating": {"$gte": min_rating}
+        }).sort("rating", -1)
+        
+        feedback_docs = await feedback_cursor.to_list(length=None)
+        
+        # Extract video IDs from feedback
+        video_ids = [fb.get("video_id") for fb in feedback_docs]
+        
+        if not video_ids:
+            return {
+                "total_videos": 0,
+                "videos": [],
+                "message": f"No videos found with rating >= {min_rating}"
+            }
+        
+        # Fetch video details for these video IDs
+        videos_cursor = videos_collection().find({
+            "_id": {"$in": video_ids},
+            "user_id": user_id
+        })
+        
+        videos = await videos_cursor.to_list(length=None)
+        
+        # Create a map of feedback by video_id for easy lookup
+        feedback_map = {fb.get("video_id"): fb for fb in feedback_docs}
+        
+        # Format response with video details and ratings
+        video_list = []
+        for video in videos:
+            video_id = video.get("video_id")
+            feedback = feedback_map.get(video_id)
+            
+            video_list.append({
+                "video_id": video_id,
+                "file_name": video.get("file_name"),
+                "file_url": video.get("file_url"),
+                "intelligent_query": video.get("intelligent_query"),
+                "video_format": video.get("video_format"),
+                "video_duration": video.get("video_duration"),
+                "uploaded_at": video.get("uploaded_at"),
+                "thumbnail_url": CloudinaryService.get_thumbnail_url(
+                    video.get("cloudinary_public_id")
+                ) if video.get("cloudinary_public_id") else None,
+                "rating": feedback.get("rating") if feedback else None,
+                "comment": feedback.get("comment") if feedback else None,
+                "rated_at": feedback.get("created_at") if feedback else None
+            })
+        
+        # Sort by rating (highest first)
+        video_list.sort(key=lambda x: x.get("rating", 0), reverse=True)
+        
+        return {
+            "total_videos": len(video_list),
+            "min_rating": min_rating,
+            "videos": video_list
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching rated videos: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while fetching rated videos: {str(e)}"
+        )
+
+
+@router.get("/user/recommended-videos")
+async def get_recommended_videos(
+    current_user: dict = Depends(get_current_user),
+    min_rating: int = 3
+):
+    """
+    Get all AI-recommended videos for user's uploaded videos with ratings >= min_rating.
+    These are videos that the system recommended based on user's uploads,
+    filtered to show only those where the user rated the recommendations 3+ stars.
+    
+    Args:
+        current_user: Authenticated user information
+        min_rating: Minimum rating threshold (default: 3)
+    
+    Returns:
+        List of recommended videos with ratings >= min_rating, sorted by rating (highest first)
+    """
+    try:
+        user_id = current_user.get("user_id")
+        
+        if not user_id:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid user authentication"
+            )
+        
+        # Get all uploaded videos by this user
+        user_videos_cursor = videos_collection().find({"user_id": user_id})
+        user_videos = await user_videos_cursor.to_list(length=None)
+        user_video_ids = [v.get("_id") for v in user_videos]
+        
+        if not user_video_ids:
+            return {
+                "total_videos": 0,
+                "videos": [],
+                "message": "No uploaded videos found"
+            }
+        
+        # Get feedback for the uploaded videos with rating >= min_rating
+        # This represents the user's rating of the recommendations for each video
+        feedback_cursor = feedback_collection().find({
+            "user_id": user_id,
+            "video_id": {"$in": user_video_ids},
+            "rating": {"$gte": min_rating}
+        }).sort("rating", -1)
+        
+        feedback_docs = await feedback_cursor.to_list(length=None)
+        
+        if not feedback_docs:
+            return {
+                "total_videos": 0,
+                "videos": [],
+                "message": f"No recommendations found with rating >= {min_rating}"
+            }
+        
+        # Get the uploaded video IDs that have ratings >= min_rating
+        rated_video_ids = [fb.get("video_id") for fb in feedback_docs]
+        
+        # Create a map of feedback by video_id for easy lookup
+        feedback_map = {fb.get("video_id"): fb for fb in feedback_docs}
+        
+        # Get all recommendations for these rated videos
+        recommendations_cursor = recommendations_collection().find({
+            "uploaded_video_id": {"$in": rated_video_ids}
+        })
+        
+        recommendations = await recommendations_cursor.to_list(length=None)
+        
+        if not recommendations:
+            return {
+                "total_videos": 0,
+                "videos": [],
+                "message": f"No recommendations found for rated videos"
+            }
+        
+        # Format response with recommendation details and ratings from the video
+        video_list = []
+        for recommendation in recommendations:
+            uploaded_video_id = recommendation.get("uploaded_video_id")
+            feedback = feedback_map.get(uploaded_video_id)
+            
+            if feedback:
+                video_list.append({
+                    "recommendation_id": recommendation.get("_id"),
+                    "title": recommendation.get("title"),
+                    "url": recommendation.get("url"),
+                    "thumbnail": recommendation.get("thumbnail"),
+                    "channel": recommendation.get("channel"),
+                    "views": recommendation.get("views"),
+                    "uploadedAt": recommendation.get("uploadedAt"),
+                    "duration": recommendation.get("duration"),
+                    "similarity": recommendation.get("similarity"),
+                    "description": recommendation.get("description"),
+                    "rating": feedback.get("rating") if feedback else None,
+                    "comment": feedback.get("comment") if feedback else None,
+                    "rated_at": feedback.get("created_at") if feedback else None,
+                    "uploaded_video_id": uploaded_video_id,
+                    "uploaded_video_name": recommendation.get("uploaded_video_name")
+                })
+        
+        # Sort by rating (highest first)
+        video_list.sort(key=lambda x: x.get("rating", 0), reverse=True)
+        
+        return {
+            "total_videos": len(video_list),
+            "min_rating": min_rating,
+            "videos": video_list
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching recommended videos: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while fetching recommended videos: {str(e)}"
+        )
+
+
 @router.delete("/{video_id}")
 async def delete_video(
     video_id: str,

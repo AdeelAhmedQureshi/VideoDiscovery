@@ -7,6 +7,7 @@ export default function DashboardStats() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [data, setData] = useState({
     total_videos: 0,
     total_feedback: 0,
@@ -16,6 +17,7 @@ export default function DashboardStats() {
   const fetchStats = useCallback(async () => {
     const token = localStorage.getItem("token");
     if (!token) {
+      setSessionExpired(true);
       setError("Not signed in. Please log in to view stats.");
       setLoading(false);
       return;
@@ -33,8 +35,10 @@ export default function DashboardStats() {
 
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
+          setSessionExpired(true);
           setError("Session expired. Please sign in again.");
         } else {
+          setSessionExpired(false);
           setError("Failed to load stats. Try again later.");
         }
         setLoading(false);
@@ -42,6 +46,8 @@ export default function DashboardStats() {
       }
 
       const json = await res.json();
+      setSessionExpired(false);
+      setError("");
       console.log("[Dashboard] Stats response:", json);
       const statsObj = json?.data?.statistics ?? json?.statistics ?? json;
       const mapped = {
@@ -55,6 +61,7 @@ export default function DashboardStats() {
       setData(mapped);
       setLoading(false);
     } catch (e) {
+      setSessionExpired(false);
       setError("Network error while loading stats.");
       setLoading(false);
     }
@@ -76,21 +83,21 @@ export default function DashboardStats() {
   const stats = [
     {
       title: "Total Videos",
-      value: loading ? "—" : String(data.total_videos),
+      value: loading || sessionExpired ? "—" : String(data.total_videos),
       icon: <Video size={28} />,
       color: "from-cyan-500 to-teal-400",
       hoverBorder: "hover:border-cyan-200",
     },
     {
       title: "AI Recommendations",
-      value: loading ? "—" : String(data.total_recommendations),
+      value: loading || sessionExpired ? "—" : String(data.total_recommendations),
       icon: <Brain size={28} />,
       color: "from-indigo-500 to-purple-400",
       hoverBorder: "hover:border-indigo-400",
     },
     {
       title: "Feedback Submitted",
-      value: loading ? "—" : String(data.total_feedback),
+      value: loading || sessionExpired ? "—" : String(data.total_feedback),
       icon: <MessageSquare size={28} />,
       color: "from-pink-500 to-rose-400",
       hoverBorder: "hover:border-pink-400",
@@ -117,6 +124,28 @@ export default function DashboardStats() {
   return (
     <section className="w-full bg-gradient-to-br from-cyan-50 to-slate-100 py-12 sm:py-16 md:py-20 lg:py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {sessionExpired && (
+          <div className="mb-6 sm:mb-8 rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-3 sm:px-5 sm:py-4 shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm sm:text-base font-semibold text-amber-900">
+                Your session has expired. Please sign in again to refresh dashboard stats.
+              </p>
+              <button
+                onClick={() => navigate("/auth")}
+                className="self-start sm:self-auto rounded-xl bg-amber-600 px-4 py-2 text-sm font-bold text-white hover:bg-amber-700 transition-colors"
+              >
+                Sign In Again
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!sessionExpired && error && (
+          <div className="mb-6 sm:mb-8 rounded-2xl border border-rose-200 bg-rose-50/90 px-4 py-3 sm:px-5 sm:py-4 shadow-sm">
+            <p className="text-sm sm:text-base font-semibold text-rose-900">{error}</p>
+          </div>
+        )}
+
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6"
           initial="hidden"
