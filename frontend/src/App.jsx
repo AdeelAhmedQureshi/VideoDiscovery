@@ -16,7 +16,7 @@ import ResetPassword from "../pages/ResetPassword";
 import Account from "../pages/Account";
 import History from "../pages/History";
 import NotFound from "../pages/NotFound";
-import Recommendation from "./Components/VideoRecommendation.jsx";
+import Recommendation from "../pages/VideoRecommendation.jsx";
 const ScrollToHash = () => {
   const location = useLocation();
 

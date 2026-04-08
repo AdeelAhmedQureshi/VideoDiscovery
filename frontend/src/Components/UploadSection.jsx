@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Upload, FileVideo, X, Loader2, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -17,7 +17,8 @@ export function UploadSection() {
     title: "",
     message: "",
     showTwoButtons: false,
-    duplicateVideoId: null
+    duplicateVideoId: null,
+    autoCloseMs: 2400
   });
 
   const allowedFormats = [
@@ -40,20 +41,34 @@ export function UploadSection() {
 
   const handleRemoveFile = () => setFile(null);
 
-  const showPopup = ({ type = "success", title, message, showTwoButtons = false, duplicateVideoId = null }) => {
+  const showPopup = ({ type = "success", title, message, showTwoButtons = false, duplicateVideoId = null, autoCloseMs }) => {
+    const resolvedAutoCloseMs = autoCloseMs ?? (showTwoButtons ? 0 : 2400);
     setPopup({
       open: true,
       type,
       title,
       message,
       showTwoButtons,
-      duplicateVideoId
+      duplicateVideoId,
+      autoCloseMs: resolvedAutoCloseMs
     });
   };
 
   const handlePopupClose = () => {
-    setPopup({ open: false, type: "info", title: "", message: "", showTwoButtons: false, duplicateVideoId: null });
+    setPopup({ open: false, type: "info", title: "", message: "", showTwoButtons: false, duplicateVideoId: null, autoCloseMs: 2400 });
   };
+
+  useEffect(() => {
+    if (!popup.open || popup.showTwoButtons || !popup.autoCloseMs) {
+      return undefined;
+    }
+
+    const timeoutId = setTimeout(() => {
+      handlePopupClose();
+    }, popup.autoCloseMs);
+
+    return () => clearTimeout(timeoutId);
+  }, [popup.open, popup.showTwoButtons, popup.autoCloseMs]);
 
   const handleSeeRecommendations = () => {
     const videoId = popup.duplicateVideoId;
@@ -239,7 +254,7 @@ export function UploadSection() {
   };
 
   return (
-    <section id="upload-section" className="py-16 sm:py-24 px-5 sm:px-6 bg-gray-50 relative">
+    <section id="upload-section" className="pt-2 sm:pt-4 md:pt-6 lg:pt-8 pb-16 sm:pb-24 px-5 sm:px-6 bg-gray-50 relative">
       <div className="container mx-auto max-w-2xl">
         {/* Section Header */}
         <motion.div
@@ -251,13 +266,13 @@ export function UploadSection() {
         >
           <div className="inline-block relative mb-4">
             <motion.h1
-              className="inline-block text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
+              className="inline-block text-4xl sm:text-5xl leading-[1.15] pb-1 font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
               variants={headingVariants}
             >
               Upload Section
             </motion.h1>
             <motion.div
-              className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
+              className="absolute -bottom-3 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
               variants={headingVariants}
             ></motion.div>
           </div>
@@ -276,7 +291,7 @@ export function UploadSection() {
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`relative border-2 border-dashed rounded-xl p-8 sm:p-16 text-center transition-all ${isDragging
+              className={`group relative border-2 border-dashed rounded-xl p-8 sm:p-16 text-center transition-all duration-300 ${isDragging
                 ? "border-cyan-500 bg-cyan-50/50"
                 : "border-gray-300 hover:border-cyan-400 hover:bg-gray-50"
                 }`}
@@ -297,8 +312,8 @@ export function UploadSection() {
                   Drop your video here or click to browse
                 </p>
 
-                <button className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 bg-white border-2 border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors pointer-events-none">
-                  <FileVideo className="w-4 h-4" />
+                <button className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 bg-white border-2 border-gray-300 text-gray-700 font-medium rounded-lg pointer-events-none transition-all duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] group-hover:border-cyan-400 group-hover:text-cyan-700 group-hover:shadow-md">
+                  <FileVideo className="w-4 h-4 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110" />
                   Select Video File
                 </button>
               </div>
@@ -359,11 +374,12 @@ export function UploadSection() {
       </div>
 
       {popup.open && (
-        <div className="fixed top-6 left-1/2 z-50 w-[min(92vw,540px)] -translate-x-1/2">
-          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white/95 shadow-2xl">
-            <div className="px-6 py-4 bg-gradient-to-r from-cyan-500 to-blue-500">
+        <div className={`fixed left-1/2 z-50 -translate-x-1/2 ${popup.showTwoButtons ? "top-5 w-[min(88vw,420px)]" : "top-4 w-max max-w-[92vw]"}`}>
+          <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 shadow-[0_24px_65px_-24px_rgba(15,23,42,0.5)] backdrop-blur-sm animate-[fadeIn_220ms_ease-out]">
+            <div className={`relative px-6 py-4 ${popup.type === "success" ? "bg-gradient-to-r from-emerald-600 to-green-600" : popup.type === "error" ? "bg-gradient-to-r from-rose-600 to-red-600" : popup.type === "warning" ? "bg-gradient-to-r from-amber-500 to-orange-500" : "bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-500"}`}>
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.25),transparent_60%)]" />
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/35">
                   {popup.type === "success" ? (
                     <CheckCircle className="h-5 w-5 text-white" />
                   ) : popup.type === "info" ? (
@@ -373,41 +389,41 @@ export function UploadSection() {
                   )}
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm uppercase tracking-widest text-white/80">Notification</p>
+                  {popup.showTwoButtons && <p className="text-xs uppercase tracking-[0.22em] text-white/80">Notification</p>}
                   <h3 className="text-lg font-bold text-white">{popup.title}</h3>
+                  {!popup.showTwoButtons && <p className="text-white/90 text-sm">{popup.message}</p>}
                 </div>
               </div>
             </div>
 
-            <div className="px-6 py-5 bg-white/90">
-              <p className="text-slate-700 font-medium mb-4">{popup.message}</p>
-              <div className="flex justify-end gap-3">
-                {popup.showTwoButtons ? (
-                  <>
-                    <button
-                      onClick={handlePopupClose}
-                      className="px-5 py-2.5 bg-gray-100 text-gray-900 font-bold rounded-2xl hover:bg-gray-200 transition-all border border-gray-200"
-                    >
-                      OK
-                    </button>
-                    <button
-                      onClick={handleSeeRecommendations}
-                      className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold rounded-2xl hover:from-cyan-600 hover:to-blue-600 transition-all shadow-lg"
-                    >
-                      See Recommendations
-                    </button>
-                  </>
-                ) : (
+            {popup.showTwoButtons ? (
+              <div className="px-6 py-5 bg-white/90">
+                <p className="text-slate-700 font-medium leading-relaxed mb-5">{popup.message}</p>
+                <div className="flex justify-end gap-3">
                   <button
                     onClick={handlePopupClose}
-                    className="px-5 py-2.5 bg-gradient-to-r from-slate-900 to-slate-700 text-white font-bold rounded-2xl hover:from-slate-800 hover:to-slate-600 transition-all shadow-lg"
+                    className="px-5 py-2.5 bg-white text-slate-800 font-semibold rounded-2xl hover:bg-slate-50 transition-all border border-slate-200"
                   >
                     OK
                   </button>
-                )}
+                  <button
+                    onClick={handleSeeRecommendations}
+                    className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold rounded-2xl hover:from-cyan-600 hover:to-blue-600 transition-all shadow-lg shadow-cyan-500/25"
+                  >
+                     Recommendations
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="h-1.5 bg-white/25">
+                <div
+                  className="h-full bg-white/90 origin-left"
+                  style={{ animation: `notificationTimer ${popup.autoCloseMs}ms linear forwards` }}
+                />
+              </div>
+            )}
           </div>
+          <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}@keyframes notificationTimer{from{transform:scaleX(1)}to{transform:scaleX(0)}}`}</style>
         </div>
       )}
 
