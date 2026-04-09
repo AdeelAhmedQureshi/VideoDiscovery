@@ -177,7 +177,7 @@ export default function History() {
             // Remove the deleted video from the state
             setHistoryData((prevData) => prevData.filter((item) => item.id !== videoId));
             setDeletingVideoId(null);
-            setNotification({ show: true, message: "Video deleted successfully!", type: "success" });
+            setNotification({ show: true, message: "Video deleted successfully", type: "success" });
 
         } catch (e) {
             console.error("Error deleting video:", e);
@@ -190,6 +190,18 @@ export default function History() {
         setShowDeleteModal(false);
         setVideoToDelete(null);
     };
+
+    useEffect(() => {
+        if (!notification.show || notification.type !== "success") {
+            return undefined;
+        }
+
+        const timeoutId = setTimeout(() => {
+            setNotification({ show: false, message: "", type: "" });
+        }, 2000);
+
+        return () => clearTimeout(timeoutId);
+    }, [notification.show, notification.type]);
 
     const containerVariants = {
         hidden: { opacity: 0, y: 14 },
@@ -527,41 +539,47 @@ export default function History() {
 
             {/* Notification Modal */}
             {notification.show && (
-                <div className="fixed top-6 left-1/2 z-50 w-[min(85vw,380px)] -translate-x-1/2">
-                    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white/95 shadow-2xl">
-                        <div className={`px-6 py-4 ${
-                            notification.type === "success" 
-                                ? "bg-gradient-to-r from-cyan-500 to-blue-500" 
+                <div className={`fixed left-1/2 z-50 -translate-x-1/2 ${notification.type === "success" ? "top-4 w-max max-w-[92vw]" : "top-6 w-[min(85vw,380px)]"}`}>
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 shadow-[0_24px_65px_-24px_rgba(15,23,42,0.5)] animate-[fadeIn_220ms_ease-out] backdrop-blur-sm">
+                        <div className={`relative px-6 py-4 ${
+                            notification.type === "success"
+                                ? "bg-gradient-to-r from-emerald-600 to-green-600"
                                 : "bg-gradient-to-r from-red-600 to-rose-600"
                         }`}>
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.25),transparent_60%)]" />
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                                <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0 ring-1 ring-white/35">
                                     {notification.type === "success" ? (
                                         <CheckCircle className="h-5 w-5 text-white" />
                                     ) : (
                                         <AlertCircle className="h-5 w-5 text-white" />
                                     )}
                                 </div>
-                                <div className="flex-1">
-                                    <p className="text-sm uppercase tracking-widest text-white/80">Notification</p>
-                                    <h3 className="text-lg font-bold text-white">
-                                        {notification.type === "success" ? "Success" : "Error"}
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="text-lg font-bold text-white truncate">
+                                        {notification.type === "success" ? "Video deleted" : "Error"}
                                     </h3>
+                                    <p className="text-white/90 text-sm">{notification.message}</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="px-6 py-5 bg-white/90">
-                            <p className="text-slate-700 font-medium mb-4">{notification.message}</p>
-                            <div className="flex justify-end">
-                                <button
-                                    onClick={() => setNotification({ show: false, message: "", type: "" })}
-                                    className="px-5 py-2.5 bg-gradient-to-r from-slate-900 to-slate-700 text-white font-bold rounded-2xl hover:from-slate-800 hover:to-slate-600 transition-all shadow-lg"
-                                >
-                                    OK
-                                </button>
+                        {notification.type === "success" ? (
+                            <div className="h-1.5 bg-white/25">
+                                <div className="h-full bg-white/90 origin-left" style={{ animation: "loginPopupTimer 2000ms linear forwards" }} />
                             </div>
-                        </div>
+                        ) : (
+                            <div className="px-6 py-5 bg-white/90">
+                                <div className="flex justify-end">
+                                    <button
+                                        onClick={() => setNotification({ show: false, message: "", type: "" })}
+                                        className="px-5 py-2.5 bg-gradient-to-r from-slate-900 to-slate-700 text-white font-bold rounded-2xl hover:from-slate-800 hover:to-slate-600 transition-all shadow-lg"
+                                    >
+                                        OK
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -581,6 +599,24 @@ export default function History() {
           animation: fade-in 0.6s ease-out forwards;
           opacity: 0;
         }
+                @keyframes loginPopupTimer {
+                    from {
+                        transform: scaleX(1)
+                    }
+                    to {
+                        transform: scaleX(0)
+                    }
+                }
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-10px)
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0)
+                    }
+                }
       `}</style>
         </div>
     );

@@ -6,11 +6,36 @@ import AnalyticsPanel from "@/Components/Analysis";
 import { RecommendationsSection } from "@/Components/RecommendationsSection";
 import { UserAvatar } from "./../src/Components/UserAvatar";
 import { useEffect, useState } from "react";
+import { waitForBackendReady } from "../Services/BackendStatusApi";
 export const Dashboard = () => {
     const { signOut } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [menuOpen, setMenuOpen] = useState(false);
+    const [backendReady, setBackendReady] = useState(false);
+    const [checkingBackend, setCheckingBackend] = useState(true);
+    const [backendError, setBackendError] = useState("");
+
+    const verifyBackendReadiness = async () => {
+        setCheckingBackend(true);
+        setBackendError("");
+
+        const result = await waitForBackendReady({
+            maxWaitMs: 120000,
+            pollIntervalMs: 2500,
+            requestTimeoutMs: 3000,
+        });
+
+        if (result.ready) {
+            setBackendReady(true);
+            setBackendError("");
+        } else {
+            setBackendReady(false);
+            setBackendError("Network error: backend is not reachable. Please check if the server is running.");
+        }
+
+        setCheckingBackend(false);
+    };
 
     useEffect(() => {
         if (location.hash) {
@@ -25,6 +50,10 @@ export const Dashboard = () => {
             }
         }
     }, [location]);
+
+    useEffect(() => {
+        verifyBackendReadiness();
+    }, []);
 
     return (
         <>
@@ -186,18 +215,53 @@ export const Dashboard = () => {
             </header>
 
             <main className="mt-20 space-y-2 sm:space-y-4">
-                <section id="analytics">
-                    <AnalyticsPanel />
-                </section>
+                {checkingBackend && (
+                    <section className="min-h-[55vh] flex items-center justify-center px-4">
+                        <div className="max-w-xl w-full rounded-2xl border border-cyan-200 bg-cyan-50/80 px-6 py-8 text-center shadow-sm">
+                            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-cyan-200 border-t-cyan-500" />
+                            <p className="text-xs font-semibold tracking-[0.18em] uppercase text-cyan-700">System Initialization</p>
+                            <h2 className="mt-1 text-xl font-bold text-cyan-900">Preparing AI Services</h2>
+                            <p className="mt-2 text-sm sm:text-base text-cyan-800 leading-relaxed">
+                                Core inference services are warming up. Dashboard insights will appear automatically once all services are available.
+                            </p>
+                            <p className="mt-3 text-xs sm:text-sm text-cyan-700/90">
+                                This usually takes a moment after server startup.
+                            </p>
+                        </div>
+                    </section>
+                )}
 
-                {/* 👇 VERY IMPORTANT */}
-                <section id="uploadsection" className="scroll-mt-24">
-                    <UploadSection />
-                </section>
+                {!checkingBackend && backendError && (
+                    <section className="min-h-[55vh] flex items-center justify-center px-4">
+                        <div className="max-w-xl w-full rounded-2xl border border-rose-200 bg-rose-50/90 px-6 py-8 text-center shadow-sm">
+                            <p className="text-xs font-semibold tracking-[0.18em] uppercase text-rose-700">Connection Issue</p>
+                            <h2 className="mt-1 text-xl font-bold text-rose-900">Unable to Reach Backend Services</h2>
+                            <p className="mt-2 text-sm sm:text-base text-rose-800 leading-relaxed">{backendError}</p>
+                            <button
+                                onClick={verifyBackendReadiness}
+                                className="mt-5 rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-rose-700 transition-colors"
+                            >
+                                Retry Connection
+                            </button>
+                        </div>
+                    </section>
+                )}
 
-                <section id="recommendationsection" className="scroll-mt-24">
-                    <RecommendationsSection />
-                </section>
+                {!checkingBackend && backendReady && (
+                    <>
+                        <section id="analytics">
+                            <AnalyticsPanel />
+                        </section>
+
+                        <section id="uploadsection" className="scroll-mt-24">
+                            <UploadSection />
+                        </section>
+
+                        <section id="recommendationsection" className="scroll-mt-24">
+                            <RecommendationsSection />
+                        </section>
+                    </>
+                )}
             </main>
         </>
     );

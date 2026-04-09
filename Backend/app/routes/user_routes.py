@@ -5,7 +5,7 @@ from typing import Optional
 from bson import ObjectId
 from ..schemas.user_schema import (
     UserSignup, UserLogin, UserResponse, ForgotPassword, ResetPassword,
-    UpdateName, UpdateEmail, UpdatePassword, DeleteAccount, DeactivateAccount, ReactivateRequest, ReactivateVerify
+    VerifyResetOTP, UpdateName, UpdateEmail, UpdatePassword, DeleteAccount, DeactivateAccount, ReactivateRequest, ReactivateVerify
 )
 from ..services.auth_service import AuthService
 from ..services.email_service import EmailService
@@ -127,7 +127,7 @@ async def login(user: UserLogin, response: Response):
 @router.post("/forgot-password", response_model=dict)
 async def forgot_password(request: ForgotPassword):
     """
-    Initiate password reset process
+    Send password reset OTP
 
     Request body:
     {
@@ -141,7 +141,30 @@ async def forgot_password(request: ForgotPassword):
 
     return {
         "success": True,
-        "message": "If the email exists, a password reset link has been sent"
+        "message": "If the email exists, a password reset OTP has been sent"
+    }
+
+
+@router.post("/verify-reset-otp", response_model=dict)
+async def verify_reset_otp(request: VerifyResetOTP):
+    """
+    Verify OTP sent to user's email and issue reset token
+
+    Request body:
+    {
+        "email": "your.email@example.com",
+        "otp": "123456"
+    }
+    """
+    data, error = await AuthService.verify_reset_otp(request.email, request.otp)
+
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+
+    return {
+        "success": True,
+        "message": "OTP verified successfully",
+        "data": data
     }
 
 
