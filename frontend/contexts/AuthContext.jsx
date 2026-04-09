@@ -7,6 +7,7 @@ const AuthContext = createContext(undefined);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [initializingModels, setInitializingModels] = useState(false);
   const [popup, setPopup] = useState({
     open: false,
     type: "info",
@@ -65,6 +66,28 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const initEngineModels = async () => {
+    try {
+      setInitializingModels(true);
+      await fetch("http://localhost:8000/api/init-models", { method: "POST" });
+      
+      let attempts = 0;
+      while (attempts < 20) {
+        const res = await fetch("http://localhost:8000/api/models-status");
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.is_loaded) break;
+        }
+        await new Promise((r) => setTimeout(r, 3000));
+        attempts++;
+      }
+    } catch (e) {
+      console.error("Model init error:", e);
+    } finally {
+      setInitializingModels(false);
+    }
+  };
+
   // SIGN UP
   const signUp = async (name, email, password) => {
     try {
@@ -88,6 +111,7 @@ export const AuthProvider = ({ children }) => {
         title: "Account created",
         message: "Your account has been created successfully."
       });
+      await initEngineModels();
       navigate("/dashboard");
     } catch (err) {
       showPopup({
@@ -129,6 +153,7 @@ export const AuthProvider = ({ children }) => {
         autoCloseMs: 2000
       });
       console.log(userData)
+      await initEngineModels();
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
@@ -216,6 +241,15 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, refreshUser, sendReactivationCode, verifyReactivation }}>
       {children}
+      {initializingModels && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+           <div className="bg-white p-8 rounded-3xl flex flex-col items-center max-w-sm w-full shadow-2xl animate-[fadeIn_220ms_ease-out]">
+              <div className="w-16 h-16 border-4 border-cyan-200 border-t-cyan-600 rounded-full animate-spin mb-4"></div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Initializing AI Engine</h3>
+              <p className="text-gray-600 text-center text-sm">Please wait while the AI models (YOLO, Whisper, CLIP) are loaded into Memory. This step ensures blazingly fast analysis.</p>
+           </div>
+        </div>
+      )}
       {popup.open && (
         <div className={`fixed left-1/2 z-50 -translate-x-1/2 ${popup.requireAction ? "top-5 w-[min(88vw,420px)]" : "top-4 w-max max-w-[92vw]"}`}>
           <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 shadow-[0_24px_65px_-24px_rgba(15,23,42,0.5)] animate-[fadeIn_220ms_ease-out] backdrop-blur-sm">

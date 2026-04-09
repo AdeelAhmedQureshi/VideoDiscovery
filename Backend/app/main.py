@@ -9,6 +9,8 @@ from .routes.feedback_routes import router as feedback_router
 from .routes.user_routes import router as user_router
 from .routes.recommendation_routes import router as recommendation_router
 from .utils.db_indexes import create_database_indexes
+import asyncio
+from .utils.account_cleanup import run_deactivated_cleanup_loop
 
 
 @asynccontextmanager
