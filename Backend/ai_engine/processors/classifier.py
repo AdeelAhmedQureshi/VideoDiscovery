@@ -107,7 +107,8 @@ class VisualIntelligenceValidator:
         """
         # Prepare text query
         text_query = f"a photo of a {object_label}"
-        text_input = clip.tokenize([text_query]).to(DEVICE)
+        # Use truncate=True to avoid tokenize errors on unexpected long labels
+        text_input = clip.tokenize([text_query], truncate=True).to(DEVICE)
         
         # Prepare image
         image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
@@ -271,7 +272,8 @@ class VisualIntelligenceValidator:
         """
         Convert a text query into a CLIP vector.
         """
-        text_input = clip.tokenize([text]).to(DEVICE)
+        # Truncate long text inputs to CLIP's context length to avoid runtime errors
+        text_input = clip.tokenize([text], truncate=True).to(DEVICE)
         
         with torch.no_grad():
             text_features = self.clip_model.encode_text(text_input)
@@ -328,9 +330,21 @@ class VisualIntelligenceValidator:
         scored_queries.sort(key=lambda x: x['score'], reverse=True)
         
         selected = scored_queries[:top_n]
+
+        # Ensure the 3rd selected query's confidence is at most 0.90
+        # (User requirement: third query confidence should not exceed 90%)
+        for idx, q in enumerate(selected):
+            if idx == 2 and q.get("score", 0) > 0.9:
+                old_score = q["score"]
+                q["score"] = 0.9
+                print(f"[Phase 3] Capped 3rd query score from {old_score:.2f} to 0.90 for query: {q.get('query')}")
         print(f"Phase 3: Validated {valid_count}/{len(candidate_queries)} queries, selected top {len(selected)}")
         if selected:
-            print(f"   Top queries: {[q['query'] for q in selected]}")
+            print("   Top queries:")
+            for i, q in enumerate(selected):
+                q_text = q.get('query', '')
+                short_q = (q_text[:180] + '...') if len(q_text) > 180 else q_text
+                print(f"     {i+1}. \"{short_q}\" — score: {q.get('score', 0):.2f}")
         
         return selected
     
@@ -373,8 +387,8 @@ class VisualIntelligenceValidator:
                 "video game", "screen recording"
             ]
             
-            # Tokenize scene labels
-            text_inputs = torch.cat([clip.tokenize(f"a photo of a {c}") for c in scenes]).to(DEVICE)
+            # Tokenize scene labels (safe truncate)
+            text_inputs = torch.cat([clip.tokenize(f"a photo of a {c}", truncate=True) for c in scenes]).to(DEVICE)
             
             # Predict best matching scene
             with torch.no_grad():
@@ -650,6 +664,10 @@ def create_validator() -> VisualIntelligenceValidator:
 
 
 # For standalone testing
+if __name__ == "__main__":
+    print("Visual Intelligence Validator - Standalone Test")
+    validator = create_validator()
+    print(f"Validator ready. FAISS index dimension: {validator.dimension}")
 if __name__ == "__main__":
     print("Visual Intelligence Validator - Standalone Test")
     validator = create_validator()

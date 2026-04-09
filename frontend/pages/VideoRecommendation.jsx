@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Video, Play, ArrowLeft, Sparkles, Youtube, ExternalLink } from "lucide-react";
+import { Video, Play, ArrowLeft, Sparkles, Youtube, ExternalLink, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RecommendationFeedback } from "../src/Components/RecommendationFeedback";
 
@@ -188,7 +188,7 @@ export default function Recommendation() {
     const [loading, setLoading] = useState(true);
     const [topRecommendations, setTopRecommendations] = useState([]);
     const [uploadedVideo, setUploadedVideo] = useState(null);
-    
+    const [notFoundReason, setNotFoundReason] = useState(null);
 
     useEffect(() => {
         fetchRecommendations();
@@ -212,7 +212,7 @@ export default function Recommendation() {
 
             const data = await response.json();
             setUploadedVideo(data.uploaded_video || null);
-            setNotFoundReason(data.not_found_reason || null);
+            setNotFoundReason(data.not_found_reason || data.message || null);
 
             // Use the new flat top_recommendations field
             // Fallback to old query_tabs format for backward compatibility
@@ -318,18 +318,6 @@ export default function Recommendation() {
                         </motion.p>
                     </motion.div>
 
-                    {/* Videos Grid */}
-                    {loading ? (
-                        <div className="space-y-8 max-w-6xl mx-auto">
-                            {[...Array(3)].map((_, i) => (
-                                <SkeletonCard key={i} />
-                            ))}
-                        </div>
-                    ) : recommendations.length > 0 ? (
-                        <>
-                            {/* Feedback Section - Appears before recommendations */}
-                            {recommendations.length > 0 && <RecommendationFeedback videoId={videoId} />}
-
                     {/* Videos List — Flat top 5 ranked by CLIP similarity */}
                     {loading ? (
                         <div className="space-y-8 max-w-6xl mx-auto">
@@ -344,6 +332,9 @@ export default function Recommendation() {
                             transition={{ duration: 0.5 }}
                             className="space-y-8 max-w-6xl mx-auto"
                         >
+                            {/* Feedback Section - Appears before recommendations */}
+                            <RecommendationFeedback videoId={videoId} />
+
                             {/* Partial match warning */}
                             {notFoundReason && (
                                 <motion.div

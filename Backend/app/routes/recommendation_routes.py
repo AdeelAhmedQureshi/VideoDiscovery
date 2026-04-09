@@ -132,7 +132,6 @@ async def get_recommendations(
 
     # Build query_tabs and flat list, store in database
     query_tabs = []
-    all_docs = []
     all_flat_results = []
 
     for entry in all_results:
@@ -143,37 +142,14 @@ async def get_recommendations(
             query_tabs.append({"query": query, "recommendations": []})
             continue
 
-        # Store in database for caching
+        # Keep fetched candidates in-memory only (temporary), attach query for traceability
         for result in results:
-            doc = {
-                "_id": generate_id("rec"),
-                "recommendation_id": generate_id("rec"),
-                "uploaded_video_id": video_id,
-                "user_id": user_id,
-                "youtube_video_id": result["youtube_video_id"],
-                "title": result["title"],
-                "thumbnail_url": result["thumbnail"],
-                "channel_title": result["channel"],
-                "views": result["views"],
-                "view_count": result["view_count"],
-                "uploaded_at_text": result["uploadedAt"],
-                "published_at": result.get("published_at", ""),
-                "duration": result["duration"],
-                "video_link": result["url"],
-                "similarity": result["similarity"],
-                "above_threshold": result.get("above_threshold", False),
-                "search_query_used": query,
-                "platform": result.get("platform", "youtube"),
-                "fetched_at": datetime.now(timezone.utc),
-            }
-            all_docs.append(doc)
+            result["search_query_used"] = query
             all_flat_results.append(result)
 
         query_tabs.append({"query": query, "recommendations": results})
 
-    if all_docs:
-        await recommendations_collection().insert_many(all_docs)
-        print(f"[Recommendations] Stored {len(all_docs)} recommendations for video {video_id}")
+    # Do NOT persist all per-query candidates. Persist only the final deduplicated top-5.
 
     # Sort flat results by similarity (descending) and take top 5
     all_flat_results.sort(key=lambda x: x.get("similarity", 0), reverse=True)
@@ -187,6 +163,39 @@ async def get_recommendations(
             top_recommendations.append(r)
         if len(top_recommendations) >= 5:
             break
+
+    # Persist only the selected top-5 recommendations for caching
+    if top_recommendations:
+        rec_docs = []
+        for rank, result in enumerate(top_recommendations):
+            rec_docs.append({
+                "_id": generate_id("rec"),
+                "recommendation_id": generate_id("rec"),
+                "uploaded_video_id": video_id,
+                "user_id": user_id,
+                "youtube_video_id": result.get("youtube_video_id"),
+                "title": result.get("title"),
+                "thumbnail_url": result.get("thumbnail"),
+                "channel_title": result.get("channel", ""),
+                "views": result.get("views", ""),
+                "view_count": result.get("view_count", 0),
+                "uploaded_at_text": result.get("uploadedAt", ""),
+                "published_at": result.get("published_at", ""),
+                "duration": result.get("duration", ""),
+                "video_link": result.get("url", ""),
+                "similarity": result.get("similarity", 0),
+                "above_threshold": result.get("above_threshold", False),
+                "search_query_used": result.get("search_query_used", ""),
+                "platform": result.get("platform", "youtube"),
+                "rank": rank + 1,
+                "fetched_at": datetime.now(timezone.utc),
+            })
+        try:
+            await recommendations_collection().insert_many(rec_docs)
+            print(f"[Recommendations] Stored top {len(rec_docs)} recommendations for video {video_id}")
+        except Exception as e:
+            # Log and continue; avoid failing the request due to DB write issues
+            print(f"[Recommendations] Failed to persist top recommendations: {e}")
 
     # ── Quality threshold check ──
     not_found_reason = _compute_not_found_reason(top_recommendations)

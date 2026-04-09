@@ -93,13 +93,24 @@ async def analyze_video(video_path: str, video_id: str):
 
         # Execute concurrently (Performance Target: ~20s)
         print(f"[Orchestrator] Starting 6 parallel processing threads...")
+        
+        # State to track dynamic progress
+        progress_state = {"current": 10}
+
+        async def wrap_task(func, name):
+            result = await asyncio.to_thread(func)
+            progress_state["current"] += 5
+            # Dynamically update the loader each time a model finishes
+            await _update_progress(video_id, progress_state["current"], f"{name} completed...")
+            return result
+
         tasks = [
-            asyncio.to_thread(run_yolo),
-            asyncio.to_thread(run_whisper),
-            asyncio.to_thread(run_clip_scene),
-            asyncio.to_thread(run_deepface),
-            asyncio.to_thread(run_slowfast),
-            asyncio.to_thread(run_places)
+            wrap_task(run_yolo, "Object Detection"),
+            wrap_task(run_whisper, "Audio Transcription"),
+            wrap_task(run_clip_scene, "Scene Classification"),
+            wrap_task(run_deepface, "Face Analysis"),
+            wrap_task(run_slowfast, "Action Recognition"),
+            wrap_task(run_places, "Place Classification")
         ]
         
         results = await asyncio.gather(*tasks)
@@ -141,7 +152,16 @@ async def analyze_video(video_path: str, video_id: str):
         # ── 70% LLM query generation ──
         await _update_progress(video_id, 70, "Generating search queries with LLM...")
 
-        llm_result = query_gen.generate_query(json_summary)
+        # Fetch filename from DB (fallback to video_path basename) and pass to LLM
+        video_doc = await videos_collection().find_one({"_id": video_id})
+        file_name = video_doc.get("file_name") if video_doc and video_doc.get("file_name") else None
+        if not file_name:
+            try:
+                file_name = os.path.basename(video_path)
+            except Exception:
+                file_name = None
+
+        llm_result = query_gen.generate_query(json_summary, filename=file_name)
         candidate_queries = llm_result.get('queries', [])
         
         # PHASE 1: CLIP Object Validation
@@ -161,9 +181,16 @@ async def analyze_video(video_path: str, video_id: str):
         # ── 85% FAISS validation ──
         await _update_progress(video_id, 85, "Validating queries with FAISS...")
 
-        # PHASE 3: LLM Query Validation (FAISS Search)
-        validated_queries_data = await asyncio.to_thread(validator.rank_and_select_queries, candidate_queries)
-        validated_queries = [q["query"] for q in validated_queries_data]
+        # PHASE 3: LLM Query Selection
+        # Force selection of the first LLM-generated query for all videos (no FAISS computation)
+        if candidate_queries:
+            first_query = candidate_queries[0]
+            validated_queries = [first_query]
+            validated_queries_data = [{"query": first_query, "score": 1.0}]
+            print(f"[Phase 3] Forced selection of first LLM query: \"{first_query}\"")
+        else:
+            validated_queries = []
+            validated_queries_data = []
 
         print(f"[AI Service] Analysis Complete for {video_id}!")
         print(f"   - Scene: {scene}")
@@ -245,21 +272,48 @@ async def analyze_video(video_path: str, video_id: str):
         # PHASE 4: Multi-Platform Discovery — YouTube + Dailymotion → CLIP re-rank → top 5
         # ======================================================================
         print(f"\n[Discovery] Fetching video recommendations for video {video_id}...")
-        print(f"[Discovery] Using top {len(validated_queries)} queries, fetching from YouTube + Dailymotion...")
+        print(f"[Discovery] Using LLM candidate queries, fetching: first->YouTube (2), others->Dailymotion...")
         try:
             from app.services.youtube_service import search_youtube
             from app.services.dailymotion_service import search_dailymotion
+            # Use candidate_queries: first query -> YouTube (2 results), others -> Dailymotion
+            if candidate_queries:
+                async def fetch_for_query_with_role(idx, query):
+                    # idx == 0 -> fetch from YouTube (2 results)
+                    if idx == 0:
+                        try:
+                            yt_results = await search_youtube(query, max_results=2)
+                            if yt_results:
+                                for r in yt_results:
+                                    r["search_query_used"] = query
+                                return {"query": query, "youtube": yt_results, "dailymotion": []}
+                            # If YouTube returned no results, fallback to Dailymotion for this query
+                            dm_results = await search_dailymotion(query, max_results=2)
+                            for r in dm_results:
+                                r["search_query_used"] = query
+                            return {"query": query, "youtube": [], "dailymotion": dm_results}
+                        except Exception as e:
+                            print(f"[Discovery] YouTube fetch exception for '{query}': {e} — trying Dailymotion")
+                            try:
+                                dm_results = await search_dailymotion(query, max_results=2)
+                                for r in dm_results:
+                                    r["search_query_used"] = query
+                                return {"query": query, "youtube": [], "dailymotion": dm_results}
+                            except Exception as e2:
+                                print(f"[Discovery] Dailymotion fallback failed for '{query}': {e2}")
+                                return {"query": query, "youtube": [], "dailymotion": []}
+                    else:
+                        # Other queries: fetch from Dailymotion only (to conserve YouTube quota)
+                        try:
+                            dm_results = await search_dailymotion(query, max_results=5)
+                            for r in dm_results:
+                                r["search_query_used"] = query
+                            return {"query": query, "youtube": [], "dailymotion": dm_results}
+                        except Exception as e:
+                            print(f"[Discovery] Dailymotion fetch failed for '{query}': {e}")
+                            return {"query": query, "youtube": [], "dailymotion": []}
 
-            if validated_queries:
-                # Fetch from YouTube (5 per query) + Dailymotion (3 per query) concurrently
-                async def fetch_for_query(query):
-                    yt_results, dm_results = await asyncio.gather(
-                        search_youtube(query, max_results=5),
-                        search_dailymotion(query, max_results=3),
-                    )
-                    return {"query": query, "youtube": yt_results, "dailymotion": dm_results}
-
-                fetch_tasks = [fetch_for_query(q) for q in validated_queries]
+                fetch_tasks = [fetch_for_query_with_role(i, q) for i, q in enumerate(candidate_queries)]
                 all_results = await asyncio.gather(*fetch_tasks)
 
                 # Flatten all results into a single list
@@ -268,15 +322,13 @@ async def analyze_video(video_path: str, video_id: str):
                 dm_count = 0
                 for entry in all_results:
                     query = entry["query"]
-                    for result in entry["youtube"]:
-                        result["search_query_used"] = query
+                    for result in entry.get("youtube", []):
                         all_videos.append(result)
                         yt_count += 1
-                    for result in entry["dailymotion"]:
-                        result["search_query_used"] = query
+                    for result in entry.get("dailymotion", []):
                         all_videos.append(result)
                         dm_count += 1
-                
+
                 print(f"[Discovery] Fetched {len(all_videos)} total videos (YouTube: {yt_count}, Dailymotion: {dm_count})")
 
                 # Build context string from the uploaded video's AI analysis

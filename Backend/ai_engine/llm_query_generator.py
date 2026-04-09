@@ -1,4 +1,5 @@
 import os
+import re
 import requests
 import json
 from typing import Dict, List
@@ -24,7 +25,7 @@ class QueryGenerator:
             "Content-Type": "application/json"
         }
     
-    def generate_query(self, metadata: Dict) -> Dict[str, any]:
+    def generate_query(self, metadata: Dict, filename: str = None) -> Dict[str, any]:
         """
         Generate 8 optimized search queries following strict topic priority and noise removal rules.
         More candidates are generated so that FAISS validation can select the best 3.
@@ -36,8 +37,11 @@ class QueryGenerator:
             Dictionary with queries list and metadata for backward compatibility.
         """
         
-        # Build prompt for LLM
-        prompt_content = self._build_prompt(metadata)
+        # Build prompt for LLM (include sanitized filename when provided)
+        metadata_for_prompt = dict(metadata) if metadata else {}
+        if filename:
+            metadata_for_prompt['filename'] = filename
+        prompt_content = self._build_prompt(metadata_for_prompt)
         
         try:
             response = requests.post(
@@ -158,12 +162,28 @@ Return ONLY a JSON array of 8 strings. No markdown, no explanations."""
     def _build_prompt(self, metadata: Dict) -> Dict:
         """Filter and format metadata for the LLM prompt."""
         
+        def _sanitize_filename(fn: str) -> str:
+            if not fn:
+                return ""
+            s = fn
+            # Remove common file extensions
+            s = re.sub(r"\.[a-zA-Z0-9]{1,5}$", "", s)
+            # Remove hashtags
+            s = re.sub(r"#\w+", "", s)
+            # Remove emoji / non-ascii characters (keeps most readable text)
+            s = re.sub(r"[^\x00-\x7F]+", " ", s)
+            # Remove 'by <channel>' patterns
+            s = re.sub(r"\bby\b\s+[A-Za-z0-9 _\-]{1,100}", "", s, flags=re.IGNORECASE)
+            # Collapse whitespace
+            s = re.sub(r"\s+", " ", s).strip()
+            return s
+
         # Filter common noise from objects
         noise_to_ignore = ["person", "clothing", "human", "face"]
-        objects = [obj for obj in metadata.get('visual_objects', metadata.get('validated_objects', [])) 
+        objects = [obj for obj in metadata.get('visual_objects', metadata.get('validated_objects', []))
                   if obj.lower() not in noise_to_ignore]
-        
-        return {
+
+        prompt = {
             "validated_objects": objects[:10],
             "audio_transcript": metadata.get('audio_transcript', '')[:500],
             "scene_environment": metadata.get('scene_environment', [])[:3],
@@ -171,6 +191,12 @@ Return ONLY a JSON array of 8 strings. No markdown, no explanations."""
             "demographics": metadata.get('demographics', {}),
             "actions": metadata.get('actions', [])[:5]
         }
+
+        # Include a sanitized filename to guide concise query generation (if provided)
+        if filename := metadata.get('filename') or metadata.get('file_name') or None:
+            # Prefer filename in metadata if already set; otherwise will be passed explicitly
+            prompt['filename'] = _sanitize_filename(filename)
+        return prompt
     
     def _fallback_query(self, metadata: Dict) -> Dict:
         """Generate a basic fallback query array if LLM fails."""
