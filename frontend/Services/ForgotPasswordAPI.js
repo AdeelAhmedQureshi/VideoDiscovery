@@ -13,7 +13,25 @@ export const forgotPassword = async (email) => {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.detail || "Failed to send reset link");
+    throw new Error(data.detail || "Failed to send OTP");
+  }
+
+  return data;
+};
+
+export const verifyResetOtp = async (email, otp) => {
+  const response = await fetch(`${BASE_URL}/users/verify-reset-otp`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, otp }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail || "Failed to verify OTP");
   }
 
   return data;

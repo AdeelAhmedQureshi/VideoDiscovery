@@ -7,6 +7,7 @@ from .email_service import EmailService
 from typing import Tuple, Dict, Optional
 from datetime import datetime, timedelta, timezone
 import secrets
+import random
 from bson import ObjectId
 
 
@@ -153,7 +154,7 @@ class AuthService:
     @staticmethod
     async def forgot_password(email: str) -> Tuple[bool, Optional[str]]:
         """
-        Initiate password reset process
+        Send OTP for password reset process
         Returns: (success, error)
         """
         try:
@@ -166,25 +167,37 @@ class AuthService:
                 # Don't reveal that user doesn't exist for security
                 return True, None
 
-            # Generate reset token
-            reset_token = secrets.token_urlsafe(32)
-            expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+            # Generate 6-digit OTP
+            otp = f"{random.randint(0, 999999):06d}"
+            expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
 
-            # Store reset token
+            # Invalidate previous active OTPs for this email
+            await reset_tokens_col.update_many(
+                {
+                    "email": email,
+                    "purpose": "otp",
+                    "used": False,
+                    "expires_at": {"$gt": datetime.now(timezone.utc)}
+                },
+                {"$set": {"used": True, "invalidated_at": datetime.now(timezone.utc)}}
+            )
+
+            # Store OTP
             token_data = {
                 "email": email,
-                "token": reset_token,
+                "otp": otp,
+                "purpose": "otp",
+                "created_at": datetime.now(timezone.utc),
                 "expires_at": expires_at,
                 "used": False
             }
             await reset_tokens_col.insert_one(token_data)
 
-            # Send reset email
-            email_sent = EmailService.send_reset_password_email(
-                email, reset_token)
+            # Send OTP email
+            email_sent = EmailService.send_password_reset_otp_email(email, otp)
 
             if not email_sent:
-                print(f"[auth] Failed to send reset email to {email}")
+                print(f"[auth] Failed to send password reset OTP to {email}")
                 # Continue anyway to not reveal if email exists
 
             return True, None
@@ -192,6 +205,47 @@ class AuthService:
         except Exception as e:
             print(f"[auth] forgot_password error: {e}")
             return False, "Failed to process password reset request"
+
+    @staticmethod
+    async def verify_reset_otp(email: str, otp: str) -> Tuple[Optional[Dict], Optional[str]]:
+        """
+        Verify password reset OTP and issue a short-lived reset token
+        Returns: (data, error)
+        """
+        try:
+            reset_tokens_col = await get_password_reset_tokens_collection()
+
+            otp_doc = await reset_tokens_col.find_one({
+                "email": email,
+                "otp": otp,
+                "purpose": "otp",
+                "used": False,
+                "expires_at": {"$gt": datetime.now(timezone.utc)}
+            })
+
+            if not otp_doc:
+                return None, "Invalid or expired OTP"
+
+            await reset_tokens_col.update_one(
+                {"_id": otp_doc["_id"]},
+                {"$set": {"used": True, "verified_at": datetime.now(timezone.utc)}}
+            )
+
+            reset_token = secrets.token_urlsafe(32)
+            await reset_tokens_col.insert_one({
+                "email": email,
+                "token": reset_token,
+                "purpose": "reset",
+                "created_at": datetime.now(timezone.utc),
+                "expires_at": datetime.now(timezone.utc) + timedelta(minutes=30),
+                "used": False
+            })
+
+            return {"reset_token": reset_token}, None
+
+        except Exception as e:
+            print(f"[auth] verify_reset_otp error: {e}")
+            return None, "Failed to verify OTP"
 
     @staticmethod
     async def reset_password(token: str, new_password: str) -> Tuple[bool, Optional[str]]:
@@ -206,6 +260,7 @@ class AuthService:
             # Find valid token
             token_doc = await reset_tokens_col.find_one({
                 "token": token,
+                "purpose": "reset",
                 "used": False,
                 "expires_at": {"$gt": datetime.now(timezone.utc)}
             })
