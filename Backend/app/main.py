@@ -20,17 +20,20 @@ async def lifespan(app: FastAPI):
     sys.path.insert(0, str(Path(__file__).parent.parent))
     
     # Startup
-    print(f"Starting {settings.PROJECT_NAME}...")
-    
-    # Initialize AI Models
-    from ai_engine.model_loader import model_loader
-    model_loader.load_models()
-    
+    app.state.startup_complete = False
+    app.state.startup_status = "starting"
+    print(f"🚀 Starting {settings.PROJECT_NAME}...")
     await create_database_indexes()
-    print(f"{settings.PROJECT_NAME} is ready!")
+    # Start background cleanup for deactivated accounts
+    asyncio.create_task(run_deactivated_cleanup_loop())
+    app.state.startup_complete = True
+    app.state.startup_status = "ready"
+    print(f"✅ {settings.PROJECT_NAME} is ready!")
     yield
     # Shutdown
-    print(f"Shutting down {settings.PROJECT_NAME}...")
+    app.state.startup_complete = False
+    app.state.startup_status = "stopped"
+    print(f"👋 Shutting down {settings.PROJECT_NAME}...")
 
 
 app = FastAPI(
@@ -38,6 +41,9 @@ app = FastAPI(
     debug=settings.DEBUG,
     lifespan=lifespan
 )
+
+app.state.startup_complete = False
+app.state.startup_status = "booting"
 
 # CORS configuration for session management with cookies
 # Important: allow_credentials=True requires specific origins (not "*")
