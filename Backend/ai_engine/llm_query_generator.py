@@ -87,7 +87,7 @@ Follow these rules strictly:
 
 5. Return exactly 8 optimized search queries ranked from most specific to broader.
 
-86: DRAMA / SERIES / EPISODE / MOVIE detection (CRITICAL):
+6. DRAMA / SERIES / EPISODE / MOVIE detection (CRITICAL):
    If the transcript contains dialogue that sounds like a TV show, drama, web series, movie, or episodic content:
    - Look for character names, show/series names, or famous dialogue lines in the transcript
    - Look for emotional dialogue, dramatic scenes, background music cues mentioned
@@ -109,6 +109,12 @@ Follow these rules strictly:
    - Include episode-related terms: "episode", "scene", "clip", "drama"
    - Include character names if mentioned in transcript
    - Use exact memorable dialogue quotes (3-5 words) as search terms
+
+9. HANDLING FILENAMES (CRITICAL):
+   - The extracted 'filename' is provided in the metadata.
+   - If the filename contains meaningful context (like a proper show title, specific event, or clear topic), utilize it to enhance queries.
+   - If the filename is auto-generated (e.g., "vid_01", "whatsapp video", "12345"), consists of meaningless buzzwords, or is generally unclear/garbled, you MUST COMPLETELY IGNORE IT.
+   - In cases where the filename is ignored, generate queries strictly based on the provided visual objects, audio transcript, actions, and scene environments.
 
 Output format:
 Return ONLY a JSON array of 8 strings. No markdown, no explanations."""

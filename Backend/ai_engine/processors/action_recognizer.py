@@ -5,12 +5,7 @@ import urllib.request
 import os
 from typing import List, Dict
 from pytorchvideo.data.encoded_video import EncodedVideo
-# Remove broken imports
-# from pytorchvideo.transforms import (
-#     ApplyTransformToKey,
-#     ShortSideScale,
-#     UniformTemporalSubsample,
-# )
+
 from torchvision.transforms import Compose, Lambda, Resize, CenterCrop
 from torchvision.transforms._transforms_video import NormalizeVideo
 from ..model_loader import model_loader

@@ -133,23 +133,13 @@ class VisualIntelligenceValidator:
         """
         Filter YOLO detections through CLIP validation (Phase 1).
         """
-        # Print requested raw detection log
-        print(f"[Phase 1] Validating {len(raw_objects)} YOLO objects with CLIP...")
-        
         validated_objects = {}
-        removed_count = 0
         
         for obj in raw_objects:
             is_valid, score = self.validate_object(frame, obj)
-            
             if is_valid:
                 validated_objects[obj] = score
-                print(f"   \"{obj}\" - similarity: {score:.2f}")
-            else:
-                removed_count += 1
-                print(f"   \"{obj}\" - similarity: {score:.2f} (removed)")
-        
-        print(f"Phase 1: Validated {len(validated_objects)}/{len(raw_objects)} objects")
+                
         return validated_objects
     
     def process_video_frames(self, video_path: str, raw_objects_per_frame: List[List[str]]) -> Dict:
@@ -664,10 +654,6 @@ def create_validator() -> VisualIntelligenceValidator:
 
 
 # For standalone testing
-if __name__ == "__main__":
-    print("Visual Intelligence Validator - Standalone Test")
-    validator = create_validator()
-    print(f"Validator ready. FAISS index dimension: {validator.dimension}")
 if __name__ == "__main__":
     print("Visual Intelligence Validator - Standalone Test")
     validator = create_validator()

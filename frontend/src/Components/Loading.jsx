@@ -59,7 +59,7 @@ const Loading = ({ videoId, isUploadComplete }) => {
 
     // Start polling immediately, then every 2 seconds
     pollProgress();
-    pollRef.current = setInterval(pollProgress, 2000);
+    pollRef.current = setInterval(pollProgress, 10000);
 
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);

@@ -14,52 +14,12 @@ class ObjectDetector:
         Scans video at 1 FPS to detect unique objects.
         Returns a list of unique string tags (e.g., ['laptop', 'person']).
         """
-        detected_objects = set()
-        cap = None
-
-        try:
-            cap = cv2.VideoCapture(video_path)
-            if not cap.isOpened():
-                print(f"[ObjectDetector] Could not open video: {video_path}")
-                return []
-
-            fps = cap.get(cv2.CAP_PROP_FPS)
-            if fps <= 0:
-                fps = 24  # Fallback
-            
-            # interval to sample 1 frame per second
-            frame_interval = int(math.ceil(fps))
-
-            frame_count = 0
-            
-            while True:
-                success, frame = cap.read()
-                if not success:
-                    break
-                
-                # Check 1 FPS rule
-                if frame_count % frame_interval == 0:
-                    # Run inference with confidence threshold 0.5
-                    # verbose=False prevents spamming console
-                    results = self.model(frame, conf=0.5, verbose=False)
-
-                    for result in results:
-                        for box in result.boxes:
-                            class_id = int(box.cls[0])
-                            # Use the model's names dict to get string label
-                            if self.model.names:
-                                label = self.model.names[class_id]
-                                detected_objects.add(label)
-                
-                frame_count += 1
+        detected_per_frame = self.detect_per_frame(video_path)
         
-        except Exception as e:
-            print(f"[ObjectDetector] Error during processing: {e}")
-            return [] # Return empty list on failure, don't crash
-
-        finally:
-            if cap:
-                cap.release()
+        detected_objects = set()
+        for frame_objects in detected_per_frame:
+            for obj in frame_objects:
+                detected_objects.add(obj)
         
         objects_list = list(detected_objects)
         print(f"[YOLO] Detected Objects: {objects_list}")

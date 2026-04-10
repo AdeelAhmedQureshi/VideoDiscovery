@@ -65,7 +65,6 @@ def transcribe_audio(video_path):
 
         # 2. Transcription using Whisper
         model = model_loader.get_whisper()
-        model = model_loader.get_whisper()
         
         # verbose=False reduces console spam
         # language=None allows auto-detection
