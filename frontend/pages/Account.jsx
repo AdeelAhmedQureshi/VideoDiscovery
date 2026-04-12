@@ -411,7 +411,7 @@ export default function Account() {
   };
 
   return (
-    <section className="min-h-screen bg-linear-to-br from-slate-50 via-white to-cyan-50 py-16 px-4 sm:px-6 lg:px-10">
+    <section className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#f7fbfb_46%,#f8fbff_100%)] py-16 px-4 sm:px-6 lg:px-10">
       <style>{`
         .account-title {
           font-family: "Space Grotesk", "Poppins", sans-serif;
@@ -423,9 +423,9 @@ export default function Account() {
           box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
         }
         .account-glow {
-          background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.35), transparent 55%),
-                      radial-gradient(circle at 90% 10%, rgba(59, 130, 246, 0.25), transparent 45%),
-                      radial-gradient(circle at 80% 90%, rgba(34, 211, 238, 0.2), transparent 55%);
+          background: radial-gradient(circle at 20% 20%, rgba(31, 143, 127, 0.25), transparent 55%),
+                      radial-gradient(circle at 90% 10%, rgba(6, 182, 212, 0.2), transparent 45%),
+                      radial-gradient(circle at 80% 90%, rgba(100, 200, 200, 0.15), transparent 55%);
         }
         .account-pill {
           background: linear-gradient(90deg, rgba(14, 165, 233, 0.15), rgba(59, 130, 246, 0.12));
@@ -440,7 +440,7 @@ export default function Account() {
         <div className="mb-10">
           <button
             onClick={() => navigate(-1)}
-            className="group inline-flex items-center gap-2 text-slate-600 hover:text-cyan-600 transition-colors mb-8 font-semibold"
+            className="group inline-flex items-center gap-2 text-slate-600 hover:text-teal-700 transition-colors mb-8 font-semibold"
           >
             <ArrowLeft className="w-8 h-8 group-hover:-translate-x-1 transition-transform" />
             Back
@@ -455,13 +455,13 @@ export default function Account() {
           >
             <div className="inline-block relative mb-5">
               <motion.h1
-                className="inline-block text-4xl sm:text-5xl leading-[1.15] pb-1 font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
+                className="display-font inline-block text-4xl sm:text-5xl leading-[1.15] pb-1 font-bold bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(20,184,166,0.35)] peer"
                 variants={headingVariants}
               >
                 Account Settings
               </motion.h1>
               <motion.div
-                className="absolute -bottom-3 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
+                className="absolute -bottom-3 left-0 right-0 h-1 bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
                 variants={headingVariants}
               ></motion.div>
             </div>
@@ -482,9 +482,9 @@ export default function Account() {
         <div className="space-y-8">
           {/* Profile Information Card */}
           <div className="account-card rounded-3xl overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-200 bg-white/70">
+            <div className="px-8 py-6 border-b border-slate-200 bg-white/85">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-2xl bg-cyan-100 text-cyan-700 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center">
                   <User className="w-5 h-5" />
                 </div>
                 <div>
@@ -494,30 +494,30 @@ export default function Account() {
               </div>
             </div>
 
-            <div className="p-8 bg-white/80">
+            <div className="p-8 bg-white/90">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-base font-bold text-gray-700 mb-2">
+                  <label className="block text-base font-bold text-slate-800 mb-2">
                     Full Name
                   </label>
                   <div className="relative">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
                       ref={nameInputRef}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       readOnly={!isEditingName}
                       placeholder="Enter your name"
-                      className={`w-full pl-12 pr-12 py-3.5 border border-slate-200 rounded-2xl transition-all text-slate-900 shadow-sm ${
+                      className={`brand-ring w-full pl-12 pr-12 py-3.5 border border-slate-200 rounded-2xl transition-all text-slate-900 shadow-sm ${
                         isEditingName
-                          ? "bg-white/90 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                          ? "bg-white/90 focus:outline-none focus:border-teal-400"
                           : "bg-slate-50/90 cursor-default"
                       }`}
                     />
                     <button
                       type="button"
                       onClick={handleEnableNameEdit}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-cyan-600"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-700"
                       aria-label="Edit full name"
                     >
                       <Pencil className="w-4 h-4" />
@@ -526,11 +526,11 @@ export default function Account() {
                 </div>
 
                 <div>
-                  <label className="block text-base font-bold text-gray-700 mb-2">
+                  <label className="block text-base font-bold text-slate-800 mb-2">
                     Email
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
                       ref={emailInputRef}
                       value={email}
@@ -538,16 +538,16 @@ export default function Account() {
                       readOnly={!isEditingEmail}
                       placeholder="your.email@example.com"
                       type="email"
-                      className={`w-full pl-12 pr-12 py-3.5 border border-slate-200 rounded-2xl transition-all text-slate-900 shadow-sm ${
+                      className={`brand-ring w-full pl-12 pr-12 py-3.5 border border-slate-200 rounded-2xl transition-all text-slate-900 shadow-sm ${
                         isEditingEmail
-                          ? "bg-white/90 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                          ? "bg-white/90 focus:outline-none focus:border-teal-400"
                           : "bg-slate-50/90 cursor-default"
                       }`}
                     />
                     <button
                       type="button"
                       onClick={handleEnableEmailEdit}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-cyan-600"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-teal-700"
                       aria-label="Edit email"
                     >
                       <Pencil className="w-4 h-4" />
@@ -559,7 +559,7 @@ export default function Account() {
               <div className="mt-8 flex flex-wrap justify-end gap-3">
                 <button
                   onClick={handleSaveProfile}
-                  className="px-8 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold rounded-2xl hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer"
+                  className="px-8 py-3.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-bold rounded-2xl hover:from-teal-700 hover:to-cyan-700 transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer"
                 >
                   Save Changes
                 </button>
@@ -569,9 +569,9 @@ export default function Account() {
 
           {/* Security & Password Card */}
           <div className="account-card rounded-3xl overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-200 bg-white/70">
+            <div className="px-8 py-6 border-b border-slate-200 bg-white/85">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-2xl bg-teal-100 text-teal-700 flex items-center justify-center">
                   <Lock className="w-5 h-5" />
                 </div>
                 <div>
@@ -581,25 +581,25 @@ export default function Account() {
               </div>
             </div>
 
-            <div className="p-8 bg-white/80">
+            <div className="p-8 bg-white/90">
               <div className="space-y-6">
                 <div>
-                  <label className="block text-base font-bold text-gray-700 mb-2">
+                  <label className="block text-base font-bold text-slate-800 mb-2">
                     Current Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
                       type={showCurrentPassword ? "text" : "password"}
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
                       placeholder="Enter current password"
-                      className="w-full pl-12 pr-12 py-3.5 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all text-slate-900 shadow-sm"
+                      className="brand-ring w-full pl-12 pr-12 py-3.5 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:border-teal-400 transition-all text-slate-900 shadow-sm"
                     />
                     <button
                       type="button"
                       onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                     >
                       {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
@@ -608,22 +608,22 @@ export default function Account() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-base font-bold text-gray-700 mb-2">
+                    <label className="block text-base font-bold text-slate-800 mb-2">
                       New Password
                     </label>
                     <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                       <input
                         type={showNewPassword ? "text" : "password"}
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="Enter new password"
-                        className="w-full pl-12 pr-12 py-3.5 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all text-slate-900 shadow-sm"
+                        className="brand-ring w-full pl-12 pr-12 py-3.5 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:border-teal-400 transition-all text-slate-900 shadow-sm"
                       />
                       <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                       >
                         {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
@@ -631,22 +631,22 @@ export default function Account() {
                   </div>
 
                   <div>
-                    <label className="block text-base font-bold text-gray-700 mb-2">
+                    <label className="block text-base font-bold text-slate-800 mb-2">
                       Confirm Password
                     </label>
                     <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                       <input
                         type={showConfirmPassword ? "text" : "password"}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Confirm new password"
-                        className="w-full pl-12 pr-12 py-3.5 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all text-slate-900 shadow-sm"
+                        className="brand-ring w-full pl-12 pr-12 py-3.5 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:border-teal-400 transition-all text-slate-900 shadow-sm"
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                       >
                         {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
@@ -654,12 +654,12 @@ export default function Account() {
                   </div>
                 </div>
 
-                <div className="bg-cyan-50 border border-cyan-200 rounded-2xl p-4">
+                <div className="bg-teal-50 border border-teal-200/60 rounded-2xl p-4">
                   <div className="flex gap-3">
-                    <AlertCircle className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
+                    <AlertCircle className="w-5 h-5 text-teal-700 flex-shrink-0 mt-0.5" />
                     <div className="text-sm">
-                      <p className="font-bold text-gray-900 mb-1">Password requirements:</p>
-                      <ul className="space-y-1 text-gray-700">
+                      <p className="font-bold text-slate-900 mb-1">Password requirements:</p>
+                      <ul className="space-y-1 text-slate-700">
                         <li>• At least 8 characters long</li>
                         <li>• Include uppercase and lowercase letters</li>
                         <li>• Include at least one number</li>
@@ -670,7 +670,7 @@ export default function Account() {
               </div>
 
               <div className="mt-8 flex justify-end">
-                <button className="px-8 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold rounded-2xl hover:from-cyan-600 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer"
+                <button className="px-8 py-3.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-bold rounded-2xl hover:from-teal-700 hover:to-cyan-700 transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer"
                   onClick={handleUpdatePassword}>
                   Update Password
                 </button>
@@ -680,9 +680,9 @@ export default function Account() {
 
           {/* Danger Zone Card */}
           <div className="rounded-3xl overflow-hidden border border-red-200 bg-white/90 shadow-[0_24px_48px_rgba(190,18,60,0.08)]">
-            <div className="px-8 py-6 border-b border-red-200 bg-gradient-to-r from-red-50 to-rose-50">
+            <div className="px-8 py-6 border-b border-red-200/70 bg-gradient-to-r from-red-50/80 to-rose-50/80">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-2xl bg-red-100 text-red-700 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-2xl bg-red-100/90 text-red-700 flex items-center justify-center">
                   <Trash2 className="w-5 h-5" />
                 </div>
                 <div>
@@ -692,9 +692,9 @@ export default function Account() {
               </div>
             </div>
 
-            <div className="p-8">
+            <div className="p-8 bg-white/75">
               {/* Deactivate Account (30-day recovery) */}
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6">
+              <div className="bg-amber-50/80 border border-amber-200/70 rounded-2xl p-5 mb-6">
                 <div className="flex gap-3">
                   <Shield className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
                   <div>
@@ -715,12 +715,12 @@ export default function Account() {
                 Deactivate 
               </button>
 
-              <div className="bg-red-50 border border-red-200 rounded-2xl p-5 mb-6">
+              <div className="bg-red-50/80 border border-red-200/70 rounded-2xl p-5 mb-6">
                 <div className="flex gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <AlertCircle className="w-5 h-5 text-red-700 flex-shrink-0 mt-0.5" />
                   <div>
                     <h3 className="font-bold text-red-900 mb-1">Delete Account</h3>
-                    <p className="text-sm text-red-700">
+                    <p className="text-sm text-red-800">
                       Once you delete your account, there is no going back. All your data, settings, and content will be permanently removed.
                     </p>
                   </div>
@@ -755,37 +755,37 @@ export default function Account() {
             </div>
 
             <div className="p-8 bg-white/90">
-              <p className="text-gray-900 font-medium mb-4">
+              <p className="text-slate-900 font-medium mb-4">
                 Deactivating will immediately disable your account. You can reactivate anytime within 30 days.
                 After 30 days, your account will be permanently deleted.
               </p>
 
               <div className="space-y-4 mb-6">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <label className="block text-sm font-bold text-slate-800 mb-2">
                     Current Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
                       type="password"
                       value={deactivatePassword}
                       onChange={(e) => setDeactivatePassword(e.target.value)}
                       placeholder="Enter your current password"
-                      className="w-full pl-12 pr-4 py-3 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all text-slate-900 shadow-sm"
+                      className="brand-ring w-full pl-12 pr-4 py-3 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:border-amber-500 transition-all text-slate-900 shadow-sm"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <label className="block text-sm font-bold text-slate-800 mb-2">
                     Type DEACTIVATE to confirm
                   </label>
                   <input
                     value={deactivateConfirmation}
                     onChange={(e) => setDeactivateConfirmation(e.target.value)}
                     placeholder="DEACTIVATE"
-                    className="w-full px-4 py-3 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all text-slate-900 shadow-sm"
+                    className="brand-ring w-full px-4 py-3 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:border-amber-500 transition-all text-slate-900 shadow-sm"
                   />
                 </div>
               </div>
@@ -793,7 +793,7 @@ export default function Account() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowDeactivateModal(false)}
-                  className="flex-1 px-4 py-3.5 bg-gray-100 text-gray-900 font-bold rounded-2xl hover:bg-gray-200 transition-all border border-gray-200"
+                  className="flex-1 px-4 py-3.5 bg-slate-100 text-slate-900 font-bold rounded-2xl hover:bg-slate-200 transition-all border border-slate-200"
                 >
                   Cancel
                 </button>
@@ -825,10 +825,10 @@ export default function Account() {
             </div>
 
             <div className="p-8 bg-white/90">
-              <p className="text-gray-900 font-medium mb-4">
+              <p className="text-slate-900 font-medium mb-4">
                 Are you absolutely sure you want to delete your account? This action cannot be undone and will permanently remove:
               </p>
-              <ul className="space-y-2 mb-6 text-sm text-gray-700">
+              <ul className="space-y-2 mb-6 text-sm text-slate-700">
                 <li className="flex items-start gap-2">
                   <span className="text-red-500 mt-0.5 font-bold">•</span>
                   <span>All your personal information and profile data</span>
@@ -845,7 +845,7 @@ export default function Account() {
 
               <div className="space-y-4 mb-6">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <label className="block text-sm font-bold text-slate-800 mb-2">
                     Current Password
                   </label>
                   <div className="relative">

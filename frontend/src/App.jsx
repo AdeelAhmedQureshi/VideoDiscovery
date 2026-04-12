@@ -52,7 +52,7 @@ export default function App() {
       <Toaster richColors position="top-right" />
       <ScrollToHash />
       <AuthProvider>
-        <div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 flex flex-col">
+        <div className="app-shell flex flex-col">
           {/* Public routes */}
           <main className="flex-1">
             <Routes>

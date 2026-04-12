@@ -109,7 +109,7 @@ export function RecommendationsSection() {
   const hasMoreVideos = visibleCount < sortedVideos.length;
 
   return (
-    <section className="py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-5 md:px-6 bg-white" id="recommendation-section">
+    <section className="py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-5 md:px-6 bg-[linear-gradient(180deg,#ffffff_0%,#f7fbfb_46%,#f8fbff_100%)]" id="recommendation-section">
       <div className="container mx-auto max-w-7xl">
         {/* Section Header */}
         <motion.div
@@ -121,18 +121,18 @@ export function RecommendationsSection() {
         >
           <div className="inline-block relative mb-3 sm:mb-4">
             <motion.h1
-              className="inline-block text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer px-2 sm:px-0"
+              className="display-font inline-block text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(20,184,166,0.35)] peer px-2 sm:px-0"
               variants={headingVariants}
             >
               AI Recommended Videos
             </motion.h1>
             <motion.div
-              className="absolute -bottom-1 sm:-bottom-2 left-0 right-0 h-0.5 sm:h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1 sm:peer-hover:h-1.5 peer-hover:opacity-80"
+              className="absolute -bottom-1 sm:-bottom-2 left-0 right-0 h-0.5 sm:h-1 bg-gradient-to-r from-teal-400 via-cyan-400 to-sky-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1 sm:peer-hover:h-1.5 peer-hover:opacity-80"
               variants={headingVariants}
             ></motion.div>
           </div>
           <motion.p
-            className="text-sm sm:text-base md:text-lg text-gray-500 mt-3 sm:mt-4 md:mt-6 px-4 sm:px-6 md:px-8 max-w-3xl mx-auto"
+            className="text-sm sm:text-base md:text-lg text-slate-600 mt-3 sm:mt-4 md:mt-6 px-4 sm:px-6 md:px-8 max-w-3xl mx-auto"
             variants={headingVariants}
           >
             System-recommended videos based on your uploads - discover similar content that matches your input videos
@@ -190,7 +190,7 @@ export function RecommendationsSection() {
             {visibleVideos.map((video, index) => (
               <div
                 key={video.recommendation_id || video.url || video.video_link || video.title || index}
-                className="group bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer transform hover:scale-105"
+                className="group bg-white/92 rounded-lg sm:rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200/80 overflow-hidden cursor-pointer transform hover:scale-105"
                 onClick={() => handleVideoClick(video, "thumbnail")}
                 role="button"
                 tabIndex={0}
@@ -222,7 +222,7 @@ export function RecommendationsSection() {
 
                   {/* Play overlay */}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-cyan-500 flex items-center justify-center shadow-lg transform transition-transform hover:scale-110">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-teal-600 to-cyan-600 flex items-center justify-center shadow-lg transform transition-transform hover:scale-110">
                       <Play className="w-5 h-5 sm:w-6 sm:h-6 text-white fill-white ml-0.5 sm:ml-1" />
                     </div>
                   </div>
@@ -246,14 +246,14 @@ export function RecommendationsSection() {
 
                 {/* Content */}
                 <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
-                  <h3 className="font-bold text-sm sm:text-base leading-snug text-gray-900 group-hover:text-cyan-600 transition-colors line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem]">
+                  <h3 className="font-bold text-sm sm:text-base leading-snug text-slate-900 group-hover:text-teal-700 transition-colors line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem]">
                     {video.title || "Untitled Video"}
                   </h3>
 
                   {/* Channel Info */}
                   {video.channel && (
                     <p className="text-xs sm:text-sm text-gray-600 font-medium flex items-center gap-1">
-                      <span className="w-5 h-5 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 text-white flex items-center justify-center text-[10px] font-bold">
+                      <span className="w-5 h-5 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 text-white flex items-center justify-center text-[10px] font-bold">
                         {video.channel.charAt(0).toUpperCase()}
                       </span>
                       {video.channel}
@@ -281,7 +281,7 @@ export function RecommendationsSection() {
                         handleVideoClick(video, "button-keyboard");
                       }
                     }}
-                    className="w-full flex items-center justify-between text-xs sm:text-sm text-cyan-600 font-medium pt-1 sm:pt-2 px-0 hover:text-cyan-700 transition-colors group-hover:bg-cyan-50 py-2 pl-2 pr-1 rounded hover:rounded-md"
+                    className="w-full flex items-center justify-between text-xs sm:text-sm text-teal-700 font-medium pt-1 sm:pt-2 px-0 hover:text-teal-800 transition-colors group-hover:bg-teal-50 py-2 pl-2 pr-1 rounded hover:rounded-md"
                     title={getVideoUrl(video) ? "Click to watch video on YouTube" : "Video link not available"}
                   >
                     <span>Watch on YouTube</span>
@@ -302,7 +302,7 @@ export function RecommendationsSection() {
                   return Math.min(currentValue + 9, sortedVideos.length);
                 });
               }}
-              className="inline-flex items-center gap-2 rounded-full bg-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:bg-cyan-700 hover:shadow-cyan-500/30"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-600 to-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:from-teal-700 hover:to-cyan-700 hover:shadow-cyan-500/30"
             >
               Show More ({sortedVideos.length - visibleCount})
             </button>

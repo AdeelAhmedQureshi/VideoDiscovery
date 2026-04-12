@@ -1,7 +1,74 @@
 /* @import "tailwindcss/preflight";
 @import "tailwindcss/utilities";
  */
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap");
 @import "tailwindcss";
+
+:root {
+	--brand-50: #eefaf8;
+	--brand-100: #d7f2ed;
+	--brand-300: #6fc9bc;
+	--brand-500: #1f8f7f;
+	--brand-600: #176f63;
+	--ink-900: #0f172a;
+	--ink-700: #334155;
+	--ink-500: #64748b;
+}
+
+* {
+	font-family: "Manrope", "Segoe UI", sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.display-font {
+	font-family: "Sora", "Manrope", sans-serif;
+}
+
+body {
+	color: var(--ink-900);
+	background:
+		radial-gradient(circle at 8% 10%, rgba(31, 143, 127, 0.08), transparent 38%),
+		radial-gradient(circle at 88% 0%, rgba(12, 74, 110, 0.08), transparent 36%),
+		linear-gradient(180deg, #f7fbfc 0%, #ffffff 42%, #f8fbff 100%);
+}
+
+::selection {
+	background: rgba(31, 143, 127, 0.24);
+	color: #0b3b34;
+}
+
+.app-shell {
+	min-height: 100vh;
+	background:
+		radial-gradient(700px 420px at -5% 12%, rgba(31, 143, 127, 0.08), transparent 64%),
+		radial-gradient(680px 460px at 102% -6%, rgba(14, 116, 144, 0.08), transparent 62%),
+		linear-gradient(180deg, #f8fcfb 0%, #ffffff 38%, #f7fbff 100%);
+}
+
+.glass-panel {
+	background: rgba(255, 255, 255, 0.86);
+	backdrop-filter: blur(12px);
+	border: 1px solid rgba(148, 163, 184, 0.2);
+	box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+}
+
+.brand-ring:focus {
+	outline: 0;
+	box-shadow: 0 0 0 3px rgba(31, 143, 127, 0.25);
+	border-color: rgba(31, 143, 127, 0.55);
+}
+
+.soft-grid {
+	background-image:
+		linear-gradient(rgba(148, 163, 184, 0.1) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
+	background-size: 32px 32px;
+}
 
 @layer base {
 	button:not(:disabled) {
