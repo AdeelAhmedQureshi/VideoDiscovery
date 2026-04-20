@@ -32,19 +32,8 @@ const VideoCard = ({ video, index }) => {
 
     const isDailymotion = video.platform === "dailymotion";
     const platformLabel = isDailymotion ? "Dailymotion" : "YouTube";
-
-    // Format similarity as percentage
-    const similarityPercent = video.similarity
-        ? Math.round(video.similarity * 100)
-        : null;
-
-    // Color based on similarity score
-    const getSimilarityColor = (percent) => {
-        if (percent >= 80) return "from-green-500 to-emerald-500";
-        if (percent >= 60) return "from-cyan-500 to-blue-500";
-        if (percent >= 40) return "from-yellow-500 to-orange-500";
-        return "from-gray-500 to-slate-500";
-    };
+    // Similarity is kept in data but hidden in UI per user preference
+    const similarityPercent = null;
 
     return (
         <motion.div
@@ -111,17 +100,7 @@ const VideoCard = ({ video, index }) => {
                     </div>
                 </div>
 
-                {/* CLIP Similarity Badge */}
-                {similarityPercent !== null && (
-                    <div className="absolute top-3 right-3">
-                        <div className={`px-3 py-1.5 bg-gradient-to-r ${getSimilarityColor(similarityPercent)} rounded-full shadow-lg flex items-center gap-1.5`}>
-                            <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                            <span className="text-white text-xs font-bold">
-                                {similarityPercent}% Match
-                            </span>
-                        </div>
-                    </div>
-                )}
+                {/* Similarity badge removed */}
 
                 {video.duration && (
                     <div className="absolute bottom-3 right-3 px-2.5 py-1 bg-black/90 rounded-lg text-white text-xs font-semibold">
@@ -186,27 +165,27 @@ export default function Recommendation() {
     const { videoId } = useParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
-    const [topRecommendations, setTopRecommendations] = useState([]);
+    const [allRecommendations, setAllRecommendations] = useState([]);
+    const [visibleCount, setVisibleCount] = useState(5);
+    const [platformFilter, setPlatformFilter] = useState("all");
     const [uploadedVideo, setUploadedVideo] = useState(null);
     const [notFoundReason, setNotFoundReason] = useState(null);
 
     useEffect(() => {
         fetchRecommendations();
     }, [videoId]);
-
-    const fetchRecommendations = async () => {
+    const fetchRecommendations = async (forceRefresh = false) => {
         setLoading(true);
+        setVisibleCount(5);
         try {
             const token = localStorage.getItem("token");
 
-            const response = await fetch(
-                `http://localhost:8000/api/recommendations/${videoId}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
+            const url = `http://localhost:8000/api/recommendations/${videoId}${forceRefresh ? '?refresh=true' : ''}`;
+            const response = await fetch(url, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
 
             if (!response.ok) throw new Error("Failed to fetch recommendations");
 
@@ -214,20 +193,38 @@ export default function Recommendation() {
             setUploadedVideo(data.uploaded_video || null);
             setNotFoundReason(data.not_found_reason || data.message || null);
 
-            // Use the new flat top_recommendations field
-            // Fallback to old query_tabs format for backward compatibility
-            if (data.top_recommendations && data.top_recommendations.length > 0) {
-                setTopRecommendations(data.top_recommendations);
-            } else if (data.query_tabs && data.query_tabs.length > 0) {
-                // Flatten query tabs as fallback
-                const flat = data.query_tabs.flatMap(tab => tab.recommendations || []);
-                setTopRecommendations(flat.slice(0, 5));
+            // Prefer query_tabs (detailed per-query candidates) to show all platform results.
+            let full = [];
+            if (data.query_tabs && data.query_tabs.length > 0) {
+                full = data.query_tabs.flatMap(tab => tab.recommendations || []);
+            } else if (data.top_recommendations && data.top_recommendations.length > 0) {
+                full = data.top_recommendations;
             } else {
-                setTopRecommendations([]);
+                full = [];
             }
+
+            // Deduplicate by youtube_video_id / id / url while preserving order
+            const seen = new Set();
+            const deduped = [];
+            for (const v of full) {
+                const key = v.youtube_video_id || v.id || v.url || v.video_link || v.youtube_id || v.youtubeId || null;
+                if (!key) {
+                    // keep items without keys but avoid exact duplicates
+                    if (!deduped.includes(v)) deduped.push(v);
+                    continue;
+                }
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    deduped.push(v);
+                }
+            }
+
+            // Sort by similarity descending when available
+            deduped.sort((a, b) => (Number(b.similarity) || 0) - (Number(a.similarity) || 0));
+            setAllRecommendations(deduped);
         } catch (error) {
             console.error("Error fetching recommendations:", error);
-            setTopRecommendations([]);
+            setAllRecommendations([]);
         } finally {
             setTimeout(() => setLoading(false), 1200);
         }
@@ -256,6 +253,18 @@ export default function Recommendation() {
         },
     };
 
+    // Filter and paging
+    const filteredRecommendations = allRecommendations.filter((video) => {
+        if (platformFilter === "all") return true;
+        if (platformFilter === "youtube") return (video.platform || "").toLowerCase() === "youtube";
+        if (platformFilter === "dailymotion") return (video.platform || "").toLowerCase() === "dailymotion" || (video.platform || "").toLowerCase() === "dailymotion";
+        return true;
+    });
+
+    const totalFiltered = filteredRecommendations.length;
+    const visibleRecommendations = filteredRecommendations.slice(0, visibleCount);
+    const hasMore = visibleCount < totalFiltered;
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-cyan-50/30">
             {/* Content */}
@@ -273,16 +282,25 @@ export default function Recommendation() {
                             </button>
 
                             {!loading && (
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-full border border-cyan-200"
-                                >
-                                    <Sparkles className="w-4 h-4 text-cyan-600" />
-                                    <span className="text-sm font-bold text-slate-700">
-                                        Top {topRecommendations.length} AI-Ranked Videos
-                                    </span>
-                                </motion.div>
+                                <div className="flex items-center gap-3">
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-full border border-cyan-200"
+                                    >
+                                        <Sparkles className="w-4 h-4 text-cyan-600" />
+                                        <span className="text-sm font-bold text-slate-700">
+                                            Top {Math.min(5, totalFiltered || 5)} AI-Ranked Videos
+                                        </span>
+                                    </motion.div>
+
+                                    <button
+                                        onClick={() => fetchRecommendations(true)}
+                                        className="px-3 py-2 rounded-md text-sm font-semibold bg-white border border-slate-200 hover:bg-slate-50"
+                                    >
+                                        Refresh Sources
+                                    </button>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -318,14 +336,34 @@ export default function Recommendation() {
                         </motion.p>
                     </motion.div>
 
-                    {/* Videos List — Flat top 5 ranked by CLIP similarity */}
+                    {/* Platform filter and Videos List — shows initial 5 with Show More */}
+                    <div className="max-w-6xl mx-auto mb-6 flex items-center justify-center gap-3">
+                        <button
+                            className={`px-3 py-1 rounded-full text-sm font-semibold transition ${platformFilter === 'all' ? 'bg-cyan-600 text-white' : 'bg-white text-slate-700 border border-slate-100'}`}
+                            onClick={() => { setPlatformFilter('all'); setVisibleCount(5); }}
+                        >
+                            All
+                        </button>
+                        <button
+                            className={`px-3 py-1 rounded-full text-sm font-semibold transition ${platformFilter === 'youtube' ? 'bg-red-600 text-white' : 'bg-white text-slate-700 border border-slate-100'}`}
+                            onClick={() => { setPlatformFilter('youtube'); setVisibleCount(5); }}
+                        >
+                            YouTube
+                        </button>
+                        <button
+                            className={`px-3 py-1 rounded-full text-sm font-semibold transition ${platformFilter === 'dailymotion' ? 'bg-blue-600 text-white' : 'bg-white text-slate-700 border border-slate-100'}`}
+                            onClick={() => { setPlatformFilter('dailymotion'); setVisibleCount(5); }}
+                        >
+                            Dailymotion
+                        </button>
+                    </div>
                     {loading ? (
                         <div className="space-y-8 max-w-6xl mx-auto">
                             {[...Array(3)].map((_, i) => (
                                 <SkeletonCard key={i} />
                             ))}
                         </div>
-                    ) : topRecommendations.length > 0 ? (
+                    ) : allRecommendations.length > 0 ? (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -346,9 +384,30 @@ export default function Recommendation() {
                                     <p>{notFoundReason}</p>
                                 </motion.div>
                             )}
-                            {topRecommendations.map((video, index) => (
+                            {visibleRecommendations.map((video, index) => (
                                 <VideoCard key={video.youtube_video_id || video.id || index} video={video} index={index} />
                             ))}
+
+                            {/* Show More / Show Less */}
+                            {totalFiltered > 5 && (
+                                <div className="mt-8 flex justify-center">
+                                    {hasMore ? (
+                                        <button
+                                            onClick={() => setVisibleCount((c) => Math.min(c + 5, totalFiltered))}
+                                            className="inline-flex items-center gap-2 rounded-full bg-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:bg-cyan-700"
+                                        >
+                                            Show More
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => setVisibleCount(5)}
+                                            className="inline-flex items-center gap-2 rounded-full bg-white border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:shadow-md"
+                                        >
+                                            Show Less
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </motion.div>
                     ) : (
                         <motion.div

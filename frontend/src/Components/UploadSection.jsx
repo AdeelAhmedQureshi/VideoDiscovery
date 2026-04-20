@@ -86,6 +86,13 @@ export function UploadSection() {
         return;
       }
 
+      // Enforce max file size (MB)
+      const MAX_UPLOAD_MB = 300;
+      if (file.size && file.size > MAX_UPLOAD_MB * 1024 * 1024) {
+        reject(`Video file too large! Max ${MAX_UPLOAD_MB} MB allowed.`);
+        return;
+      }
+
       const url = URL.createObjectURL(file);
       const video = document.createElement("video");
       video.preload = "metadata";
@@ -94,6 +101,8 @@ export function UploadSection() {
         URL.revokeObjectURL(url);
         if (video.duration > 180) {
           reject("Video too long! Max 3 minutes allowed.");
+        } else if (video.duration < 10) {
+          reject("Video too short! Minimum 10 seconds required.");
         } else {
           resolve(file);
         }

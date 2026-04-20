@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     YOUTUBE_API_KEY: str | None = None
 
     MAX_UPLOAD_SIZE_MB: int
+    # Upload duration limits (seconds)
+    MIN_UPLOAD_SECONDS: int = 10
+    MAX_UPLOAD_SECONDS: int = 180
 
 
 settings = Settings()

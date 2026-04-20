@@ -3,6 +3,7 @@ from ..database import videos_collection, recommendations_collection, feedback_c
 from ..utils.helper_functions import generate_id
 from ..utils.jwt_handler import get_current_user
 from ..services.cloudinary_service import CloudinaryService
+from ..config import settings
 from ..models.video_model import video_document
 from datetime import datetime, timezone
 import hashlib
@@ -78,8 +79,20 @@ async def upload_video(
             status_code=401, detail="Invalid user authentication")
 
     try:
-        # Read file content for hash calculation
+        # Read file content for hash calculation and validate size
         file_content = await file.read()
+
+        # Enforce maximum upload size (bytes -> MB)
+        try:
+            max_mb = int(settings.MAX_UPLOAD_SIZE_MB)
+        except Exception:
+            max_mb = 300
+        size_mb = len(file_content) / (1024 * 1024)
+        if size_mb > max_mb:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Video file size {size_mb:.2f} MB exceeds maximum allowed size of {max_mb} MB."
+            )
 
         # Calculate video hash for duplicate detection
         video_hash = hashlib.sha256(file_content).hexdigest()
@@ -117,6 +130,59 @@ async def upload_video(
             raise HTTPException(
                 status_code=500,
                 detail="Failed to upload video to Cloudinary. Please try again."
+            )
+
+        # Validate duration limits (robust check)
+        duration = cloudinary_result.get("duration")
+        # Try to coerce to float if possible
+        try:
+            duration_val = float(duration) if duration is not None else None
+        except Exception:
+            duration_val = None
+
+        # If Cloudinary didn't return duration, attempt to fetch resource info
+        if duration_val is None and cloudinary_result.get("public_id"):
+            try:
+                info = CloudinaryService.get_video_info(cloudinary_result.get("public_id"))
+                if info and info.get("duration") is not None:
+                    duration_val = float(info.get("duration"))
+            except Exception:
+                duration_val = None
+
+        # If still unknown, reject upload with clear message
+        if duration_val is None:
+            # Clean up local file and cloudinary asset (if any)
+            try:
+                if cloudinary_result.get("public_id"):
+                    await CloudinaryService.delete_video(cloudinary_result.get("public_id"))
+            except Exception:
+                pass
+            try:
+                os.remove(local_path)
+            except Exception:
+                pass
+            raise HTTPException(status_code=400, detail="Unable to determine video duration. Please try another file or re-encode the video.")
+
+        # Enforce configured bounds
+        if duration_val < settings.MIN_UPLOAD_SECONDS or duration_val > settings.MAX_UPLOAD_SECONDS:
+            # Delete the uploaded Cloudinary asset to avoid orphaned uploads
+            try:
+                if cloudinary_result.get("public_id"):
+                    await CloudinaryService.delete_video(cloudinary_result.get("public_id"))
+            except Exception:
+                pass
+
+            # Remove local temp file
+            try:
+                os.remove(local_path)
+            except Exception:
+                pass
+
+            # Return informative client error
+            raise HTTPException(
+                status_code=400,
+                detail=(f"Video duration {duration_val}s is outside allowed range "
+                        f"({settings.MIN_UPLOAD_SECONDS}s - {settings.MAX_UPLOAD_SECONDS}s).")
             )
 
         # Generate video ID
