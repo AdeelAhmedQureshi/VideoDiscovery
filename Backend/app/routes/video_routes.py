@@ -2,6 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Form
 from ..database import videos_collection, recommendations_collection, feedback_collection
 from ..utils.helper_functions import generate_id
 from ..utils.jwt_handler import get_current_user
+from ..config import settings
 from ..services.cloudinary_service import CloudinaryService
 from ..models.video_model import video_document
 from datetime import datetime, timezone
@@ -40,6 +41,14 @@ async def upload_video(
     try:
         # Read file content for hash calculation
         file_content = await file.read()
+
+        # Enforce upload size limit before duplicate checks and Cloudinary upload
+        max_upload_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
+        if len(file_content) > max_upload_bytes:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large. Maximum allowed size is {settings.MAX_UPLOAD_SIZE_MB} MB."
+            )
 
         # Calculate video hash for duplicate detection
         video_hash = hashlib.sha256(file_content).hexdigest()

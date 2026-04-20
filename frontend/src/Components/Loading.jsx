@@ -51,7 +51,7 @@ const Loading = ({ videoId, isUploadComplete }) => {
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="w-[min(92vw,540px)] overflow-hidden rounded-3xl border border-slate-200 bg-white/95 shadow-2xl">
         {/* Header with gradient */}
-        <div className="px-6 py-5 bg-gradient-to-r from-cyan-500 to-blue-500">
+        <div className="px-6 py-5 bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
               <div className="w-6 h-6 border-3 border-white/40 border-t-white rounded-full animate-spin"></div>
@@ -93,15 +93,15 @@ const Loading = ({ videoId, isUploadComplete }) => {
                 />
                 <defs>
                   <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#06b6d4" />
-                    <stop offset="50%" stopColor="#3b82f6" />
-                    <stop offset="100%" stopColor="#06b6d4" />
+                    <stop offset="0%" stopColor="#0d9488" />
+                    <stop offset="50%" stopColor="#06b6d4" />
+                    <stop offset="100%" stopColor="#0ea5e9" />
                   </linearGradient>
                 </defs>
               </svg>
               {/* Percentage Text */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-4xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
+                <span className="text-4xl font-bold bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 bg-clip-text text-transparent">
                   {Math.round(progress)}%
                 </span>
               </div>
@@ -110,7 +110,7 @@ const Loading = ({ videoId, isUploadComplete }) => {
 
           {/* Current Task */}
           <div className="text-center">
-            <p className="text-cyan-600 font-semibold text-lg mb-2 min-h-[28px]">
+            <p className="text-teal-700 font-semibold text-lg mb-2 min-h-[28px]">
               {currentTask}
             </p>
             <p className="text-slate-600 text-sm">

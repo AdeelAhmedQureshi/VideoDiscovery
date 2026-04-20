@@ -33,7 +33,7 @@ export const UserAvatar = () => {
         <Button
           variant="ghost"
           size="icon"
-          className="w-13 h-13 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-500 flex items-center justify-center shadow-md text-white font-bold text-2xl cursor-pointer"
+          className="w-13 h-13 rounded-full bg-gradient-to-br from-teal-600 to-cyan-600 flex items-center justify-center shadow-md hover:shadow-lg text-white font-bold text-2xl cursor-pointer transition-shadow"
         >
           {initials}
         </Button>
@@ -46,7 +46,7 @@ export const UserAvatar = () => {
         {/* Account Option */}
         <DropdownMenuItem
           onClick={() => navigate("/account")}
-          className="hover:bg-cyan-100 flex items-center gap-2 cursor-pointer"
+          className="hover:bg-teal-100 flex items-center gap-2 cursor-pointer"
         >
           <User className="h-5 w-5" />
           Account

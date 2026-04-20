@@ -7,6 +7,7 @@ import { Documentation } from "../pages/Documentation";
 import { Hero } from "./Components/HeroSection";
 import { Features } from "./Components/Features";
 import { HowItWorks } from "./Components/HowitWorks";
+import { FAQSection } from "./Components/FAQSection";
 import { Footer } from "./Components/Footer";
 import { Dashboard } from "../pages/Dashboard";
 import { ProtectedRoute } from "./Components/ProtectedRoutes";
@@ -15,6 +16,7 @@ import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
 import Account from "../pages/Account";
 import History from "../pages/History";
+import Help from "../pages/Help";
 import NotFound from "../pages/NotFound";
 import Recommendation from "../pages/VideoRecommendation.jsx";
 const ScrollToHash = () => {
@@ -52,7 +54,7 @@ export default function App() {
       <Toaster richColors position="top-right" />
       <ScrollToHash />
       <AuthProvider>
-        <div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 flex flex-col">
+        <div className="app-shell flex flex-col">
           {/* Public routes */}
           <main className="flex-1">
             <Routes>
@@ -64,6 +66,7 @@ export default function App() {
                     <Hero />
                     <Features />
                     <HowItWorks />
+                    <FAQSection />
                   </>
                 }
               />
@@ -71,6 +74,7 @@ export default function App() {
               {/* Auth page */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/documentation" element={<Documentation />} />
+              <Route path="/help" element={<Help />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route
