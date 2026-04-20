@@ -241,7 +241,7 @@ export default function History() {
     });
 
     return (
-        <div className="min-h-screen font-sans text-gray-800 bg-white">
+        <div className="min-h-screen font-sans text-slate-800 bg-[linear-gradient(180deg,#ffffff_0%,#f7fbfb_46%,#f8fbff_100%)]">
 
             <style>{`
         @keyframes blob {
@@ -264,7 +264,7 @@ export default function History() {
                 <div className="mb-6">
                     <button
                         onClick={() => navigate(-1)}
-                        className="flex items-center gap-2 text-gray-600 hover:text-cyan-600 transition font-semibold cursor-pointer"
+                        className="flex items-center gap-2 text-slate-600 hover:text-teal-700 transition font-semibold cursor-pointer"
                     >
                         <ArrowLeft className="w-6 h-6 font-bold" />
                         Back
@@ -282,18 +282,18 @@ export default function History() {
                 >
                     <div className="inline-block relative mb-4">
                         <motion.h1
-                            className="inline-block text-4xl sm:text-5xl leading-[1.15] pb-1 font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
+                            className="display-font inline-block text-4xl sm:text-5xl leading-[1.15] pb-1 font-bold bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(20,184,166,0.35)] peer"
                             variants={headingVariants}
                         >
                             History & Activity
                         </motion.h1>
                         <motion.div
-                            className="absolute -bottom-3 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
+                            className="absolute -bottom-3 left-0 right-0 h-1 bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
                             variants={headingVariants}
                         ></motion.div>
                     </div>
                     <motion.p
-                        className="text-base sm:text-lg text-gray-500 mt-4 sm:mt-6"
+                        className="text-base sm:text-lg text-slate-600 mt-4 sm:mt-6"
                         variants={headingVariants}
                     >
                         Review your recent video interactions and Recommendations
@@ -301,8 +301,8 @@ export default function History() {
                 </motion.div>
 
                 {/* Section Header (Light only) */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 pb-4 border-b border-gray-200 gap-4">
-                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Recent Activity</h2>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 pb-4 border-b border-slate-200 gap-4">
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Recent Activity</h2>
                     {/* <button className="text-sm text-cyan-600 font-semibold hover:text-cyan-700 flex items-center gap-2 transition-all duration-300 hover:gap-3 bg-white hover:bg-cyan-50 px-4 py-2 rounded-lg border border-cyan-300 shadow">
                         View all <ArrowUpRight className="w-4 h-4 text-cyan-600" />
                     </button> */}
@@ -310,10 +310,10 @@ export default function History() {
 
                 {/* Search */}
                 {!loading && !error && historyData.length > 0 && (
-                    <div className="mb-8 rounded-3xl border border-cyan-100 bg-gradient-to-r from-cyan-50 via-white to-blue-50 p-4 sm:p-5 shadow-[0_12px_30px_-18px_rgba(14,116,144,0.5)]">
+                    <div className="mb-8 rounded-3xl border border-teal-200/60 bg-[linear-gradient(90deg,rgba(247,251,250,0.9),rgba(255,255,255,0.95),rgba(248,251,255,0.9))] p-4 sm:p-5 shadow-[0_12px_30px_-18px_rgba(31,143,127,0.4)]">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                             <div className="relative flex-1">
-                                <div className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-cyan-500">
+                                <div className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-teal-600">
                                     <Search className="h-5 w-5" />
                                 </div>
                                 <input
@@ -321,21 +321,21 @@ export default function History() {
                                     value={searchQuery}
                                     onChange={(event) => setSearchQuery(event.target.value)}
                                     placeholder="Search by video title or feedback..."
-                                    className="relative z-0 w-full rounded-2xl border border-cyan-100 bg-white/90 px-12 py-3.5 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition focus:border-cyan-300 focus:outline-none focus:ring-4 focus:ring-cyan-100"
+                                    className="brand-ring relative z-0 w-full rounded-2xl border border-teal-200/60 bg-white/90 px-12 py-3.5 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition focus:border-teal-400"
                                 />
                             </div>
-                            <label className="flex items-center gap-2 rounded-2xl border border-cyan-100 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm">
+                            <label className="flex items-center gap-2 rounded-2xl border border-teal-200/60 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm">
                                 <input
                                     type="checkbox"
                                     checked={feedbackOnly}
                                     onChange={(event) => setFeedbackOnly(event.target.checked)}
-                                    className="h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-200"
+                                    className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-200"
                                 />
                                 Feedback only
                             </label>
                         </div>
                         {normalizedQuery && (
-                            <p className="mt-3 text-xs font-semibold uppercase tracking-widest text-gray-400">
+                            <p className="mt-3 text-xs font-semibold uppercase tracking-widest text-slate-400">
                                 Showing {filteredHistory.length} of {historyData.length}
                             </p>
                         )}
@@ -345,8 +345,8 @@ export default function History() {
                 {/* Loading State */}
                 {loading && (
                     <div className="text-center py-16">
-                        <div className="inline-block w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="mt-4 text-gray-600">Loading your history...</p>
+                        <div className="inline-block w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="mt-4 text-slate-600">Loading your history...</p>
                     </div>
                 )}
 
@@ -363,21 +363,21 @@ export default function History() {
                 {/* Empty State */}
                 {!loading && !error && historyData.length === 0 && (
                     <div className="text-center py-16">
-                        <div className="inline-block p-4 rounded-full bg-gray-100 mb-4">
-                            <Video className="w-8 h-8 text-gray-400" />
+                        <div className="inline-block p-4 rounded-full bg-slate-100 mb-4">
+                            <Video className="w-8 h-8 text-slate-400" />
                         </div>
-                        <p className="text-gray-600 font-semibold">No videos uploaded yet</p>
-                        <p className="text-gray-500 text-sm mt-2">Upload your first video to see your history</p>
+                        <p className="text-slate-600 font-semibold">No videos uploaded yet</p>
+                        <p className="text-slate-500 text-sm mt-2">Upload your first video to see your history</p>
                     </div>
                 )}
 
                 {!loading && !error && historyData.length > 0 && filteredHistory.length === 0 && (
                     <div className="text-center py-16">
-                        <div className="inline-block p-4 rounded-full bg-gray-100 mb-4">
-                            <MessageSquare className="w-8 h-8 text-gray-400" />
+                        <div className="inline-block p-4 rounded-full bg-slate-100 mb-4">
+                            <MessageSquare className="w-8 h-8 text-slate-400" />
                         </div>
-                        <p className="text-gray-600 font-semibold">No results found</p>
-                        <p className="text-gray-500 text-sm mt-2">Try a different title or feedback keyword.</p>
+                        <p className="text-slate-600 font-semibold">No results found</p>
+                        <p className="text-slate-500 text-sm mt-2">Try a different title or feedback keyword.</p>
                     </div>
                 )}
 
@@ -504,7 +504,7 @@ export default function History() {
             {/* Delete Confirmation Modal */}
             {showDeleteModal && (
                 <div className="fixed top-6 left-1/2 z-50 w-[min(85vw,380px)] -translate-x-1/2">
-                    <div className="overflow-hidden rounded-3xl border border-red-200 bg-white/95 shadow-2xl">
+                    <div className="overflow-hidden rounded-3xl border border-red-200 bg-white/90 shadow-2xl">
                         <div className="px-6 py-4 bg-gradient-to-r from-red-600 to-rose-600">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
@@ -517,14 +517,14 @@ export default function History() {
                             </div>
                         </div>
 
-                        <div className="px-6 py-5 bg-white/90">
+                        <div className="px-6 py-5 bg-white/85">
                             <p className="text-slate-700 font-medium mb-4">
-                                Are you sure you want to delete this video?  This action cannot be undone.
+                                Are you sure you want to delete this video? This action cannot be undone.
                             </p>
                             <div className="flex justify-end gap-3">
                                 <button
                                     onClick={cancelDelete}
-                                    className="px-5 py-2.5 bg-gray-100 text-gray-900 font-bold rounded-2xl hover:bg-gray-200 transition-all border border-gray-200"
+                                    className="px-5 py-2.5 bg-slate-100 text-slate-900 font-bold rounded-2xl hover:bg-slate-200 transition-all border border-slate-200"
                                 >
                                     Cancel
                                 </button>
@@ -543,7 +543,7 @@ export default function History() {
             {/* Notification Modal */}
             {notification.show && (
                 <div className={`fixed left-1/2 z-50 -translate-x-1/2 ${notification.type === "success" ? "top-4 w-max max-w-[92vw]" : "top-6 w-[min(85vw,380px)]"}`}>
-                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 shadow-[0_24px_65px_-24px_rgba(15,23,42,0.5)] animate-[fadeIn_220ms_ease-out] backdrop-blur-sm">
+                    <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white/90 shadow-[0_24px_65px_-24px_rgba(15,23,42,0.5)] animate-[fadeIn_220ms_ease-out] backdrop-blur-sm">
                         <div className={`relative px-6 py-4 ${
                             notification.type === "success"
                                 ? "bg-gradient-to-r from-emerald-600 to-green-600"
@@ -588,20 +588,6 @@ export default function History() {
             )}
 
             <style>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.6s ease-out forwards;
-          opacity: 0;
-        }
                 @keyframes loginPopupTimer {
                     from {
                         transform: scaleX(1)

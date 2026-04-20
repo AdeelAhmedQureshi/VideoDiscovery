@@ -97,7 +97,7 @@ export function Features() {
   return (
     <section
       id="features-section"
-      className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white to-gray-50 scroll-mt-24"
+      className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 lg:px-8 bg-[linear-gradient(180deg,#ffffff_0%,#f7fbfb_44%,#f8fbff_100%)] scroll-mt-24"
     >
       <motion.div
         className="text-center mb-12 sm:mb-16"
@@ -108,18 +108,18 @@ export function Features() {
       >
         <div className="inline-block relative mb-4">
           <motion.h1
-            className="inline-block text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-300 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
+            className="display-font inline-block text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-300 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(20,184,166,0.35)] peer"
             variants={headingVariants}
           >
             Features
           </motion.h1>
           <motion.div
-            className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-300 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
+            className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-teal-400 via-cyan-400 to-sky-400 rounded-full blur-sm transition-all duration-300 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
             variants={headingVariants}
           ></motion.div>
         </div>
         <motion.p
-          className="text-sm sm:text-base md:text-lg text-gray-500 mt-3 sm:mt-4 md:mt-6 px-4"
+          className="text-sm sm:text-base md:text-lg text-slate-600 mt-3 sm:mt-4 md:mt-6 px-4"
           variants={headingVariants}
         >
           Powerful tools for advanced video discovery and analysis
@@ -138,12 +138,12 @@ export function Features() {
               key={index}
               className={`
                 relative overflow-hidden
-                p-5 sm:p-6 md:p-8 bg-white rounded-xl sm:rounded-2xl
-                border border-gray-100
-                shadow-sm
+                p-5 sm:p-6 md:p-8 bg-white/90 rounded-xl sm:rounded-2xl
+                border border-slate-200/80
+                shadow-[0_16px_36px_-24px_rgba(15,23,42,0.38)]
                 transition-all duration-300 ease-out
                 ${feature.hoverBorder}
-                hover:shadow-lg ${feature.hoverShadow}
+                hover:shadow-[0_24px_44px_-22px_rgba(15,23,42,0.35)] ${feature.hoverShadow}
                 group
                 cursor-pointer
               `}
@@ -177,11 +177,11 @@ export function Features() {
                 </motion.div>
               </div>
 
-              <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 text-gray-900 group-hover:text-gray-950 transition-colors duration-200">
+              <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 text-slate-900 group-hover:text-slate-950 transition-colors duration-200">
                 {feature.title}
               </h3>
 
-              <p className="text-sm sm:text-base text-gray-600 leading-relaxed group-hover:text-gray-700 transition-colors duration-200">
+              <p className="text-sm sm:text-base text-slate-600 leading-relaxed group-hover:text-slate-700 transition-colors duration-200">
                 {feature.description}
               </p>
             </motion.div>

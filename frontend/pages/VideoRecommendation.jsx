@@ -266,7 +266,7 @@ export default function Recommendation() {
     const hasMore = visibleCount < totalFiltered;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-cyan-50/30">
+        <div className="min-h-screen bg-[radial-gradient(circle_at_8%_12%,rgba(20,184,166,0.08),transparent_34%),linear-gradient(180deg,#f7fbfb_0%,#ffffff_55%,#f8fbff_100%)]">
             {/* Content */}
             <div>
                 {/* Header */}
@@ -318,18 +318,18 @@ export default function Recommendation() {
                     >
                         <div className="inline-block relative mb-4">
                             <motion.h1
-                                className="inline-block text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
+                                className="display-font inline-block text-4xl sm:text-5xl font-bold bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(20,184,166,0.35)] peer"
                                 variants={headingVariants}
                             >
                                 Best Matches
                             </motion.h1>
                             <motion.div
-                                className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
+                                className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-teal-400 via-cyan-400 to-sky-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
                                 variants={headingVariants}
                             ></motion.div>
                         </div>
                         <motion.p
-                            className="text-base sm:text-lg text-gray-500 mt-4 sm:mt-6"
+                            className="text-base sm:text-lg text-slate-600 mt-4 sm:mt-6"
                             variants={headingVariants}
                         >
                             Top 5 most similar videos ranked by AI semantic analysis of your uploaded content.

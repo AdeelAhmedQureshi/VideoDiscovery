@@ -29,6 +29,7 @@ export function UploadSection() {
     "video/webm",
     "video/x-matroska" // MKV
   ];
+  const MAX_UPLOAD_SIZE_MB = 300;
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
@@ -81,6 +82,11 @@ export function UploadSection() {
 
   const validateVideoFile = (file) => {
     return new Promise((resolve, reject) => {
+      if (file.size > MAX_UPLOAD_SIZE_MB * 1024 * 1024) {
+        reject(`File too large! Maximum ${MAX_UPLOAD_SIZE_MB} MB allowed.`);
+        return;
+      }
+
       if (!allowedFormats.includes(file.type)) {
         reject("Invalid format! Only MP4, AVI, MOV allowed.");
         return;
@@ -275,7 +281,7 @@ export function UploadSection() {
   };
 
   return (
-    <section id="upload-section" className="pt-2 sm:pt-4 md:pt-6 lg:pt-8 pb-16 sm:pb-24 px-5 sm:px-6 bg-gray-50 relative">
+    <section id="upload-section" className="pt-2 sm:pt-4 md:pt-6 lg:pt-8 pb-16 sm:pb-24 px-5 sm:px-6 bg-[linear-gradient(180deg,#f7fbfb_0%,#ffffff_52%,#f8fbff_100%)] relative">
       <div className="container mx-auto max-w-2xl">
         {/* Section Header */}
         <motion.div
@@ -287,18 +293,18 @@ export function UploadSection() {
         >
           <div className="inline-block relative mb-4">
             <motion.h1
-              className="inline-block text-4xl sm:text-5xl leading-[1.15] pb-1 font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
+              className="display-font inline-block text-4xl sm:text-5xl leading-[1.15] pb-1 font-bold bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(20,184,166,0.35)] peer"
               variants={headingVariants}
             >
               Upload Section
             </motion.h1>
             <motion.div
-              className="absolute -bottom-3 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
+              className="absolute -bottom-3 left-0 right-0 h-1 bg-gradient-to-r from-teal-400 via-cyan-400 to-sky-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
               variants={headingVariants}
             ></motion.div>
           </div>
           <motion.p
-            className="text-base sm:text-lg text-gray-500 mt-4 sm:mt-6"
+            className="text-base sm:text-lg text-slate-600 mt-4 sm:mt-6"
             variants={headingVariants}
           >
             Upload your video to get started with intelligent recommendations
@@ -306,15 +312,15 @@ export function UploadSection() {
         </motion.div>
 
         {/* Upload Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
+        <div className="bg-white/92 rounded-2xl shadow-[0_20px_44px_-26px_rgba(15,23,42,0.38)] border border-slate-200 p-6 sm:p-8">
           {!file ? (
             <div
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               className={`group relative border-2 border-dashed rounded-xl p-8 sm:p-16 text-center transition-all duration-300 ${isDragging
-                ? "border-cyan-500 bg-cyan-50/50"
-                : "border-gray-300 hover:border-cyan-400 hover:bg-gray-50"
+                ? "border-teal-500 bg-teal-50/50"
+                : "border-slate-300 hover:border-teal-400 hover:bg-slate-50"
                 }`}
             >
               <input
@@ -325,15 +331,15 @@ export function UploadSection() {
               />
 
               <div className="space-y-4">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto rounded-full bg-linear-to-br from-cyan-100 to-cyan-50 flex items-center justify-center">
-                  <Upload className="w-8 h-8 text-cyan-500" />
+                <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto rounded-full bg-linear-to-br from-teal-100 to-cyan-50 flex items-center justify-center">
+                  <Upload className="w-8 h-8 text-teal-600" />
                 </div>
 
-                <p className="text-sm sm:text-base font-medium text-gray-900 mb-1">
+                <p className="text-sm sm:text-base font-semibold text-slate-900 mb-1">
                   Drop your video here or click to browse
                 </p>
 
-                <button className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 bg-white border-2 border-gray-300 text-gray-700 font-medium rounded-lg pointer-events-none transition-all duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] group-hover:border-cyan-400 group-hover:text-cyan-700 group-hover:shadow-md">
+                <button className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 bg-white border-2 border-slate-300 text-slate-700 font-medium rounded-lg pointer-events-none transition-all duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-[1.02] group-hover:border-teal-400 group-hover:text-teal-700 group-hover:shadow-md">
                   <FileVideo className="w-4 h-4 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110" />
                   Select Video File
                 </button>
@@ -342,9 +348,9 @@ export function UploadSection() {
           ) : (
             <div className="space-y-6">
               {/* File Info */}
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200 flex-wrap sm:flex-nowrap">
-                <div className="w-12 h-12 rounded-lg bg-linear-to-br from-cyan-100 to-cyan-50 flex items-center justify-center shrink-0">
-                  <FileVideo className="w-6 h-6 text-cyan-500" />
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200 flex-wrap sm:flex-nowrap">
+                <div className="w-12 h-12 rounded-lg bg-linear-to-br from-teal-100 to-cyan-50 flex items-center justify-center shrink-0">
+                  <FileVideo className="w-6 h-6 text-teal-600" />
                 </div>
 
                 <div className="flex-1 min-w-0">
@@ -367,7 +373,7 @@ export function UploadSection() {
               <button
                 onClick={handleAnalyze}
                 disabled={isAnalyzing}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 sm:py-4 bg-cyan-500 hover:bg-cyan-600 text-white font-medium rounded-xl shadow-sm transition-colors disabled:opacity-70"
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3.5 sm:py-4 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white font-semibold rounded-xl shadow-sm transition-colors disabled:opacity-70"
               >
                 {isAnalyzing ? (
                   <>

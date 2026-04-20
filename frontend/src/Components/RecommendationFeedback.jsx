@@ -101,15 +101,15 @@ export function RecommendationFeedback({ videoId }) {
       ) : !showFeedbackForm ? (
         <button
           onClick={() => setShowFeedbackForm(true)}
-          className="w-full bg-white border-2 border-cyan-200 hover:border-cyan-400 rounded-2xl p-6 text-center transition-all duration-300 hover:shadow-lg group"
+          className="w-full bg-white/92 border-2 border-teal-200 hover:border-teal-400 rounded-2xl p-6 text-center transition-all duration-300 hover:shadow-lg group"
         >
           <div className="flex items-center justify-center gap-3">
-            <MessageSquare className="w-6 h-6 text-cyan-600 group-hover:scale-110 transition-transform" />
-            <span className="text-lg font-bold text-gray-800">
+            <MessageSquare className="w-6 h-6 text-teal-700 group-hover:scale-110 transition-transform" />
+            <span className="text-lg font-bold text-slate-800">
               Share Your Feedback (Optional)
             </span>
           </div>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-sm text-slate-500 mt-2">
             How satisfied are you with these recommendations?
           </p>
         </button>
@@ -119,7 +119,7 @@ export function RecommendationFeedback({ videoId }) {
           animate={{ opacity: 1, scale: 1 }}
           className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden"
         >
-          <div className="bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-4">
+          <div className="bg-gradient-to-r from-teal-600 to-cyan-600 px-6 py-4">
             <h3 className="text-xl font-bold text-white flex items-center gap-2">
               <MessageSquare className="w-5 h-5" />
               Share Your Feedback
@@ -174,7 +174,7 @@ export function RecommendationFeedback({ videoId }) {
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Tell us more about your experience..."
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none transition-all"
+                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none transition-all"
                 maxLength={500}
               />
               <p className="text-xs text-gray-500 mt-1">
@@ -197,7 +197,7 @@ export function RecommendationFeedback({ videoId }) {
               <button
                 onClick={handleSubmitFeedback}
                 disabled={submittingFeedback}
-                className="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold rounded-xl hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                className="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-semibold rounded-xl hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
               >
                 {submittingFeedback ? (
                   <>

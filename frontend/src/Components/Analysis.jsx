@@ -85,8 +85,8 @@ export default function DashboardStats() {
       title: "Total Videos",
       value: loading || sessionExpired ? "—" : String(data.total_videos),
       icon: <Video size={28} />,
-      color: "from-cyan-500 to-teal-400",
-      hoverBorder: "hover:border-cyan-200",
+      color: "from-teal-600 to-cyan-500",
+      hoverBorder: "hover:border-teal-200",
     },
     {
       title: "AI Recommendations",
@@ -122,7 +122,7 @@ export default function DashboardStats() {
   };
 
   return (
-    <section className="w-full bg-gradient-to-br from-cyan-50 to-slate-100 py-12 sm:py-16 md:py-20 lg:py-24">
+    <section className="w-full bg-[linear-gradient(180deg,#f7fbfb_0%,#ffffff_55%,#f8fbff_100%)] py-12 sm:py-16 md:py-20 lg:py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {sessionExpired && (
           <div className="mb-6 sm:mb-8 rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-3 sm:px-5 sm:py-4 shadow-sm">
@@ -164,9 +164,9 @@ export default function DashboardStats() {
               onClick={() => navigate('/history')}
               className={`
                 relative overflow-hidden rounded-xl sm:rounded-2xl
-                bg-white/70 backdrop-blur-lg
+                bg-white/85 backdrop-blur-lg
                 shadow-md p-4 sm:p-5 md:p-6
-                border border-transparent ${item.hoverBorder}
+                border border-slate-200/70 ${item.hoverBorder}
                 cursor-pointer
                 transition-all duration-300
               `}

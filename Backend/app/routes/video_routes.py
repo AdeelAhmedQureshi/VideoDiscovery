@@ -2,6 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Form, B
 from ..database import videos_collection, recommendations_collection, feedback_collection
 from ..utils.helper_functions import generate_id
 from ..utils.jwt_handler import get_current_user
+from ..config import settings
 from ..services.cloudinary_service import CloudinaryService
 from ..config import settings
 from ..models.video_model import video_document

@@ -26,7 +26,7 @@ export function Documentation() {
 
   const handleRecommendation = () => {
     if (!user) navigate("/auth");
-    else navigate("/dashboard#recommendationsection");
+    else navigate("/dashboard/#recommendationsection");
   };
 
   const handleInsights = () => {
@@ -35,7 +35,7 @@ export function Documentation() {
   };
 
   const cardBase =
-    "p-8 bg-white rounded-2xl border border-gray-100 shadow-lg cursor-pointer group transition-all duration-300 hover:-translate-y-4 hover:shadow-xl";
+    "p-8 bg-white/90 rounded-2xl border border-slate-200/80 shadow-[0_18px_36px_-22px_rgba(15,23,42,0.35)] cursor-pointer group transition-all duration-300 hover:-translate-y-3 hover:shadow-[0_26px_44px_-24px_rgba(15,23,42,0.35)]";
 
   const containerVariants = {
     hidden: { opacity: 0, y: 14 },
@@ -73,13 +73,13 @@ export function Documentation() {
   };
 
   return (
-    <section className="min-h-screen bg-linear-to-b from-white to-gray-50 py-16 sm:py-24 px-5 sm:px-6 mt-14">
+    <section className="min-h-screen bg-[radial-gradient(circle_at_8%_12%,rgba(20,184,166,0.1),transparent_34%),radial-gradient(circle_at_90%_0%,rgba(14,165,233,0.08),transparent_36%),linear-gradient(180deg,#ffffff_0%,#f7fbfb_48%,#f8fbff_100%)] py-16 sm:py-24 px-5 sm:px-6 mt-14">
       <div className="max-w-6xl mx-auto">
 
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-10 transition-colors"
+          className="flex items-center gap-2 text-slate-600 hover:text-teal-800 mb-10 transition-colors font-semibold"
         >
           <ArrowLeft className="w-6 h-6" />
           <span className="text-lg font-medium">Back</span>
@@ -95,18 +95,18 @@ export function Documentation() {
         >
           <div className="inline-block relative mb-4">
             <motion.h1
-              className="inline-block text-4xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(34,211,238,0.45)] peer"
+              className="display-font inline-block text-4xl sm:text-5xl font-bold bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 bg-clip-text text-transparent bg-[length:200%_200%] transition-[background-position,filter,transform] duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_14px_rgba(20,184,166,0.35)] peer"
               variants={headingVariants}
             >
               Documentation
             </motion.h1>
             <motion.div
-              className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
+              className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-teal-400 via-cyan-400 to-sky-400 rounded-full blur-sm transition-all duration-500 peer-hover:blur-md peer-hover:h-1.5 peer-hover:opacity-80"
               variants={headingVariants}
             ></motion.div>
           </div>
           <motion.p
-            className="text-base sm:text-lg text-gray-500 mt-4 sm:mt-6"
+            className="text-base sm:text-lg text-slate-600 mt-4 sm:mt-6"
             variants={headingVariants}
           >
             Get started with VideoDiscovery in just a few easy steps
@@ -125,18 +125,18 @@ export function Documentation() {
           {/* Card 1 */}
           <motion.div
             onClick={handleCreateAccount}
-            className={`${cardBase} hover:border-blue-400 hover:shadow-blue-200/60`}
+            className={`${cardBase} hover:border-teal-300 hover:shadow-teal-200/55`}
             variants={cardVariants}
             whileHover={{ y: -8, scale: 1.02, boxShadow: "0 20px 40px -20px rgba(59, 130, 246, 0.4)" }}
             whileTap={{ scale: 0.98 }}
           >
-            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-blue-100 to-blue-50 mb-5 mx-auto group-hover:scale-110 transition-transform">
-              <BookOpen className="w-8 h-8 text-blue-500" />
+            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-teal-100 to-cyan-50 mb-5 mx-auto group-hover:scale-110 transition-transform">
+              <BookOpen className="w-8 h-8 text-teal-600" />
             </div>
             <h3 className="text-xl font-semibold text-center mb-3">
               Create an Account
             </h3>
-            <p className="text-gray-600 text-sm text-center">
+            <p className="text-slate-600 text-sm text-center">
               Sign up quickly using your email or username.
             </p>
           </motion.div>
@@ -144,18 +144,18 @@ export function Documentation() {
           {/* Card 2 */}
           <motion.div
             onClick={handleUpload}
-            className={`${cardBase} hover:border-cyan-400 hover:shadow-cyan-200/60`}
+            className={`${cardBase} hover:border-teal-300 hover:shadow-teal-200/55`}
             variants={cardVariants}
             whileHover={{ y: -8, scale: 1.02, boxShadow: "0 20px 40px -20px rgba(34, 211, 238, 0.4)" }}
             whileTap={{ scale: 0.98 }}
           >
-            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-cyan-100 to-cyan-50 mb-5 mx-auto group-hover:scale-110 transition-transform">
-              <Upload className="w-8 h-8 text-cyan-500" />
+            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-teal-100 to-cyan-50 mb-5 mx-auto group-hover:scale-110 transition-transform">
+              <Upload className="w-8 h-8 text-teal-600" />
             </div>
             <h3 className="text-xl font-semibold text-center mb-3">
               Upload Videos
             </h3>
-            <p className="text-gray-600 text-sm text-center">
+            <p className="text-slate-600 text-sm text-center">
               Upload videos and let AI analyze them.
             </p>
           </motion.div>
@@ -163,18 +163,18 @@ export function Documentation() {
           {/* Card 3 */}
           <motion.div
             onClick={handleRecommendation}
-            className={`${cardBase} hover:border-purple-400 hover:shadow-purple-200/60`}
+            className={`${cardBase} hover:border-cyan-300 hover:shadow-cyan-200/55`}
             variants={cardVariants}
             whileHover={{ y: -8, scale: 1.02, boxShadow: "0 20px 40px -20px rgba(168, 85, 247, 0.4)" }}
             whileTap={{ scale: 0.98 }}
           >
-            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-purple-100 to-purple-50 mb-5 mx-auto group-hover:scale-110 transition-transform">
-              <Video className="w-8 h-8 text-purple-500" />
+            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-cyan-100 to-sky-50 mb-5 mx-auto group-hover:scale-110 transition-transform">
+              <Video className="w-8 h-8 text-cyan-600" />
             </div>
             <h3 className="text-xl font-semibold text-center mb-3">
               Discover Recommendations
             </h3>
-            <p className="text-gray-600 text-sm text-center">
+            <p className="text-slate-600 text-sm text-center">
               Explore AI-generated video suggestions.
             </p>
           </motion.div>
@@ -182,18 +182,18 @@ export function Documentation() {
           {/* Card 4 */}
           <motion.div
             onClick={handleInsights}
-            className={`${cardBase} hover:border-pink-400 hover:shadow-pink-200/60`}
+            className={`${cardBase} hover:border-sky-300 hover:shadow-sky-200/55`}
             variants={cardVariants}
             whileHover={{ y: -8, scale: 1.02, boxShadow: "0 20px 40px -20px rgba(236, 72, 153, 0.4)" }}
             whileTap={{ scale: 0.98 }}
           >
-            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-pink-100 to-pink-50 mb-5 mx-auto group-hover:scale-110 transition-transform">
-              <Info className="w-8 h-8 text-pink-500" />
+            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-sky-100 to-cyan-50 mb-5 mx-auto group-hover:scale-110 transition-transform">
+              <Info className="w-8 h-8 text-sky-600" />
             </div>
             <h3 className="text-xl font-semibold text-center mb-3">
               View History
             </h3>
-            <p className="text-gray-600 text-sm text-center">
+            <p className="text-slate-600 text-sm text-center">
               View history and improve recommendations.
             </p>
           </motion.div>
@@ -224,7 +224,7 @@ export function Documentation() {
 
               <button
                 onClick={() => navigate("/dashboard")}
-                className="px-6 py-2 rounded-xl bg-cyan-500 text-white hover:bg-cyan-600 transition"
+                className="px-6 py-2 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700 transition"
               >
                 Go to Dashboard
               </button>

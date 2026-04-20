@@ -82,23 +82,23 @@ export default function ResetPassword() {
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-100 via-sky-50 to-blue-100 px-4 py-8">
-      <div className="w-full max-w-lg rounded-3xl border border-cyan-100 bg-white/95 shadow-xl backdrop-blur-sm p-6 sm:p-8">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-[radial-gradient(circle_at_10%_12%,rgba(20,184,166,0.12),transparent_35%),radial-gradient(circle_at_90%_0%,rgba(14,165,233,0.1),transparent_36%),linear-gradient(180deg,#f4fbfa_0%,#f8fcff_46%,#ffffff_100%)]">
+      <div className="w-full max-w-lg rounded-3xl border border-slate-200/80 bg-white/90 shadow-[0_24px_60px_rgba(15,23,42,0.1)] backdrop-blur-sm p-6 sm:p-8">
         <div className="mb-4 flex items-center justify-between">
           <Link
             to="/forgot-password"
-            className="inline-flex items-center gap-2 text-sm font-medium text-cyan-700 hover:text-cyan-900"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-teal-700 hover:text-teal-900"
           >
             <ArrowLeft size={16} />
             Back
           </Link>
-          <span className="inline-flex items-center gap-2 rounded-full bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-700">
+          <span className="inline-flex items-center gap-2 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 border border-teal-100">
             <ShieldCheck size={14} />
             Secure Reset
           </span>
         </div>
 
-        <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">Reset Password</h2>
+        <h2 className="display-font text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Reset Password</h2>
         <p className="mt-2 text-sm text-slate-500">
           Create a strong new password for your account.
         </p>
@@ -126,7 +126,7 @@ export default function ResetPassword() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter new password"
-                className="w-full pl-10 pr-10 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-300 outline-none"
+                className="w-full pl-10 pr-10 py-3 border border-slate-300 rounded-xl brand-ring outline-none bg-white"
               />
               <button
                 type="button"
@@ -148,7 +148,7 @@ export default function ResetPassword() {
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 placeholder="Confirm new password"
-                className="w-full pl-10 pr-10 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-300 outline-none"
+                className="w-full pl-10 pr-10 py-3 border border-slate-300 rounded-xl brand-ring outline-none bg-white"
               />
               <button
                 type="button"
@@ -160,7 +160,7 @@ export default function ResetPassword() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
             <p className="text-xs font-semibold text-slate-700 mb-2">Password must include:</p>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <RequirementItem ok={checks.minLength} text="At least 8 characters" />
@@ -174,7 +174,7 @@ export default function ResetPassword() {
 
           <button
             disabled={loading || !allChecksPassed || password !== confirm}
-            className="w-full py-3 bg-cyan-600 hover:bg-cyan-700 disabled:bg-cyan-300 text-white rounded-xl font-semibold transition"
+            className="w-full py-3 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 disabled:from-teal-300 disabled:to-cyan-300 text-white rounded-xl font-semibold transition"
           >
             {loading ? "Resetting..." : "Update Password"}
           </button>
