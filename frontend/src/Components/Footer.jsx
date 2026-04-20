@@ -60,6 +60,11 @@ export function Footer() {
                   Documentation
                 </a>
               </li>
+              <li>
+                <a href="/#faq" className="hover:text-teal-700 transition-colors">
+                  FAQs
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -68,7 +73,7 @@ export function Footer() {
             <h3 className="footer-title font-semibold text-slate-900 text-base sm:text-lg">Resources</h3>
             <ul className="space-y-2 text-xs sm:text-sm text-slate-600">
               <li>
-                <a href="#" className="hover:text-teal-700 transition-colors">
+                <a href="/documentation" className="hover:text-teal-700 transition-colors">
                   Documentation
                 </a>
               </li>
@@ -83,7 +88,7 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-teal-700 transition-colors">
+                <a href="/help" className="hover:text-teal-700 transition-colors">
                   Support
                 </a>
               </li>

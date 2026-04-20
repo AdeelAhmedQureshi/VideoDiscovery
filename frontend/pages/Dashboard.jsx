@@ -82,6 +82,12 @@ export const Dashboard = () => {
                     .nav-link:hover::after {
                         transform: scaleX(1);
                     }
+                    .nav-link.active {
+                        color: #0f766e;
+                    }
+                    .nav-link.active::after {
+                        transform: scaleX(1);
+                    }
                     .logo-link {
                         transition: color 0.2s, transform 0.2s;
                     }
@@ -103,9 +109,15 @@ export const Dashboard = () => {
                         <nav className="hidden md:flex items-center gap-10">
                             <a
                                 href="/"
-                                className="text-lg font-semibold text-slate-600 nav-link"
+                                className={`text-lg font-semibold text-slate-600 nav-link ${location.pathname === "/" ? "active" : ""}`}
                             >
                                 Home
+                            </a>
+                            <a
+                                href="/dashboard"
+                                className={`text-lg font-semibold text-slate-600 nav-link ${location.pathname === "/dashboard" ? "active" : ""}`}
+                            >
+                                Dashboard
                             </a>
                             <a
                                 href="/"
@@ -174,9 +186,18 @@ export const Dashboard = () => {
                                     navigate("/");
                                     setMenuOpen(false);
                                 }}
-                                className="w-full text-left text-base font-semibold text-slate-700 hover:text-teal-700"
+                                className={`w-full text-left text-base font-semibold hover:text-teal-700 ${location.pathname === "/" ? "text-teal-700 underline decoration-2 underline-offset-4" : "text-slate-700"}`}
                             >
                                 Home
+                            </button>
+                            <button
+                                onClick={() => {
+                                    navigate("/dashboard");
+                                    setMenuOpen(false);
+                                }}
+                                className={`w-full text-left text-base font-semibold hover:text-teal-700 ${location.pathname === "/dashboard" ? "text-teal-700 underline decoration-2 underline-offset-4" : "text-slate-700"}`}
+                            >
+                                Dashboard
                             </button>
                             <button
                                 onClick={() => {

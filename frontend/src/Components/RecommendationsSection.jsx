@@ -304,7 +304,7 @@ export function RecommendationsSection() {
               }}
               className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-600 to-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:from-teal-700 hover:to-cyan-700 hover:shadow-cyan-500/30"
             >
-              Show More ({sortedVideos.length - visibleCount})
+              Show More
             </button>
           </div>
         )}

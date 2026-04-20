@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Video, Menu, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./../../contexts/AuthContext";
 import { UserAvatar } from "./../Components/UserAvatar";
 
 export const Header = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -35,6 +36,12 @@ export const Header = () => {
         .nav-link:hover::after {
           transform: scaleX(1);
         }
+        .nav-link.active {
+          color: #0f766e;
+        }
+        .nav-link.active::after {
+          transform: scaleX(1);
+        }
         .logo-link {
           transition: color 0.2s, transform 0.2s;
         }
@@ -56,11 +63,16 @@ export const Header = () => {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-9">
-            <a href="/" className="nav-link text-[1.02rem] font-semibold text-slate-600">Home</a>
+            <a
+              href="/"
+              className={`nav-link text-[1.02rem] font-semibold text-slate-600 ${location.pathname === "/" ? "active" : ""}`}
+            >
+              Home
+            </a>
             {user && (
               <a
                 href="/dashboard"
-                className="nav-link text-[1.02rem] font-semibold text-slate-600"
+                className={`nav-link text-[1.02rem] font-semibold text-slate-600 ${location.pathname === "/dashboard" ? "active" : ""}`}
               >
                 Dashboard
               </a>
@@ -102,7 +114,7 @@ export const Header = () => {
                 navigate("/");
                 setMenuOpen(false);
               }}
-              className="w-full text-left text-base font-semibold text-slate-700 hover:text-teal-700"
+              className={`w-full text-left text-base font-semibold hover:text-teal-700 ${location.pathname === "/" ? "text-teal-700 underline decoration-2 underline-offset-4" : "text-slate-700"}`}
             >
               Home
             </button>
@@ -112,7 +124,7 @@ export const Header = () => {
                   navigate("/dashboard");
                   setMenuOpen(false);
                 }}
-                className="w-full text-left text-base font-semibold text-slate-700 hover:text-teal-700"
+                className={`w-full text-left text-base font-semibold hover:text-teal-700 ${location.pathname === "/dashboard" ? "text-teal-700 underline decoration-2 underline-offset-4" : "text-slate-700"}`}
               >
                 Dashboard
               </button>

@@ -28,6 +28,7 @@ export function UploadSection() {
     "video/webm",
     "video/x-matroska" // MKV
   ];
+  const MAX_UPLOAD_SIZE_MB = 300;
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
@@ -80,6 +81,11 @@ export function UploadSection() {
 
   const validateVideoFile = (file) => {
     return new Promise((resolve, reject) => {
+      if (file.size > MAX_UPLOAD_SIZE_MB * 1024 * 1024) {
+        reject(`File too large! Maximum ${MAX_UPLOAD_SIZE_MB} MB allowed.`);
+        return;
+      }
+
       if (!allowedFormats.includes(file.type)) {
         reject("Invalid format! Only MP4, AVI, MOV allowed.");
         return;

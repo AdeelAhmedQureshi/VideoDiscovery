@@ -56,12 +56,12 @@ export function Hero() {
           
           {/* Animated Heading */}
           <motion.h1
-            className="display-font text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-slate-900 px-2 sm:px-4 w-full overflow-visible"
+            className="display-font text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-slate-900 px-2 sm:px-3 md:px-4 w-full overflow-visible break-words whitespace-normal"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1 }}
           >
-            <span className="inline-flex gap-3 sm:gap-4 flex-wrap justify-center cursor-default">
+            <span className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-wrap justify-center cursor-default">
               {["Discover", "Videos", "with"].map((word, i) => (
                 <motion.span
                   key={word}
@@ -75,7 +75,7 @@ export function Hero() {
               ))}
             </span>
             <motion.span 
-              className="block mt-2 sm:mt-3 bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 bg-clip-text text-transparent bg-[length:200%_200%] transition-all duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_18px_rgba(13,148,136,0.4)] cursor-default w-full px-2"
+              className="block mt-3 sm:mt-4 md:mt-5 bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 bg-clip-text text-transparent bg-[length:200%_200%] transition-all duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_18px_rgba(13,148,136,0.4)] cursor-default px-1 word-break"
               animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
               transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
             >
@@ -85,7 +85,7 @@ export function Hero() {
 
           {/* Animated Description */}
           <motion.p
-            className="text-base sm:text-lg md:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed group cursor-default"
+            className="text-sm xs:text-base sm:text-lg md:text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed group cursor-default px-2 break-words"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1.5, delay: 0.5 }}
@@ -93,6 +93,7 @@ export function Hero() {
             <span className="transition-all duration-300 hover:text-gray-800">
               Upload any video and let our  
             </span>
+            <b></b>
             <span className="font-semibold text-teal-700 transition-all duration-300 hover:text-teal-600 hover:drop-shadow-[0_0_8px_rgba(20,184,166,0.35)]">
                  advanced multimodal AI 
             </span>
