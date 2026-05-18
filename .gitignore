@@ -10,6 +10,7 @@ venv.bak/
 # Project Specific Models & weights
 Backend/models/
 Backend/weights/
+Backend/ai_engine/models/
 *.pt
 *.pth
 *.bin
