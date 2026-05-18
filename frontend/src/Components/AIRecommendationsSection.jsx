@@ -394,31 +394,12 @@ export function AIRecommendationsSection() {
                               <h4 className="text-sm font-bold text-slate-900 line-clamp-2 group-hover:text-indigo-600 transition-colors mb-2">
                                 {recVideo.title}
                               </h4>
-                              <div className="flex items-center justify-between gap-2 mb-2">
+                              <div className="flex items-center justify-between gap-2">
                                 <div className="text-xs text-slate-500 line-clamp-1">
                                   {recVideo.channel || "Unknown Channel"}
                                 </div>
                                 <ExternalLink className="w-3.5 h-3.5 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>
-                              
-                              {/* Similarity Score */}
-                              {recVideo.similarity !== undefined && (
-                                <div className="flex items-center gap-2">
-                                  <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                    <div 
-                                      className={`h-full transition-all ${
-                                        recVideo.similarity >= 0.5 ? 'bg-green-500' :
-                                        recVideo.similarity >= 0.3 ? 'bg-yellow-500' :
-                                        'bg-orange-500'
-                                      }`}
-                                      style={{ width: `${Math.min(recVideo.similarity * 100, 100)}%` }}
-                                    />
-                                  </div>
-                                  <span className="text-xs font-semibold text-slate-600 whitespace-nowrap">
-                                    {(recVideo.similarity * 100).toFixed(0)}%
-                                  </span>
-                                </div>
-                              )}
                             </div>
 
                             {/* Gradient Bottom Border */}
@@ -430,7 +411,7 @@ export function AIRecommendationsSection() {
                       <div className="py-12 text-center rounded-xl bg-slate-50 border border-slate-200">
                         <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                         <p className="text-slate-600 font-medium">No recommendations available</p>
-                        <p className="text-slate-500 text-sm mt-1">Recommendations are still being processed</p>
+                        <p className="text-slate-500 text-sm mt-1">Recommendations may still be processing or below quality threshold</p>
                         <button
                           onClick={() => {
                             const token = localStorage.getItem("token");

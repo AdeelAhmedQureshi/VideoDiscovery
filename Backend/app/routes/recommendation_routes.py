@@ -31,26 +31,24 @@ async def get_recommendations(
     refresh: bool = False,
     limit: int = 100,
     focus: str | None = None,
-    include_all: bool = True,
+    include_all: bool = False,
     current_user: dict = Depends(get_current_user)
 ):
     """
     Get YouTube video recommendations for an analyzed video.
 
-    Returns all ranked videos (flat list) sorted by real semantic similarity.
+    Returns top-ranked videos (flat list) sorted by real semantic similarity.
     Also includes query_tabs for transparency (which query found which videos).
 
-    Quality threshold logic:
-      - If include_all=True: Returns ALL recommendations regardless of similarity score
-      - If include_all=False: Applies quality threshold filtering
-        - If ALL results are below threshold → empty list + not_found_reason
-        - If some are below → results returned with not_found_reason warning
-        - If all above → results returned, not_found_reason is null
+    Quality threshold logic (default behavior with include_all=False):
+      - If ALL results are below threshold → empty list + not_found_reason
+      - If some are below → results returned with not_found_reason warning
+      - If all above → results returned, not_found_reason is null
 
     Query params:
         refresh: If true, delete cached recs and re-fetch from YouTube.
-        limit: Maximum number of recommendations to return (default: 100, set to 999 for all)
-        include_all: If true, return all recommendations including low-score ones (default: True)
+        limit: Maximum number of recommendations to return (default: 100)
+        include_all: If true, return all recommendations including low-score ones (default: False)
 
     Returns:
         {
