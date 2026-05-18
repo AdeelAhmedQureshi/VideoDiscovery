@@ -133,11 +133,34 @@ export function AIRecommendationsSection() {
       const recsData = await recsRes.json();
       console.log(`[AIRecs] Response for ${videoId}:`, recsData);
       
-      // Response structure: { uploaded_video, top_recommendations, query_tabs, not_found_reason }
-      let videos = recsData.top_recommendations || [];
+      // Use query_tabs (all candidates from queries) instead of just top_recommendations
+      // This matches the behavior of VideoRecommendation.jsx and shows all available matches
+      let videos = [];
+      
+      // Prefer query_tabs (detailed per-query candidates) to show all results
+      if (recsData.query_tabs && recsData.query_tabs.length > 0) {
+        videos = recsData.query_tabs.flatMap(tab => tab.recommendations || []);
+      } else if (recsData.top_recommendations && recsData.top_recommendations.length > 0) {
+        videos = recsData.top_recommendations;
+      }
+      
+      // Deduplicate by youtube_video_id while preserving order
+      const seen = new Set();
+      const deduped = [];
+      for (const v of videos) {
+        const key = v.youtube_video_id || v.id || v.url || v.video_link || null;
+        if (!key) {
+          if (!deduped.includes(v)) deduped.push(v);
+          continue;
+        }
+        if (!seen.has(key)) {
+          seen.add(key);
+          deduped.push(v);
+        }
+      }
       
       // If empty and there's a reason, log it
-      if (videos.length === 0 && recsData.not_found_reason) {
+      if (deduped.length === 0 && recsData.not_found_reason) {
         console.warn(`[AIRecs] No recommendations for ${videoId}: ${recsData.not_found_reason}`);
         toast.info(`Some recommendations may be below quality threshold`, {
           description: recsData.not_found_reason || "No matching videos found"
@@ -147,7 +170,7 @@ export function AIRecommendationsSection() {
       setVideosWithRecs((prev) =>
         prev.map((video) =>
           video.id === videoId 
-            ? { ...video, recommendedVideos: videos, recommendations: videos.length }
+            ? { ...video, recommendedVideos: deduped, recommendations: deduped.length }
             : video
         )
       );
