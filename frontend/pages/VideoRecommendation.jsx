@@ -172,15 +172,35 @@ export default function Recommendation() {
     const [notFoundReason, setNotFoundReason] = useState(null);
 
     useEffect(() => {
-        fetchRecommendations();
+        // Detect if the page load was a hard reload and force a refresh of recommendations
+        const isReload = (() => {
+            try {
+                const navEntries = performance.getEntriesByType && performance.getEntriesByType("navigation");
+                if (navEntries && navEntries.length > 0) {
+                    return navEntries[0].type === "reload";
+                }
+                // Fallback for older browsers
+                return window.performance && window.performance.navigation && window.performance.navigation.type === 1;
+            } catch (e) {
+                return false;
+            }
+        })();
+
+        fetchRecommendations(isReload, { limit: 5, focus: null });
     }, [videoId]);
-    const fetchRecommendations = async (forceRefresh = false) => {
+    const fetchRecommendations = async (forceRefresh = false, opts = { limit: 5, focus: null }) => {
         setLoading(true);
-        setVisibleCount(5);
+        setVisibleCount(opts.limit || 5);
         try {
             const token = localStorage.getItem("token");
 
-            const url = `http://localhost:8000/api/recommendations/${videoId}${forceRefresh ? '?refresh=true' : ''}`;
+            const params = new URLSearchParams();
+            if (forceRefresh) params.set('refresh', 'true');
+            if (opts.limit) params.set('limit', String(opts.limit));
+            if (opts.focus) params.set('focus', opts.focus);
+
+            const qs = params.toString();
+            const url = `http://localhost:8000/api/recommendations/${videoId}${qs ? `?${qs}` : ''}`;
             const response = await fetch(url, {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -190,8 +210,10 @@ export default function Recommendation() {
             if (!response.ok) throw new Error("Failed to fetch recommendations");
 
             const data = await response.json();
+            console.log("[Recommendations API] response:", data);
             setUploadedVideo(data.uploaded_video || null);
-            setNotFoundReason(data.not_found_reason || data.message || null);
+            // Accept both snake_case and camelCase keys from the API
+            setNotFoundReason(data.not_found_reason || data.notFoundReason || data.message || null);
 
             // Prefer query_tabs (detailed per-query candidates) to show all platform results.
             let full = [];
@@ -209,7 +231,6 @@ export default function Recommendation() {
             for (const v of full) {
                 const key = v.youtube_video_id || v.id || v.url || v.video_link || v.youtube_id || v.youtubeId || null;
                 if (!key) {
-                    // keep items without keys but avoid exact duplicates
                     if (!deduped.includes(v)) deduped.push(v);
                     continue;
                 }
@@ -219,9 +240,17 @@ export default function Recommendation() {
                 }
             }
 
-            // Sort by similarity descending when available
-            deduped.sort((a, b) => (Number(b.similarity) || 0) - (Number(a.similarity) || 0));
+            // Keep original ordering (backend already biases by focus/heuristic)
             setAllRecommendations(deduped);
+            // Notify other parts of the app (e.g., History page) that recommendation totals updated
+            try {
+                const totalCandidates = (data?.uploaded_video?.recommendation_stats?.total_candidates
+                    || data?.uploaded_video?.recommendation_stats?.totalCandidates
+                    || deduped.length || 0);
+                window.dispatchEvent(new CustomEvent('recommendationStatsUpdated', { detail: { videoId: videoId, total_candidates: totalCandidates } }));
+            } catch (e) {
+                console.warn('Failed to dispatch recommendationStatsUpdated event', e);
+            }
         } catch (error) {
             console.error("Error fetching recommendations:", error);
             setAllRecommendations([]);
@@ -290,15 +319,16 @@ export default function Recommendation() {
                                     >
                                         <Sparkles className="w-4 h-4 text-cyan-600" />
                                         <span className="text-sm font-bold text-slate-700">
-                                            Top {Math.min(5, totalFiltered || 5)} AI-Ranked Videos
+                                            Top {Math.min(visibleCount, totalFiltered || visibleCount)} AI-Ranked Videos
                                         </span>
                                     </motion.div>
 
                                     <button
-                                        onClick={() => fetchRecommendations(true)}
+                                        title="More Recommendations"
+                                        onClick={() => fetchRecommendations(true, { limit: 20, focus: 'both' })}
                                         className="px-3 py-2 rounded-md text-sm font-semibold bg-white border border-slate-200 hover:bg-slate-50"
                                     >
-                                        Refresh Sources
+                                        More Recommendations
                                     </button>
                                 </div>
                             )}
@@ -373,17 +403,6 @@ export default function Recommendation() {
                             {/* Feedback Section - Appears before recommendations */}
                             <RecommendationFeedback videoId={videoId} />
 
-                            {/* Partial match warning */}
-                            {notFoundReason && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: -10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800"
-                                >
-                                    <span className="text-lg">⚠️</span>
-                                    <p>{notFoundReason}</p>
-                                </motion.div>
-                            )}
                             {visibleRecommendations.map((video, index) => (
                                 <VideoCard key={video.youtube_video_id || video.id || index} video={video} index={index} />
                             ))}

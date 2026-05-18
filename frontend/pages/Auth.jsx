@@ -127,7 +127,7 @@ export default function Auth() {
                 {isSignUp ? 'Create Account' : 'Login Account'}
               </h2>
               <p className="text-sm sm:text-base text-slate-600 mt-1">
-                {isSignUp ? 'Sign up to start analyzing your videos' : 'Sign in to continue to your account'}
+                {isSignUp ? 'Sign up to start analyzing your videos' : 'Log in to your account'}
               </p>
             </div>
 

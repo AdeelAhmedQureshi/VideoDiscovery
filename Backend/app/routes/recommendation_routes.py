@@ -10,6 +10,7 @@ Implements strict quality threshold:
 """
 
 import asyncio
+from typing import List, Dict, Optional
 from fastapi import APIRouter, HTTPException, Depends
 from ..database import videos_collection, recommendations_collection
 from ..utils.jwt_handler import get_current_user
@@ -28,21 +29,28 @@ MIN_SIMILARITY_THRESHOLD = 0.15
 async def get_recommendations(
     video_id: str,
     refresh: bool = False,
+    limit: int = 100,
+    focus: str | None = None,
+    include_all: bool = True,
     current_user: dict = Depends(get_current_user)
 ):
     """
     Get YouTube video recommendations for an analyzed video.
 
-    Returns CLIP-ranked top 5 videos (flat list) sorted by real semantic similarity.
+    Returns all ranked videos (flat list) sorted by real semantic similarity.
     Also includes query_tabs for transparency (which query found which videos).
 
     Quality threshold logic:
-      - If ALL top 5 are below threshold → empty list + not_found_reason
-      - If some are below → results returned with not_found_reason warning
-      - If all above → results returned, not_found_reason is null
+      - If include_all=True: Returns ALL recommendations regardless of similarity score
+      - If include_all=False: Applies quality threshold filtering
+        - If ALL results are below threshold → empty list + not_found_reason
+        - If some are below → results returned with not_found_reason warning
+        - If all above → results returned, not_found_reason is null
 
     Query params:
         refresh: If true, delete cached recs and re-fetch from YouTube.
+        limit: Maximum number of recommendations to return (default: 100, set to 999 for all)
+        include_all: If true, return all recommendations including low-score ones (default: True)
 
     Returns:
         {
@@ -77,8 +85,21 @@ async def get_recommendations(
             top_recommendations = _format_cached_flat(cached)
             query_tabs = _group_cached_by_query(cached)
             not_found_reason = _compute_not_found_reason(top_recommendations)
-            # If ALL below threshold, return empty list
-            if not_found_reason and all(
+            # Update recommendation_stats from cached documents (platform breakdown)
+            try:
+                yt_count = sum(1 for d in cached if (d.get("platform") or "").lower() == "youtube")
+                dm_count = sum(1 for d in cached if (d.get("platform") or "").lower() == "dailymotion")
+                stats = {
+                    "youtube_candidates": int(yt_count),
+                    "dailymotion_candidates": int(dm_count),
+                    "total_candidates": int(yt_count + dm_count),
+                    "last_fetched_at": datetime.now(timezone.utc)
+                }
+                await videos_collection().update_one({"_id": video_id}, {"$set": {"recommendation_stats": stats}})
+            except Exception as e:
+                print(f"[Recommendations] Failed to update recommendation_stats from cache for {video_id}: {e}")
+            # If ALL below threshold and include_all=False, return empty list
+            if not include_all and not_found_reason and all(
                 r.get("similarity", 0) < MIN_SIMILARITY_THRESHOLD for r in top_recommendations
             ):
                 return {
@@ -94,75 +115,130 @@ async def get_recommendations(
                 "not_found_reason": not_found_reason,
             }
 
-    # No cache — fetch from YouTube using top 3 AI-generated queries
+    # No cache — fetch from YouTube using top 3 AI-generated queries + optional focus
     ai_metadata = video.get("ai_metadata", {})
     search_queries = ai_metadata.get("search_queries", [])[:3]  # Top 3 queries only
 
-    if not search_queries:
-        # No search queries yet — video may still be processing
-        status = video.get("status", "unknown")
-        if status == "processing":
-            return {
-                "uploaded_video": _format_video_summary(video),
-                "top_recommendations": [],
-                "query_tabs": [],
-                "not_found_reason": None,
-                "message": "Video is still being analyzed. Recommendations will be available soon.",
-            }
+    # If no queries yet, video might still be processing
+    if not search_queries and video.get("status") == "processing":
         return {
             "uploaded_video": _format_video_summary(video),
             "top_recommendations": [],
             "query_tabs": [],
-            "not_found_reason": "No search queries could be generated for this video. The content may be too generic or unclear.",
+            "not_found_reason": None,
+            "message": "Video is still being analyzed. Recommendations will be available soon.",
         }
 
-    # Fetch 5 YouTube + 3 Dailymotion videos for EACH query concurrently
-    print(f"[Recommendations] Fetching YouTube + Dailymotion results for video {video_id} with {len(search_queries)} queries")
+    # Build effective queries, optionally biasing by scene/actions
+    scene = ai_metadata.get("scene") or (ai_metadata.get("multimodal_context", {}) or {}).get("visual", {}).get("scene")
+    actions = ai_metadata.get("actions", []) or (ai_metadata.get("multimodal_context", {}) or {}).get("activity", {}).get("actions", [])
+
+    effective_queries = [q for q in search_queries if q]
+
+    if focus:
+        f = focus.lower()
+        if f in ("scene", "both") and scene:
+            # Add scene-focused queries
+            effective_queries.append(f"{scene}")
+            effective_queries.append(f"{scene} scene")
+            effective_queries.append(f"{scene} video")
+        if f in ("action", "both") and actions:
+            for act in actions:
+                if act:
+                    effective_queries.append(f"{act} video")
+                    effective_queries.append(f"{act} {scene or ''}".strip())
+
+    # Deduplicate while preserving order
+    seen_q = set()
+    effective_queries = [q for q in effective_queries if not (q in seen_q or seen_q.add(q))]
+
+    if not effective_queries:
+        # No meaningful queries
+        return {
+            "uploaded_video": _format_video_summary(video),
+            "top_recommendations": [],
+            "query_tabs": [],
+            "not_found_reason": "No search queries could be generated for this video.",
+        }
+
+    print(f"[Recommendations] Fetching YouTube + Dailymotion results for video {video_id} with {len(effective_queries)} queries (limit={limit}, focus={focus})")
+
+    # Determine per-query fetch size (over-fetch to allow deduping and selection)
+    # Fetch enough results per query to meet the limit requirement
+    per_query_fetch = max(10, min(limit, 25))
 
     async def fetch_for_query(query):
-        """Fetch from both YouTube and Dailymotion for a single query."""
         yt_results, dm_results = await asyncio.gather(
-            search_youtube(query, max_results=5),
-            search_dailymotion(query, max_results=3),
+            search_youtube(query, max_results=per_query_fetch),
+            search_dailymotion(query, max_results=per_query_fetch),
         )
-        return {"query": query, "results": yt_results + dm_results}
+        # Attach query for traceability
+        combined = []
+        for r in (yt_results or []):
+            r["search_query_used"] = query
+            combined.append(r)
+        for r in (dm_results or []):
+            r["search_query_used"] = query
+            combined.append(r)
+        return {"query": query, "recommendations": combined}
 
-    tasks = [fetch_for_query(q) for q in search_queries]
+    tasks = [fetch_for_query(q) for q in effective_queries]
     all_results = await asyncio.gather(*tasks)
 
-    # Build query_tabs and flat list, store in database
+    # Build query_tabs and flatten
     query_tabs = []
     all_flat_results = []
-
     for entry in all_results:
         query = entry["query"]
-        results = entry["results"]
-
+        results = entry.get("recommendations", [])
         if not results:
             query_tabs.append({"query": query, "recommendations": []})
             continue
-
-        # Keep fetched candidates in-memory only (temporary), attach query for traceability
-        for result in results:
-            result["search_query_used"] = query
-            all_flat_results.append(result)
-
         query_tabs.append({"query": query, "recommendations": results})
+        all_flat_results.extend(results)
 
     # Do NOT persist all per-query candidates. Persist only the final deduplicated top-5.
 
-    # Sort flat results by similarity (descending) and take top 5
-    all_flat_results.sort(key=lambda x: x.get("similarity", 0), reverse=True)
-    # Deduplicate by youtube_video_id
+    # Deduplicate by youtube_video_id/url/id while preserving order
     seen = set()
-    top_recommendations = []
+    deduped = []
     for r in all_flat_results:
-        vid = r.get("youtube_video_id", "")
-        if vid not in seen:
-            seen.add(vid)
-            top_recommendations.append(r)
-        if len(top_recommendations) >= 5:
-            break
+        key = r.get("youtube_video_id") or r.get("id") or r.get("url") or r.get("video_link") or None
+        if key is None:
+            # keep items without keys but avoid exact duplicates
+            if r not in deduped:
+                deduped.append(r)
+            continue
+        if key not in seen:
+            seen.add(key)
+            deduped.append(r)
+
+    # Heuristic match score: prefer results that mention scene or actions in title/description/tags
+    def compute_match_score(item: Dict) -> int:
+        score = 0
+        # combine searchable text fields into one lowercase string
+        title = str(item.get("title", ""))
+        description = str(item.get("description", ""))
+        tags = ",".join(item.get("tags", []) or [])
+        text_fields = " ".join([title, description, tags]).lower()
+        if scene and scene.lower() in text_fields:
+            score += 3
+        for act in actions or []:
+            if act and act.lower() in text_fields:
+                score += 1
+        return score
+
+    def view_count_val(item: Dict) -> int:
+        try:
+            return int(item.get("view_count") or 0)
+        except Exception:
+            return 0
+
+    # Sort by match score (desc), then by view_count (desc)
+    deduped.sort(key=lambda x: (compute_match_score(x), view_count_val(x)), reverse=True)
+
+    # Select top-N based on requested limit
+    top_recommendations = deduped[:max(1, min(limit, len(deduped)))]
 
     # Persist only the selected top-5 recommendations for caching
     if top_recommendations:
@@ -197,13 +273,28 @@ async def get_recommendations(
             # Log and continue; avoid failing the request due to DB write issues
             print(f"[Recommendations] Failed to persist top recommendations: {e}")
 
+    # Persist recommendation candidate stats (counts per platform) so History page can show totals
+    try:
+        yt_count = sum(1 for r in all_flat_results if (r.get("platform") or "").lower() == "youtube")
+        dm_count = sum(1 for r in all_flat_results if (r.get("platform") or "").lower() == "dailymotion")
+        stats = {
+            "youtube_candidates": int(yt_count),
+            "dailymotion_candidates": int(dm_count),
+            "total_candidates": int(yt_count + dm_count),
+            "last_fetched_at": datetime.now(timezone.utc)
+        }
+        await videos_collection().update_one({"_id": video_id}, {"$set": {"recommendation_stats": stats}})
+        print(f"[Recommendations] Updated recommendation_stats for {video_id}: {stats}")
+    except Exception as e:
+        print(f"[Recommendations] Failed to persist recommendation_stats for {video_id}: {e}")
+
     # ── Quality threshold check ──
     not_found_reason = _compute_not_found_reason(top_recommendations)
 
-    if not_found_reason and all(
+    if not include_all and not_found_reason and all(
         r.get("similarity", 0) < MIN_SIMILARITY_THRESHOLD for r in top_recommendations
     ):
-        # ALL below threshold → show Not Found
+        # ALL below threshold → show Not Found (only if include_all=False)
         print(f"[Recommendations] ALL {len(top_recommendations)} results below threshold {MIN_SIMILARITY_THRESHOLD} — returning Not Found")
         return {
             "uploaded_video": _format_video_summary(video),
@@ -251,7 +342,7 @@ def _compute_not_found_reason(top_recommendations: list) -> str | None:
 
 
 def _format_cached_flat(cached_docs: list) -> list:
-    """Format cached recommendation documents as a flat ranked list."""
+    """Format cached recommendation documents as a flat ranked list. Returns all cached recommendations."""
     seen = set()
     results = []
     for doc in cached_docs:
@@ -275,8 +366,6 @@ def _format_cached_flat(cached_docs: list) -> list:
             "search_query_used": doc.get("search_query_used", ""),
             "platform": doc.get("platform", "youtube"),
         })
-        if len(results) >= 5:
-            break
     return results
 
 
@@ -315,4 +404,5 @@ def _format_video_summary(video: dict) -> dict:
         "file_url": video.get("file_url"),
         "status": video.get("status", "unknown"),
         "uploaded_at": str(video.get("uploaded_at", "")),
+        "recommendation_stats": video.get("recommendation_stats") if isinstance(video, dict) else None,
     }

@@ -87,6 +87,7 @@ export default function DashboardStats() {
       icon: <Video size={28} />,
       color: "from-teal-600 to-cyan-500",
       hoverBorder: "hover:border-teal-200",
+      link: "/videos",
     },
     {
       title: "AI Recommendations",
@@ -94,6 +95,7 @@ export default function DashboardStats() {
       icon: <Brain size={28} />,
       color: "from-indigo-500 to-purple-400",
       hoverBorder: "hover:border-indigo-400",
+      link: "/recommendations",
     },
     {
       title: "Feedback Submitted",
@@ -101,6 +103,7 @@ export default function DashboardStats() {
       icon: <MessageSquare size={28} />,
       color: "from-pink-500 to-rose-400",
       hoverBorder: "hover:border-pink-400",
+      link: "/feedback",
     },
   ];
 
@@ -161,7 +164,7 @@ export default function DashboardStats() {
                 scale: 1.02,
                 transition: { duration: 0.3 },
               }}
-              onClick={() => navigate('/history')}
+              onClick={() => navigate(item.link)}
               className={`
                 relative overflow-hidden rounded-xl sm:rounded-2xl
                 bg-white/85 backdrop-blur-lg

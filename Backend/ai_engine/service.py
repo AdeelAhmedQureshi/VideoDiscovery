@@ -343,6 +343,23 @@ async def analyze_video(video_path: str, video_id: str):
 
                 print(f"[Discovery] Fetched {len(all_videos)} total videos (YouTube: {yt_count}, Dailymotion: {dm_count})")
 
+                # Persist per-platform candidate counts so the History page can show
+                # the total number of recommended candidates (YouTube + Dailymotion).
+                try:
+                    stats = {
+                        "youtube_candidates": yt_count,
+                        "dailymotion_candidates": dm_count,
+                        "total_candidates": yt_count + dm_count,
+                        "last_fetched_at": datetime.now()
+                    }
+                    await videos_collection().update_one(
+                        {"_id": video_id},
+                        {"$set": {"recommendation_stats": stats}}
+                    )
+                    print(f"[Discovery] Saved recommendation stats for {video_id}: {stats}")
+                except Exception as e:
+                    print(f"[Discovery] Failed to persist recommendation stats for {video_id}: {e}")
+
                 # Build context string from the uploaded video's AI analysis
                 # This gives the re-ranker S3 (Context Match) signal: comparing
                 # candidate video metadata against what our AI detected in the input

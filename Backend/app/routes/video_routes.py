@@ -90,9 +90,11 @@ async def upload_video(
             max_mb = 300
         size_mb = len(file_content) / (1024 * 1024)
         if size_mb > max_mb:
+            # Provide a clear, user-facing message about size limits
             raise HTTPException(
                 status_code=400,
-                detail=f"Video file size {size_mb:.2f} MB exceeds maximum allowed size of {max_mb} MB."
+                detail=(f"Only videos up to {max_mb} MB are supported. "
+                        f"Uploaded file size is {size_mb:.2f} MB.")
             )
 
         # Calculate video hash for duplicate detection
@@ -179,12 +181,18 @@ async def upload_video(
             except Exception:
                 pass
 
-            # Return informative client error
-            raise HTTPException(
-                status_code=400,
-                detail=(f"Video duration {duration_val}s is outside allowed range "
-                        f"({settings.MIN_UPLOAD_SECONDS}s - {settings.MAX_UPLOAD_SECONDS}s).")
-            )
+            # Return specific, user-friendly messages per case
+            if duration_val < settings.MIN_UPLOAD_SECONDS:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(f"Video must be at least {settings.MIN_UPLOAD_SECONDS} seconds long.")
+                )
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(f"Video must be at most {settings.MAX_UPLOAD_SECONDS} seconds long "
+                            f"({settings.MAX_UPLOAD_SECONDS} seconds maximum).")
+                )
 
         # Generate video ID
         video_id = generate_id("v")
@@ -429,18 +437,38 @@ async def get_user_history(
         # Format response with additional data
         history_list = []
         for video in videos:
-            video_id = video.get("video_id")
+            # Use either the explicit `video_id` field or fallback to `_id`
+            video_id = video.get("video_id") or video.get("_id")
 
-            # Count recommendations for this video
-            recommendation_count = await recommendations_collection().count_documents(
-                {"uploaded_video_id": video_id}
-            )
+            # Build list of possible ids to match inconsistent schemas
+            alt_id = video.get("_id")
+            possible_ids = [i for i in (video.get("video_id"), alt_id) if i is not None]
 
-            # Get feedback for this video
-            feedback_doc = await feedback_collection().find_one({
-                "video_id": video_id,
-                "user_id": user_id
-            })
+            # Prefer to use persisted per-platform candidate totals if available
+            rec_stats = video.get("recommendation_stats") if isinstance(video, dict) else None
+            if rec_stats and isinstance(rec_stats, dict) and rec_stats.get("total_candidates") is not None:
+                recommendation_count = int(rec_stats.get("total_candidates", 0))
+            else:
+                # Fall back to counting persisted recommendation documents in DB
+                if not possible_ids:
+                    recommendation_count = 0
+                else:
+                    recommendation_count = await recommendations_collection().count_documents(
+                        {"uploaded_video_id": {"$in": possible_ids}}
+                    )
+
+            # Get feedback for this video — accept either `video_id` or `uploaded_video_id` keys
+            or_clauses = []
+            for _id in possible_ids:
+                or_clauses.append({"video_id": _id})
+                or_clauses.append({"uploaded_video_id": _id})
+
+            feedback_doc = None
+            if or_clauses:
+                feedback_doc = await feedback_collection().find_one({
+                    "user_id": user_id,
+                    "$or": or_clauses
+                })
 
             history_list.append({
                 "video_id": video_id,

@@ -583,29 +583,6 @@ export default function Account() {
 
             <div className="p-8 bg-white/90">
               <div className="space-y-6">
-                <div>
-                  <label className="block text-base font-bold text-slate-800 mb-2">
-                    Current Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input
-                      type={showCurrentPassword ? "text" : "password"}
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      placeholder="Enter current password"
-                      className="brand-ring w-full pl-12 pr-12 py-3.5 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:border-teal-400 transition-all text-slate-900 shadow-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    >
-                      {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-base font-bold text-slate-800 mb-2">
@@ -618,6 +595,7 @@ export default function Account() {
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="Enter new password"
+                        autoComplete="new-password"
                         className="brand-ring w-full pl-12 pr-12 py-3.5 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:border-teal-400 transition-all text-slate-900 shadow-sm"
                       />
                       <button
@@ -641,6 +619,7 @@ export default function Account() {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Confirm new password"
+                        autoComplete="new-password"
                         className="brand-ring w-full pl-12 pr-12 py-3.5 bg-white/90 border border-slate-200 rounded-2xl focus:outline-none focus:border-teal-400 transition-all text-slate-900 shadow-sm"
                       />
                       <button

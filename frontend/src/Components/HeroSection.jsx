@@ -75,7 +75,7 @@ export function Hero() {
               ))}
             </span>
             <motion.span 
-              className="block mt-3 sm:mt-4 md:mt-5 bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 bg-clip-text text-transparent bg-[length:200%_200%] transition-all duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_18px_rgba(13,148,136,0.4)] cursor-default px-1 word-break"
+              className="block mt-3 sm:mt-4 md:mt-5 bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 bg-clip-text text-transparent bg-[length:200%_200%] transition-all duration-500 hover:bg-[position:100%_50%] hover:scale-[1.02] hover:drop-shadow-[0_0_18px_rgba(13,148,136,0.4)] cursor-default px-2 sm:px-4 overflow-visible leading-relaxed line-clamp-none"
               animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
               transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
             >
@@ -85,26 +85,29 @@ export function Hero() {
 
           {/* Animated Description */}
           <motion.p
-            className="text-sm xs:text-base sm:text-lg md:text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed group cursor-default px-2 break-words"
+            className="text-sm xs:text-base sm:text-lg md:text-xl text-slate-600 max-w-4xl mx-auto leading-relaxed group cursor-default px-2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1.5, delay: 0.5 }}
           >
             <span className="transition-all duration-300 hover:text-gray-800">
-              Upload any video and let our  
+              Upload any video and let our
             </span>
-            <b></b>
+            {" "}
             <span className="font-semibold text-teal-700 transition-all duration-300 hover:text-teal-600 hover:drop-shadow-[0_0_8px_rgba(20,184,166,0.35)]">
-                 advanced multimodal AI 
+              advanced multimodal AI
             </span>
+            {" "}
             <span className="transition-all duration-300 hover:text-gray-800">
-               analyze visual, audio, and textual content to discover 
+              analyze visual, audio, and textual content to discover
             </span>
+            {" "}
             <span className="font-semibold text-sky-700 transition-all duration-300 hover:text-sky-600 hover:drop-shadow-[0_0_8px_rgba(56,189,248,0.35)]">
-               semantically related videos 
+              semantically related videos
             </span>
+            {" "}
             <span className="transition-all duration-300 hover:text-gray-800">
-               from across the web.
+              from across the web.
             </span>
           </motion.p>
 

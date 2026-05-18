@@ -1,8 +1,9 @@
-import { Upload, Video, BookOpen, Info, ArrowLeft } from "lucide-react";
+import { Upload, Video, BookOpen, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Header } from "../src/Components/Navbar";
 
 export function Documentation() {
   const navigate = useNavigate();
@@ -73,17 +74,10 @@ export function Documentation() {
   };
 
   return (
-    <section className="min-h-screen bg-[radial-gradient(circle_at_8%_12%,rgba(20,184,166,0.1),transparent_34%),radial-gradient(circle_at_90%_0%,rgba(14,165,233,0.08),transparent_36%),linear-gradient(180deg,#ffffff_0%,#f7fbfb_48%,#f8fbff_100%)] py-16 sm:py-24 px-5 sm:px-6 mt-14">
+    <>
+      <Header />
+      <section className="min-h-screen bg-[radial-gradient(circle_at_8%_12%,rgba(20,184,166,0.1),transparent_34%),radial-gradient(circle_at_90%_0%,rgba(14,165,233,0.08),transparent_36%),linear-gradient(180deg,#ffffff_0%,#f7fbfb_48%,#f8fbff_100%)] py-16 sm:py-24 px-5 sm:px-6 mt-32">
       <div className="max-w-6xl mx-auto">
-
-        {/* Back Button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-slate-600 hover:text-teal-800 mb-10 transition-colors font-semibold"
-        >
-          <ArrowLeft className="w-6 h-6" />
-          <span className="text-lg font-medium">Back</span>
-        </button>
 
         {/* Header */}
         <motion.div
@@ -200,6 +194,7 @@ export function Documentation() {
 
         </motion.div>
       </div>
+      </section>
 
       {/* Modal */}
       {showModal && (
@@ -233,6 +228,6 @@ export function Documentation() {
           </div>
         </div>
       )}
-    </section>
+    </>
   );
 }

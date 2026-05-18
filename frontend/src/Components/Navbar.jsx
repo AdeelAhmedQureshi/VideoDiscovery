@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Video, Menu, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "./../../contexts/AuthContext";
@@ -9,6 +9,38 @@ export const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isOnFeatures, setIsOnFeatures] = useState(false);
+
+  useEffect(() => {
+    if (location.pathname !== "/") {
+      setIsOnFeatures(false);
+      return;
+    }
+
+    const handleScroll = () => {
+      const featuresSection = document.getElementById("features-section");
+      const howItWorksSection = document.getElementById("howitworks");
+
+      let featureIsActive = false;
+
+      // Features is only active if:
+      // 1. Features section is visible in viewport
+      // 2. How it Works section hasn't been reached yet (is still below)
+      if (featuresSection && howItWorksSection) {
+        const featureRect = featuresSection.getBoundingClientRect();
+        const howRect = howItWorksSection.getBoundingClientRect();
+
+        // Features is active only if Features is in viewport AND How it Works hasn't started
+        featureIsActive = featureRect.top < window.innerHeight && howRect.top > 50;
+      }
+
+      setIsOnFeatures(featureIsActive);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    handleScroll(); // Check on mount
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [location.pathname]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/86 backdrop-blur-xl border-b border-slate-200/70 h-22 flex items-center">
@@ -65,7 +97,7 @@ export const Header = () => {
           <nav className="hidden md:flex items-center gap-9">
             <a
               href="/"
-              className={`nav-link text-[1.02rem] font-semibold text-slate-600 ${location.pathname === "/" ? "active" : ""}`}
+              className={`nav-link text-[1.02rem] font-semibold text-slate-600 ${location.pathname === "/" && !isOnFeatures ? "active" : ""}`}
             >
               Home
             </a>
@@ -77,8 +109,13 @@ export const Header = () => {
                 Dashboard
               </a>
             )}
-            <a href="#features-section" className="nav-link text-[1.02rem] font-semibold text-slate-600">Features</a>
-            <a href="/documentation" className="nav-link text-[1.02rem] font-semibold text-slate-600">Documentation</a>
+            <a href="#features-section" className={`nav-link text-[1.02rem] font-semibold text-slate-600 ${isOnFeatures ? "active" : ""}`}>Features</a>
+            <a
+              href="/documentation"
+              className={`nav-link text-[1.02rem] font-semibold text-slate-600 ${location.pathname === "/documentation" ? "active" : ""}`}
+            >
+              Documentation
+            </a>
             
           </nav>
 
@@ -114,7 +151,7 @@ export const Header = () => {
                 navigate("/");
                 setMenuOpen(false);
               }}
-              className={`w-full text-left text-base font-semibold hover:text-teal-700 ${location.pathname === "/" ? "text-teal-700 underline decoration-2 underline-offset-4" : "text-slate-700"}`}
+              className={`w-full text-left text-base font-semibold hover:text-teal-700 ${location.pathname === "/" && !isOnFeatures ? "text-teal-700 underline decoration-2 underline-offset-4" : "text-slate-700"}`}
             >
               Home
             </button>
@@ -134,7 +171,7 @@ export const Header = () => {
                 navigate("/", { state: { scrollTo: "features-section" } });
                 setMenuOpen(false);
               }}
-              className="w-full text-left text-base font-semibold text-slate-700 hover:text-teal-700"
+              className={`w-full text-left text-base font-semibold hover:text-teal-700 ${isOnFeatures && location.pathname === "/" ? "text-teal-700 underline decoration-2 underline-offset-4" : "text-slate-700"}`}
             >
               Features
             </button>
@@ -143,7 +180,7 @@ export const Header = () => {
                 navigate("/documentation");
                 setMenuOpen(false);
               }}
-              className="w-full text-left text-base font-semibold text-slate-700 hover:text-teal-700"
+              className={`w-full text-left text-base font-semibold hover:text-teal-700 ${location.pathname === "/documentation" ? "text-teal-700 underline decoration-2 underline-offset-4" : "text-slate-700"}`}
             >
               Documentation
             </button>

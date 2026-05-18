@@ -19,6 +19,10 @@ import History from "../pages/History";
 import Help from "../pages/Help";
 import NotFound from "../pages/NotFound";
 import Recommendation from "../pages/VideoRecommendation.jsx";
+import MediaHub from "../pages/MediaHub.jsx";
+import VideosPage from "../pages/Videos.jsx";
+import RecommendationsPage from "../pages/Recommendations.jsx";
+import FeedbackPage from "../pages/Feedback.jsx";
 const ScrollToHash = () => {
   const location = useLocation();
 
@@ -106,6 +110,38 @@ export default function App() {
                 element={
                   <ProtectedRoute>
                     <Recommendation />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/media-hub"
+                element={
+                  <ProtectedRoute>
+                    <MediaHub />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/videos"
+                element={
+                  <ProtectedRoute>
+                    <VideosPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/recommendations"
+                element={
+                  <ProtectedRoute>
+                    <RecommendationsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/feedback"
+                element={
+                  <ProtectedRoute>
+                    <FeedbackPage />
                   </ProtectedRoute>
                 }
               />

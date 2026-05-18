@@ -33,6 +33,24 @@ export default function History() {
     const [feedbackOnly, setFeedbackOnly] = useState(false);
 
     useEffect(() => {
+        // Listen for recommendation stats updates from other pages (e.g., when user clicks "More Recommendations")
+        const handler = (e) => {
+            try {
+                const detail = e?.detail || {};
+                const vid = detail.videoId;
+                const total = Number(detail.total_candidates || detail.totalCandidates || 0);
+                if (!vid) return;
+                setHistoryData((prev) => prev.map((it) => it.id === vid ? { ...it, recommendations: total } : it));
+            } catch (err) {
+                console.warn('Error handling recommendationStatsUpdated event', err);
+            }
+        };
+        window.addEventListener('recommendationStatsUpdated', handler);
+        return () => window.removeEventListener('recommendationStatsUpdated', handler);
+    }, []);
+
+    useEffect(() => {
+
         const fetchHistoryData = async () => {
             const token = localStorage.getItem("token");
             if (!token) {
