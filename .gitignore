@@ -1,5 +1,4 @@
 # Environments
-.env
 .venv
 env/
 venv/
@@ -13,6 +12,7 @@ Backend/weights/
 Backend/ai_engine/models/
 *.pt
 *.pth
+*.pth.tar
 *.bin
 *.onnx
 *.safetensors
@@ -111,3 +111,4 @@ temp_videos/
 *.db
 *.faiss
 index.faiss
+config.bat
